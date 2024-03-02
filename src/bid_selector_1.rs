@@ -11,7 +11,6 @@ use crate::image_button::ImageButton;
 use crate::transform::Transform;
 use crate::view_trait::ViewTrait;
 
-
 pub struct BidSelector1 {
     pub visible: bool,
     pub transform: Transform,
@@ -30,11 +29,12 @@ impl BidSelector1 {
         gfx: &mut Graphics,
         sender: Sender<PlayerAction>,
     ) -> Self {
-
-        let mut trans =
-            Transform::from_translation_angle_full_size(position, 0.0, texture.size().into());
-        trans.set_scale(vec2(texture_scale, texture_scale));
-        trans.drawn_size = vec2(texture.size().0 * 0.5, texture.size().1 * 0.5);
+        let trans = Transform::from_pos_tex_scale_centered(
+            position,
+            &texture,
+            crate::view_fn::TEX_SCALE,
+            true,
+        );
 
         let accept_button = BidSelector1::create_accept_button(gfx, sender.clone());
         let pass_button = BidSelector1::create_pass_button(gfx, sender.clone());
@@ -49,7 +49,10 @@ impl BidSelector1 {
         }
     }
 
-    fn create_accept_button(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> ImageButton<PlayerAction> {
+    fn create_accept_button(
+        gfx: &mut Graphics,
+        sender: Sender<PlayerAction>,
+    ) -> ImageButton<PlayerAction> {
         let enabled = gfx
             .create_texture()
             .from_image(include_bytes!("assets/accept_enabled.png"))
@@ -63,13 +66,23 @@ impl BidSelector1 {
             .unwrap();
 
         let pos = vec2(104., 55.);
-        let mut button = ImageButton::new(pos, enabled, Some(mouse_over), None, 1.0, String::new(), Some(sender));
-        button.transform.set_offset(Vec2::ZERO);
+        let mut button = ImageButton::new(
+            pos,
+            enabled,
+            Some(mouse_over),
+            None,
+            1.0,
+            String::new(),
+            Some(sender),
+        );
         button.mouse_up_message = None; //
         button
     }
 
-    fn create_pass_button(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> ImageButton<PlayerAction> {
+    fn create_pass_button(
+        gfx: &mut Graphics,
+        sender: Sender<PlayerAction>,
+    ) -> ImageButton<PlayerAction> {
         let enabled = gfx
             .create_texture()
             .from_image(include_bytes!("assets/pass_enabled.png"))
@@ -83,8 +96,15 @@ impl BidSelector1 {
             .unwrap();
 
         let pos = vec2(214., 55.);
-        let mut button = ImageButton::new(pos, enabled, Some(mouse_over), None, 1.0, String::new(), Some(sender));
-        //button.transform.set_offset(Vec2::ZERO);
+        let mut button = ImageButton::new(
+            pos,
+            enabled,
+            Some(mouse_over),
+            None,
+            1.0,
+            String::new(),
+            Some(sender),
+        );
         button.mouse_up_message = None; //
         button
     }
@@ -97,23 +117,28 @@ impl ViewTrait for BidSelector1 {
         &mut self,
         event: &Event,
         screen_pt: Vec2,
-        parent_affine: Option<&notan::math::Affine2>,
+        parent_affine: &Affine2,
     ) -> bool {
         if !self.visible {
             return false;
         }
 
-        let parent_affine = Some(*parent_affine.unwrap() * self.transform.affine2());
+        let affine = *parent_affine * self.transform.affine2();
 
-
-        if self.accept_button.mouse_event_handled(event, screen_pt, parent_affine.as_ref()) {
+        if self
+            .accept_button
+            .mouse_event_handled(event, screen_pt, &affine)
+        {
             return true;
         }
 
-        if self.pass_button.mouse_event_handled(event, screen_pt, parent_affine.as_ref()) {
+        if self
+            .pass_button
+            .mouse_event_handled(event, screen_pt, &affine)
+        {
             return true;
         }
-        
+
         false
     }
 
@@ -122,14 +147,13 @@ impl ViewTrait for BidSelector1 {
             return;
         }
 
+        let (size_x, size_y) = self.transform.size().into();
         draw.image(&self.texture)
-            .transform(self.transform.mat3())
-            .size(self.transform.drawn_size.x, self.transform.drawn_size.y);
+            .transform(self.transform.mat3_with_parent(parent_affine))
+            .size(size_x, size_y);
 
         let affine = *parent_affine * self.transform.affine2();
-
         self.accept_button.draw(draw, &affine, gfx);
         self.pass_button.draw(draw, &affine, gfx);
-       
     }
 }

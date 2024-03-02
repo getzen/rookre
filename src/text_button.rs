@@ -34,7 +34,7 @@ impl ButtonState {
 pub struct TextButton<T> {
     pub visible: bool,
     pub transform: Transform,
-    size: Vec2,
+    //size: Vec2,
     pub state: ButtonState,
     pub stroke_color: Color,
     pub stroke_width: f32,
@@ -51,11 +51,13 @@ pub struct TextButton<T> {
 }
 
 impl<T> TextButton<T> {
-    pub fn new(text: String, size: Vec2, translation: Vec2, sender: Option<Sender<T>>) -> Self {
+    pub fn new(text: String, size: Vec2, position: Vec2, sender: Option<Sender<T>>) -> Self {
+        let transform = Transform::from_translation_size_centered(position, size, true);
+
         Self {
             visible: true,
-            transform: Transform::from_translation_angle_full_size(translation, 0.0, size),
-            size,
+            transform,
+            //size,
             state: ButtonState::Enabled,
             stroke_color: Color::BLACK,
             stroke_width: 1.0,
@@ -77,7 +79,7 @@ impl<T: Copy> ViewTrait for TextButton<T> {
         &mut self,
         event: &Event,
         screen_pt: Vec2,
-        parent_affine: Option<&notan::math::Affine2>,
+        parent_affine: &Affine2,
     ) -> bool {
         if !self.visible {
             return false;
@@ -122,7 +124,8 @@ impl<T: Copy> ViewTrait for TextButton<T> {
         }
 
         // No need to center the rect with 'position' since the transform will do it.
-        draw.rect((0.0, 0.0), self.size.into())
+        let (size_x, size_y) = self.transform.size().into();
+        draw.rect((0.0, 0.0), (size_x, size_y))
             .transform(self.transform.mat3())
             .corner_radius(6.0)
             .fill()
@@ -132,7 +135,7 @@ impl<T: Copy> ViewTrait for TextButton<T> {
 
         draw.text(&self.font, &self.text)
             // Need to move the position to the center, then use draw methods to center from there.
-            .position(self.size.x * 0.5, self.size.y * 0.5)
+            .position(size_x * 0.5, size_y * 0.5)
             .transform(self.transform.mat3())
             .size(self.font_size * self.pixel_ratio)
             .h_align_center()

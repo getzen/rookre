@@ -1,6 +1,6 @@
 use notan::{
     draw::{Draw, DrawImages, DrawTransform},
-    math::{vec2, Affine2, Vec2},
+    math::{Affine2, Vec2},
     prelude::{Color, Graphics, Texture},
     Event,
 };
@@ -9,6 +9,7 @@ use slotmap::DefaultKey;
 use crate::{
     animators::{AngleAnimator, TranslationAnimator},
     transform::Transform,
+    view_fn::CARD_SCALE,
     view_trait::ViewTrait,
 };
 
@@ -33,20 +34,19 @@ pub struct Sprite {
 }
 
 impl Sprite {
-    /// By default, self.size is set to the texture size.
     pub fn new(
         id: DefaultKey,
         texture: Texture,
-        translation: Vec2,
+        position: Vec2,
         alt_texture: Option<Texture>,
     ) -> Self {
-        let size = vec2(texture.width(), texture.height());
-
+        let transform =
+            Transform::from_pos_tex_scale_centered(position, &texture, CARD_SCALE, true); //
         Self {
             id,
             visible: true,
             z_order: 0,
-            transform: Transform::from_translation_angle_full_size(translation, 0.0, size),
+            transform,
             texture,
             color: Color::WHITE,
             children: Vec::new(),
@@ -72,8 +72,10 @@ impl ViewTrait for Sprite {
             &self.texture
         };
 
+        let (size_x, size_y) = self.transform.size().into();
         draw.image(tex)
-            .transform(self.transform.mat3())
+            .transform(self.transform.mat3_with_parent(parent_affine))
+            .size(size_x, size_y)
             .color(self.color);
 
         if !self.children.is_empty() {
@@ -88,16 +90,17 @@ impl ViewTrait for Sprite {
         &mut self,
         event: &Event,
         screen_pt: Vec2,
-        parent_affine: Option<&Affine2>,
+        parent_affine: &Affine2,
     ) -> bool {
         // If not visible, don't check this view or its children.
         if !self.visible {
             return false;
         }
 
+        let affine = *parent_affine * self.transform.affine2();
         // Check children reverse to check on-top kids first.
         for child in self.children.iter_mut().rev() {
-            if child.mouse_event_handled(event, screen_pt, parent_affine) {
+            if child.mouse_event_handled(event, screen_pt, &affine) {
                 return true;
             }
         }

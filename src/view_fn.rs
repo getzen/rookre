@@ -14,6 +14,9 @@ use crate::game::PlayerAction;
 use crate::player::PlayerId;
 //use crate::trump_view::TrumpView;
 
+pub const TEX_SCALE: f32 = 2.0; // Default texture images are double size.
+pub const CARD_SCALE: f32 = 3.0; // Card images are triple size.
+
 // Colors
 pub const TABLE_COLOR: Color = Color::from_rgb(0.3, 0.3, 0.3);
 pub const DEEP_GREEN: Color = Color::new(0. / 255., 175. / 255., 0. / 255., 1.);

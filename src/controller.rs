@@ -66,7 +66,8 @@ impl Controller {
             | Event::MouseDown { button: _, x, y }
             | Event::MouseUp { button: _, x, y } => {
                 let screen_pt = Vec2::new(x as f32, y as f32);
-                self.view.mouse_event_handled(&event, screen_pt, Some(&notan::math::Affine2::IDENTITY));
+                let affine = &notan::math::Affine2::IDENTITY;
+                self.view.mouse_event_handled(&event, screen_pt, &affine);
             }
             // Event::KeyDown { key }
             _ => {}
@@ -169,7 +170,7 @@ impl Controller {
         let mut draw = gfx.create_draw();
         draw.clear(crate::view_fn::TABLE_COLOR);
 
-        let affine = notan::math::Affine2::IDENTITY; // "parent" affine
+        let affine = notan::math::Affine2::IDENTITY;
         self.view.draw(&mut draw, &affine, gfx);
 
         gfx.render(&draw);

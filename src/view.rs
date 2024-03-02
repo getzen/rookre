@@ -9,7 +9,17 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, bid::Bid, bid_selector_1::{self, BidSelector1}, card::{Card, CardId}, game::{Game, GameAction, GameMessage, PlayerAction}, image_button::ImageButton, player::PlayerId, sprite::Sprite, text_button::TextButton, view_fn::{ViewFn, CARD_SIZE}, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator},
+    bid::Bid,
+    bid_selector_1::{self, BidSelector1},
+    card::{Card, CardId},
+    game::{Game, GameAction, GameMessage, PlayerAction},
+    image_button::ImageButton,
+    player::PlayerId,
+    sprite::Sprite,
+    text_button::TextButton,
+    view_fn::{ViewFn, CARD_SIZE},
+    view_trait::ViewTrait,
 };
 
 #[derive(Clone)]
@@ -76,9 +86,9 @@ impl View {
             .unwrap();
 
         for (_, card) in cards {
-            let mut sprite = View::create_card_sprite(gfx, card, &face_down_tex);
-            sprite.transform.set_scale_from_size(CARD_SIZE.into());
-            sprite.transform.set_translation(vec2(0.0, 0.0));
+            let sprite = View::create_card_sprite(gfx, card, &face_down_tex);
+            //sprite.transform.set_scale_from_size(CARD_SIZE.into());
+            //sprite.transform.set_translation(vec2(0.0, 0.0));
             sprites.push(sprite);
         }
         sprites
@@ -124,9 +134,8 @@ impl View {
         button
     }
 
-    fn create_bid_selector_1(gfx: &mut Graphics,
-        sender: Sender<PlayerAction>) -> BidSelector1 {
-            let tex = gfx
+    fn create_bid_selector_1(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> BidSelector1 {
+        let tex = gfx
             .create_texture()
             .from_image(include_bytes!("assets/bid_selector_1.png"))
             .build()
@@ -220,7 +229,7 @@ impl ViewTrait for View {
         &mut self,
         event: &Event,
         screen_pt: Vec2,
-        parent_affine: Option<&Affine2>,
+        parent_affine: &Affine2,
     ) -> bool {
         let screen_pt = vec2(screen_pt.x, screen_pt.y);
 
@@ -326,7 +335,7 @@ impl ViewTrait for View {
     fn draw(
         &mut self,
         draw: &mut notan::draw::Draw,
-        parent_affine: &notan::math::Affine2,
+        parent_affine: &Affine2,
         gfx: &mut notan::prelude::Graphics,
     ) {
         for sprite in &mut self.sprites {

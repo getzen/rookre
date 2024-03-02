@@ -25,9 +25,10 @@ pub trait ViewTrait {
     // if !self.visible {
     //     return;
     // }
+    // let (size_x, size_y) = self.transform.draw_size().into();
     // draw.image(&self.texture)
     //     .transform(self.transform.mat3())
-    //     .color(self.color);
+    //     .size(size_x, size_y);
 
     // Get time_delta at controller level using app.timer.delta_f32(). No point in
     // calling that function over and over for each view.
@@ -47,12 +48,13 @@ pub trait ViewTrait {
         &mut self,
         event: &Event,
         screen_pt: Vec2,
-        parent_affine: Option<&Affine2>,
+        parent_affine: &Affine2,
     ) -> bool {
         false
     }
     // Sample implementation
-    // if self.transform.contains_screen_point(screen_pt, parent_affine) {
+    // let affine = *parent_affine * self.transform.affine2();
+    // if self.transform.contains_screen_point(screen_pt, affine) {
     //     match event {
     //         Event::MouseUp { button, x, y } => {
     //             println!("mouse up");

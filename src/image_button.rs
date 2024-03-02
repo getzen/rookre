@@ -1,13 +1,11 @@
 use std::sync::mpsc::Sender;
 
 use notan::draw::*;
-use notan::math::vec2;
 use notan::math::Affine2;
 use notan::math::Vec2;
 use notan::prelude::*;
 
 use crate::transform::Transform;
-use crate::view_fn::MED_GRAY;
 use crate::view_trait::ViewTrait;
 
 #[derive(PartialEq)]
@@ -49,9 +47,12 @@ impl<T> ImageButton<T> {
         text: String,
         sender: Option<Sender<T>>,
     ) -> Self {
-        let mut trans =
-            Transform::from_translation_angle_full_size(position, 0.0, tex_enabled.size().into());
-        trans.drawn_size = vec2(tex_enabled.size().0 * 0.5, tex_enabled.size().1 * 0.5);
+        let trans = Transform::from_pos_tex_scale_centered(
+            position,
+            &tex_enabled,
+            crate::view_fn::TEX_SCALE,
+            true,
+        );
 
         Self {
             visible: true,
@@ -83,7 +84,7 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
         &mut self,
         event: &Event,
         screen_pt: Vec2,
-        parent_affine: Option<&notan::math::Affine2>,
+        parent_affine: &Affine2,
     ) -> bool {
         if !self.visible {
             return false;
@@ -142,16 +143,17 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
                 .as_ref()
                 .unwrap_or(&self.texture_enabled),
         };
-        
-        //let affine = *parent_affine * self.transform.affine2();
-        let mat3 = (*parent_affine * self.transform.affine2()).into();
-        draw.image(tex).transform(mat3).size(self.transform.drawn_size.x, self.transform.drawn_size.y);;
+
+        let (size_x, size_y) = self.transform.size().into();
+        draw.image(tex)
+            .transform(self.transform.mat3_with_parent(parent_affine))
+            .size(size_x, size_y);
 
         // Need to move the position to the center, then use draw methods to center from there.
-        let pos = self.transform.scaled_size() * 0.5;
+        let pos = self.transform.size() * 0.5;
         draw.text(&self.font, &self.text)
             .position(pos.x, pos.y)
-            .transform(self.transform.mat3())
+            .transform(self.transform.mat3_with_parent(parent_affine))
             .size(self.font_size * self.pixel_ratio)
             .h_align_center()
             .v_align_middle()
