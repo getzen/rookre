@@ -1,0 +1,34 @@
+deck_kind: Standard53
+remove_ranks:
+- 2
+- 3
+- 4
+- 6
+remove_cards: []
+bird_joker_rank: 15.0
+bird_joker_points: 0
+face_rank_to_game_rank_changes:
+- - 1
+  - 14.0
+face_rank_points:
+- - 5
+  - 5
+- - 10
+  - 10
+- - 14
+  - 10
+player_count_default: 4
+partner_kind: Across
+hand_size: 9
+nest_size: 1
+nest_face_up: 1
+bidding_kind: Euchre
+bidding_progression: OneBidderLeft
+bid_increment: 0
+trump_picking: Euchre
+trump_must_be_broken: false
+makers_points_awarded_for_win: !PointsTakenWithMultiplier 1
+makers_points_awarded_for_loss: !Fixed 0
+defenders_points_awarded_for_win: !PointsTakenWithMultiplier 2
+defenders_points_awarded_for_loss: !Fixed 0
+nest_points_awarded: CardPoints
