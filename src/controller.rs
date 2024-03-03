@@ -171,7 +171,7 @@ impl Controller {
         draw.clear(crate::view_fn::TABLE_COLOR);
 
         let affine = notan::math::Affine2::IDENTITY;
-        self.view.draw(&mut draw, &affine, gfx);
+        self.view.draw(&mut draw, &affine);
 
         gfx.render(&draw);
     }

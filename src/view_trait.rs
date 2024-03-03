@@ -20,7 +20,7 @@ pub trait ViewTrait {
     // Create draw at controller level using gfx.create_draw() and conclude drawing
     // there with fx.render(&draw). gfx is passed to views since it has other
     // useful functions.
-    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2, _gfx: &mut Graphics);
+    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2);
     // Sample implementation:
     // if !self.visible {
     //     return;

@@ -61,7 +61,7 @@ impl Sprite {
 }
 
 impl ViewTrait for Sprite {
-    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2, _gfx: &mut Graphics) {
+    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
         if !self.visible {
             return;
         }
@@ -81,7 +81,7 @@ impl ViewTrait for Sprite {
         if !self.children.is_empty() {
             let affine = *parent_affine * self.transform.affine2();
             for child in &mut self.children {
-                child.draw(draw, &affine, _gfx);
+                child.draw(draw, &affine);
             }
         }
     }

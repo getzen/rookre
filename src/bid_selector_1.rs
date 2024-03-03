@@ -25,7 +25,6 @@ impl BidSelector1 {
     pub fn new(
         position: Vec2,
         texture: Texture,
-        texture_scale: f32,
         gfx: &mut Graphics,
         sender: Sender<PlayerAction>,
     ) -> Self {
@@ -142,7 +141,7 @@ impl ViewTrait for BidSelector1 {
         false
     }
 
-    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2, gfx: &mut Graphics) {
+    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
         if !self.visible {
             return;
         }
@@ -153,7 +152,7 @@ impl ViewTrait for BidSelector1 {
             .size(size_x, size_y);
 
         let affine = *parent_affine * self.transform.affine2();
-        self.accept_button.draw(draw, &affine, gfx);
-        self.pass_button.draw(draw, &affine, gfx);
+        self.accept_button.draw(draw, &affine);
+        self.pass_button.draw(draw, &affine);
     }
 }

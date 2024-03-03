@@ -118,7 +118,7 @@ impl<T: Copy> ViewTrait for TextButton<T> {
         false
     }
 
-    fn draw(&mut self, draw: &mut Draw, _parent_affine: &Affine2, _gfx: &mut Graphics) {
+    fn draw(&mut self, draw: &mut Draw, _parent_affine: &Affine2) {
         if !self.visible {
             return;
         }

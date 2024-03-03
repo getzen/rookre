@@ -143,7 +143,7 @@ impl View {
 
         let pos = ViewFn::bid_view_position(0, 4);
         //let pos = vec2(0., 0.);
-        BidSelector1::new(pos, tex, 1.0, gfx, sender)
+        BidSelector1::new(pos, tex, gfx, sender)
     }
 
     /// Add the action to the queue. It will occur after the last action already
@@ -335,17 +335,16 @@ impl ViewTrait for View {
     fn draw(
         &mut self,
         draw: &mut notan::draw::Draw,
-        parent_affine: &Affine2,
-        gfx: &mut notan::prelude::Graphics,
+        parent_affine: &Affine2
     ) {
         for sprite in &mut self.sprites {
-            sprite.draw(draw, parent_affine, gfx);
+            sprite.draw(draw, parent_affine);
         }
 
         // Buttons
-        self.deal_button.draw(draw, parent_affine, gfx);
+        self.deal_button.draw(draw, parent_affine);
 
         self.bid_selector_1.visible = true;
-        self.bid_selector_1.draw(draw, parent_affine, gfx);
+        self.bid_selector_1.draw(draw, parent_affine);
     }
 }

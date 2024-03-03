@@ -123,7 +123,7 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
         false
     }
 
-    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2, _gfx: &mut Graphics) {
+    fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
         if !self.visible {
             return;
         }
