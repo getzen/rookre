@@ -323,16 +323,20 @@ impl Game {
     /// Deals the given number of cards to each player.
     pub fn deal_cards(&mut self, count: usize) {
         let mut messages = Vec::new();
+        let p_count = self.players.len();
 
-        for (p, player) in self.players.iter_mut().enumerate() {
-            for _ in 0..count {
-                if let Some(id) = self.deck.pop() {
-                    player.add_to_hand(id);
-                    messages.push(GameMessage::UpdateHand(p));
-                }
+        // Start with the player to the dealer's left.
+        let mut deal_to = (self.dealer + 1) % p_count;
+
+        for _ in 0..(count * p_count) {
+            if let Some(id) = self.deck.pop() {
+                self.players[deal_to].add_to_hand(id);
+                messages.push(GameMessage::UpdateHand(deal_to));
             }
+            deal_to = (deal_to + 1) % p_count;
         }
 
+        // Sort human hands.
         for p in 0..self.players.len() {
             if !self.player_is_bot(p) {
                 self.sort_hand(p);

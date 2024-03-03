@@ -1,3 +1,5 @@
+// Draws an image. No updating or event handling functions.
+
 use notan::{
     draw::{Draw, DrawImages, DrawTransform},
     math::{Affine2, Vec2},

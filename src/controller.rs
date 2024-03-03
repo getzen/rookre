@@ -99,7 +99,7 @@ impl Controller {
                         .queue_message(message.clone(), Some(self.game.clone()));
                     self.view.queue_message(GameMessage::Delay(0.1), None);
                 }
-                GameMessage::UpdateHand(_) => {
+                GameMessage::UpdateHand(p) => {
                     self.view
                         .queue_message(message.clone(), Some(self.game.clone()));
                     self.view.queue_message(GameMessage::Delay(0.1), None);
