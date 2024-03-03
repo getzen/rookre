@@ -9,28 +9,21 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, bid::Bid, bid_selector::BidSelector, card::{Card, CardId}, game::{Game, GameAction, GameMessage, PlayerAction}, image::Image, image_button::ImageButton, player::PlayerId, sprite::Sprite, view_fn::ViewFn, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator},
+    bid::Bid,
+    bid_selector::BidSelector,
+    card::{Card, CardId},
+    game::{Game, GameAction, GameMessage, PlayerAction},
+    image::Image,
+    image_button::ImageButton,
+    player::PlayerId,
+    sprite::Sprite,
+    view_fn::ViewFn,
+    view_trait::ViewTrait,
 };
 
-#[derive(Clone)]
-pub struct Action {
-    message: GameMessage,
-    delay: f32,
-    game: Option<Game>,
-}
-
-impl Action {
-    pub fn new(message: GameMessage, delay: f32, game: Option<Game>) -> Self {
-        Self {
-            message,
-            delay,
-            game,
-        }
-    }
-}
-
 pub struct View {
-    action_queue: VecDeque<Action>,
+    game_message_queue: VecDeque<GameMessage>,
     last_action_time: f32,
     queue_empty: bool,
     sprites: Vec<Sprite>,
@@ -55,7 +48,7 @@ impl View {
         let bid_selector = View::create_bid_selector_1(gfx, sender.clone());
 
         Self {
-            action_queue: VecDeque::new(),
+            game_message_queue: VecDeque::new(),
             last_action_time: 0.0,
             queue_empty: true,
             sprites,
@@ -102,7 +95,9 @@ impl View {
             .from_image(include_bytes!("assets/dealer_marker.png"))
             .build()
             .unwrap();
-        Image::new(tex, Vec2::ZERO)
+        let mut marker = Image::new(tex, Vec2::ZERO);
+        marker.visible = false;
+        marker
     }
 
     fn create_deal_button(
@@ -147,14 +142,7 @@ impl View {
 
     /// Add the action to the queue.
     pub fn queue_message(&mut self, message: GameMessage) {
-        // The Delay action is used to push back subsequent actions.
-        let delay = match message {
-            GameMessage::Delay(d) => d,
-            _ => 0.0,
-        };
-        //self.last_action_time += delay;
-        let action = Action::new(message, delay, game_clone);
-        self.action_queue.push_back(action);
+        self.game_message_queue.push_back(message);
         self.queue_empty = false;
     }
 
@@ -197,12 +185,8 @@ impl View {
         for (idx, id) in hand.iter().enumerate() {
             let pos = ViewFn::hand_card_position(player_id, p_count, is_bot, idx, hand.len());
             let angle = ViewFn::player_rotation(player_id, p_count);
-            self.update_card(id, pos, angle, idx, !is_bot);
+            self.update_card(id, pos, angle, 100 + idx, !is_bot); // adding 100 so hand cards are higher than deck cards
         }
-    }
-
-    fn move_card_to_hand(&mut self, card_id: CardId, player_id: PlayerId) {
-
     }
 
     fn update_nest(&mut self, game: &Game, display: bool) {
@@ -288,58 +272,53 @@ impl ViewTrait for View {
     }
 
     fn update(&mut self, app: &mut App, time_delta: f32) {
-        // Update when the last action will occur. Used in add_action() to properly
-        // queue up actions.
-        //self.last_action_time -= time_delta;
-        //self.last_action_time = self.last_action_time.max(0.0);
+        // Move the ready-to-go actions from the queue and add to a temporary Vec.
+        let mut messages_ready = Vec::new();
 
-        // Adjust the delay for the next action in the queue.
-        if let Some(action) = self.action_queue.front_mut() {
-            action.delay -= time_delta;
-        }
-        
-        // Move the ready-to-fire actions from the queue and add to a temporary Vec.
-        let mut actions_to_fire = Vec::new();
-
-        if let Some(action) = self.action_queue.front() {
-            if action.delay <= 0.0 {
-                actions_to_fire.push(self.action_queue.pop_front().unwrap());
+        loop {
+            if let Some(msg) = self.game_message_queue.pop_front() {
+                match msg {
+                    GameMessage::Delay(mut time) => {
+                        time -= time_delta;
+                        if time > 0.0 {
+                            self.game_message_queue
+                            .push_front(GameMessage::Delay(time));
+                            //println!("{time}");
+                        }
+                        break;
+                    }
+                    _ => {
+                        messages_ready.push(msg);
+                    }
+                }
+            } else {
+                break;
             }
         }
-        // loop {
-        //     if let Some(action) = self.action_queue.front() {
-        //         if action.delay <= 0.0 {
-        //             actions_to_fire.push(self.action_queue.pop_front().unwrap());
-        //             continue;
-        //         }
-        //     }
-        //     break;
-        // }
 
-        // Fire the actions.
-        for action in &actions_to_fire {
-            match &action.message {
+        // Fire the messages.
+        for msg in &messages_ready {
+            match &msg {
                 GameMessage::UpdateDeck(game) => {
-                    self.update_deck(game);
+                    self.update_deck(&game);
                 }
                 GameMessage::UpdateNest(game) => {
-                    self.update_nest(game, true);
+                    self.update_nest(&game, true);
                 }
                 GameMessage::UpdateHand(game, p) => {
-                    self.update_hand(game, *p);
+                    self.update_hand(&game, *p);
                 }
                 GameMessage::UpdateDealer(game) => {
-                    self.update_dealer(game);
+                    self.update_dealer(&game);
                 }
                 GameMessage::GetBid(game) => {
-                    self.get_bid(game);
+                    self.get_bid(&game);
                 }
                 GameMessage::Delay(_) => {}
-                
             };
         }
 
-        if !self.queue_empty && self.action_queue.is_empty() {
+        if !self.queue_empty && self.game_message_queue.is_empty() {
             println!("-- view: queue empty --");
             self.queue_empty = true;
         }
