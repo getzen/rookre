@@ -27,7 +27,7 @@ pub trait ViewTrait {
     // }
     // let (size_x, size_y) = self.transform.draw_size().into();
     // draw.image(&self.texture)
-    //     .transform(self.transform.mat3())
+    //     .transform(self.transform.mat3_with_parent(parent_affine))
     //     .size(size_x, size_y);
 
     // Get time_delta at controller level using app.timer.delta_f32(). No point in
