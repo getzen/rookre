@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 
-use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::Sender;
 
 use slotmap::SlotMap;
 
@@ -59,7 +58,7 @@ pub enum GameMessage {
 
 #[derive(Clone)]
 pub struct Game {
-    pub options: GameOptions, // MOVE this out of the Game struct.
+    pub options: GameOptions,
     pub action_queue: VecDeque<GameAction>,
 
     pub cards: SlotMap<CardId, Card>,

@@ -42,7 +42,7 @@ use notan::{
 // });
 
 // Globals
-use std::{mem::size_of_val, sync::Mutex};
+use std::sync::Mutex;
 static PIXEL_RATIO: Mutex<f32> = Mutex::new(0.0);
 static FONT: Mutex<Option<notan::draw::Font>> = Mutex::new(None);
 
