@@ -11,7 +11,7 @@ use crate::image_button::ImageButton;
 use crate::transform::Transform;
 use crate::view_trait::ViewTrait;
 
-pub struct BidSelector1 {
+pub struct BidSelector {
     pub visible: bool,
     pub transform: Transform,
     pub z_order: usize,
@@ -21,7 +21,7 @@ pub struct BidSelector1 {
     pub pass_button: ImageButton<PlayerAction>,
 }
 
-impl BidSelector1 {
+impl BidSelector {
     pub fn new(
         position: Vec2,
         texture: Texture,
@@ -35,8 +35,8 @@ impl BidSelector1 {
             true,
         );
 
-        let accept_button = BidSelector1::create_accept_button(gfx, sender.clone());
-        let pass_button = BidSelector1::create_pass_button(gfx, sender.clone());
+        let accept_button = BidSelector::create_accept_button(gfx, sender.clone());
+        let pass_button = BidSelector::create_pass_button(gfx, sender.clone());
 
         Self {
             visible: true,
@@ -109,7 +109,7 @@ impl BidSelector1 {
     }
 }
 
-impl ViewTrait for BidSelector1 {
+impl ViewTrait for BidSelector {
     fn update(&mut self, _app: &mut notan::app::App, _time_delta: f32) {}
 
     fn mouse_event_handled(

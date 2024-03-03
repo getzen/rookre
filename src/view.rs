@@ -11,14 +11,13 @@ use slotmap::SlotMap;
 use crate::{
     animators::{AngleAnimator, TranslationAnimator},
     bid::Bid,
-    bid_selector_1::{self, BidSelector1},
+    bid_selector::BidSelector,
     card::{Card, CardId},
     game::{Game, GameAction, GameMessage, PlayerAction},
     image_button::ImageButton,
     player::PlayerId,
     sprite::Sprite,
-    text_button::TextButton,
-    view_fn::{ViewFn, CARD_SIZE},
+    view_fn::ViewFn,
     view_trait::ViewTrait,
 };
 
@@ -46,12 +45,8 @@ pub struct View {
     sprites: Vec<Sprite>,
     sprites_z_order_dirty: bool,
 
-    //text_buttons: Vec<TextButton<PlayerAction>>,
-
-    //image_buttons: Vec<ImageButton<PlayerAction>>,
     pub deal_button: ImageButton<PlayerAction>,
-
-    pub bid_selector_1: BidSelector1,
+    pub bid_selector_1: BidSelector,
 }
 
 impl View {
@@ -86,15 +81,13 @@ impl View {
             .unwrap();
 
         for (_, card) in cards {
-            let sprite = View::create_card_sprite(gfx, card, &face_down_tex);
-            //sprite.transform.set_scale_from_size(CARD_SIZE.into());
-            //sprite.transform.set_translation(vec2(0.0, 0.0));
+            let sprite = View::create_card_sprite(card, &face_down_tex, gfx);
             sprites.push(sprite);
         }
         sprites
     }
 
-    fn create_card_sprite(gfx: &mut Graphics, card: &Card, face_down_tex: &Texture) -> Sprite {
+    fn create_card_sprite(card: &Card, face_down_tex: &Texture, gfx: &mut Graphics) -> Sprite {
         let face_up_tex = ViewFn::load_card_texture(gfx, card);
         let sprite = Sprite::new(
             card.id,
@@ -134,7 +127,7 @@ impl View {
         button
     }
 
-    fn create_bid_selector_1(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> BidSelector1 {
+    fn create_bid_selector_1(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> BidSelector {
         let tex = gfx
             .create_texture()
             .from_image(include_bytes!("assets/bid_selector_1.png"))
@@ -142,8 +135,7 @@ impl View {
             .unwrap();
 
         let pos = ViewFn::bid_view_position(0, 4);
-        //let pos = vec2(0., 0.);
-        BidSelector1::new(pos, tex, gfx, sender)
+        BidSelector::new(pos, tex, gfx, sender)
     }
 
     /// Add the action to the queue. It will occur after the last action already
@@ -332,11 +324,7 @@ impl ViewTrait for View {
         }
     }
 
-    fn draw(
-        &mut self,
-        draw: &mut notan::draw::Draw,
-        parent_affine: &Affine2
-    ) {
+    fn draw(&mut self, draw: &mut notan::draw::Draw, parent_affine: &Affine2) {
         for sprite in &mut self.sprites {
             sprite.draw(draw, parent_affine);
         }
