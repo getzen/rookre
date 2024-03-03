@@ -1,10 +1,14 @@
 use notan::{
     draw::{Draw, DrawImages, DrawTransform},
     math::{Affine2, Vec2},
-    prelude::{Color, Texture},
+    prelude::{Color, Texture}
 };
 
-use crate::{transform::Transform, view_fn::TEX_SCALE, view_trait::ViewTrait};
+use crate::{
+    transform::Transform,
+    view_fn::TEX_SCALE,
+    view_trait::ViewTrait,
+};
 
 pub struct Image {
     pub visible: bool,
@@ -15,8 +19,12 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn new(texture: Texture, position: Vec2) -> Self {
-        let transform = Transform::from_pos_tex_scale_centered(position, &texture, TEX_SCALE, true);
+    pub fn new(
+        texture: Texture,
+        position: Vec2,
+    ) -> Self {
+        let transform =
+            Transform::from_pos_tex_scale_centered(position, &texture, TEX_SCALE, true);
         Self {
             visible: true,
             z_order: 0,
