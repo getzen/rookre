@@ -44,6 +44,12 @@ impl Controller {
         game.assign_across_partners();
         game.do_next_action();
 
+        // Game clone speed test
+        // let now = std::time::Instant::now();
+        // let g = game.clone();
+        // let elapsed = now.elapsed().as_micros();
+        // println!("game clone: {elapsed} micros");  
+
         let view = View::new(gfx, &game.cards, player_action_sender.clone());
 
         let (audio_message_sender, audio_message_receiver) = mpsc::channel();

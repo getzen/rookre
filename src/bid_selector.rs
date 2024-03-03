@@ -39,7 +39,7 @@ impl BidSelector {
         let pass_button = BidSelector::create_pass_button(gfx, sender.clone());
 
         Self {
-            visible: true,
+            visible: false,
             transform: trans,
             z_order: 0,
             texture,

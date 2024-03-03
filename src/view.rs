@@ -46,7 +46,9 @@ pub struct View {
     sprites_z_order_dirty: bool,
 
     pub deal_button: ImageButton<PlayerAction>,
-    pub bid_selector_1: BidSelector,
+    pub bid_selector: BidSelector,
+
+    fps_update: f32,
 }
 
 impl View {
@@ -57,7 +59,7 @@ impl View {
     ) -> Self {
         let sprites = View::create_card_sprites(cards, gfx);
         let deal_button = View::create_deal_button(gfx, sender.clone());
-        let bid_selector_1 = View::create_bid_selector_1(gfx, sender.clone());
+        let bid_selector = View::create_bid_selector_1(gfx, sender.clone());
 
         Self {
             action_queue: VecDeque::new(),
@@ -67,7 +69,9 @@ impl View {
             sprites_z_order_dirty: false,
 
             deal_button,
-            bid_selector_1,
+            bid_selector,
+
+            fps_update: 0.0,
         }
     }
 
@@ -211,7 +215,8 @@ impl View {
         if game.active_player_is_bot() {
             println!("bot bidding: {}", game.active_player);
         } else {
-            println!("presenting bid select");
+            println!("bid_selector visible");
+            self.bid_selector.visible = true;
         }
     }
 }
@@ -241,7 +246,7 @@ impl ViewTrait for View {
         }
 
         if self
-            .bid_selector_1
+            .bid_selector
             .mouse_event_handled(event, screen_pt, parent_affine)
         {
             return true;
@@ -322,9 +327,14 @@ impl ViewTrait for View {
             self.sprites.sort_by(|a, b| a.z_order.cmp(&b.z_order));
             self.sprites_z_order_dirty = false;
         }
+
+        self.fps_update -= time_delta;
     }
 
     fn draw(&mut self, draw: &mut notan::draw::Draw, parent_affine: &Affine2) {
+
+        let now = std::time::Instant::now();
+
         for sprite in &mut self.sprites {
             sprite.draw(draw, parent_affine);
         }
@@ -332,7 +342,18 @@ impl ViewTrait for View {
         // Buttons
         self.deal_button.draw(draw, parent_affine);
 
-        self.bid_selector_1.visible = true;
-        self.bid_selector_1.draw(draw, parent_affine);
+        self.bid_selector.draw(draw, parent_affine);
+
+
+        // FPS
+        if self.fps_update < 0.0 {
+            // let draw_fps = (60.0 / (now.elapsed().as_secs_f32() / 0.0167)) as usize;
+            // println!(
+            //     "draw millis: {}, fps: {}",
+            //     now.elapsed().as_millis(),
+            //     draw_fps
+            // );
+            self.fps_update = 2.0;
+        }
     }
 }
