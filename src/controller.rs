@@ -48,7 +48,7 @@ impl Controller {
         // let now = std::time::Instant::now();
         // let g = game.clone();
         // let elapsed = now.elapsed().as_micros();
-        // println!("game clone: {elapsed} micros");  
+        // println!("game clone: {elapsed} micros");
 
         let view = View::new(gfx, &game.cards, player_action_sender.clone());
 
@@ -104,6 +104,7 @@ impl Controller {
                         .queue_message(message.clone(), Some(self.game.clone()));
                     self.view.queue_message(GameMessage::Delay(0.1), None);
                 }
+                GameMessage::UpdateDealer(..) => self.view.queue_message(message.clone(), None),
                 GameMessage::GetBid(_) => {
                     self.view
                         .queue_message(message.clone(), Some(self.game.clone()));

@@ -9,6 +9,7 @@ mod card;
 mod controller;
 mod game;
 mod game_options;
+mod image;
 mod image_button;
 mod text_button;
 // mod message_view;

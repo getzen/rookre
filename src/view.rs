@@ -9,16 +9,7 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator},
-    bid::Bid,
-    bid_selector::BidSelector,
-    card::{Card, CardId},
-    game::{Game, GameAction, GameMessage, PlayerAction},
-    image_button::ImageButton,
-    player::PlayerId,
-    sprite::Sprite,
-    view_fn::ViewFn,
-    view_trait::ViewTrait,
+    animators::{AngleAnimator, TranslationAnimator}, bid::Bid, bid_selector::BidSelector, card::{Card, CardId}, game::{Game, GameAction, GameMessage, PlayerAction}, image::Image, image_button::ImageButton, player::PlayerId, sprite::Sprite, view_fn::ViewFn, view_trait::ViewTrait
 };
 
 #[derive(Clone)]
@@ -45,6 +36,7 @@ pub struct View {
     sprites: Vec<Sprite>,
     sprites_z_order_dirty: bool,
 
+    pub dealer_marker: Image,
     pub deal_button: ImageButton<PlayerAction>,
     pub bid_selector: BidSelector,
 
@@ -58,6 +50,7 @@ impl View {
         sender: Sender<PlayerAction>,
     ) -> Self {
         let sprites = View::create_card_sprites(cards, gfx);
+        let dealer_marker = View::create_dealer_marker(gfx);
         let deal_button = View::create_deal_button(gfx, sender.clone());
         let bid_selector = View::create_bid_selector_1(gfx, sender.clone());
 
@@ -68,6 +61,7 @@ impl View {
             sprites,
             sprites_z_order_dirty: false,
 
+            dealer_marker,
             deal_button,
             bid_selector,
 
@@ -100,6 +94,15 @@ impl View {
             Some(face_down_tex.clone()),
         );
         sprite
+    }
+
+    fn create_dealer_marker(gfx: &mut Graphics) -> Image {
+        let tex = gfx
+            .create_texture()
+            .from_image(include_bytes!("assets/dealer_marker.png"))
+            .build()
+            .unwrap();
+        Image::new(tex, Vec2::ZERO)
     }
 
     fn create_deal_button(
@@ -211,6 +214,14 @@ impl View {
         }
     }
 
+    fn update_dealer(&mut self, p: PlayerId, count: usize) {
+        let pos = ViewFn::dealer_marker_position(p, count);
+        let angle = ViewFn::player_rotation(p, count);
+        self.dealer_marker.transform.set_translation(pos);
+        self.dealer_marker.transform.set_angle(angle);
+        self.dealer_marker.visible = true;
+    }
+
     fn get_bid(&mut self, game: &Game) {
         if game.active_player_is_bot() {
             println!("bot bidding: {}", game.active_player);
@@ -305,6 +316,9 @@ impl ViewTrait for View {
                 GameMessage::UpdateHand(p) => {
                     self.update_hand(action.game.as_ref().unwrap(), *p);
                 }
+                GameMessage::UpdateDealer(p, count) => {
+                    self.update_dealer(*p, *count);
+                }
                 GameMessage::GetBid(_) => {
                     self.get_bid(action.game.as_ref().unwrap());
                 }
@@ -332,18 +346,19 @@ impl ViewTrait for View {
     }
 
     fn draw(&mut self, draw: &mut notan::draw::Draw, parent_affine: &Affine2) {
-
         let now = std::time::Instant::now();
 
         for sprite in &mut self.sprites {
             sprite.draw(draw, parent_affine);
         }
 
+        // Images
+        self.dealer_marker.draw(draw, parent_affine);
+
         // Buttons
         self.deal_button.draw(draw, parent_affine);
 
         self.bid_selector.draw(draw, parent_affine);
-
 
         // FPS
         if self.fps_update < 0.0 {

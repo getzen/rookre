@@ -52,6 +52,7 @@ pub enum GameMessage {
     UpdateDeck,
     UpdateNest,
     UpdateHand(PlayerId),
+    UpdateDealer(PlayerId, usize), // dealer id, player count
     GetBid(PlayerId),
     Delay(f32),
 }
@@ -284,6 +285,8 @@ impl Game {
         self.nest.clear();
 
         self.dealer = (self.dealer + 1) % self.players.len();
+        self.send_message(GameMessage::UpdateDealer(self.dealer, self.players.len()));
+
         self.active_player = (self.dealer + 1) % self.players.len();
 
         self.trick = Trick::new(self.players.len());
