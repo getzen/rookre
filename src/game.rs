@@ -47,13 +47,13 @@ pub enum GameAction {
     EndGame,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone)]
 pub enum GameMessage {
-    UpdateDeck,
-    UpdateNest,
-    UpdateHand(PlayerId),
-    UpdateDealer(PlayerId, usize), // dealer id, player count
-    GetBid(PlayerId),
+    UpdateDeck(Game),
+    UpdateNest(Game),
+    UpdateHand(Game, PlayerId),
+    UpdateDealer(Game),
+    GetBid(Game),
     Delay(f32),
 }
 
@@ -280,12 +280,18 @@ impl Game {
         // Put all the ids in the deck and shuffle.
         self.deck = self.cards.keys().collect();
         fastrand::shuffle(&mut self.deck);
-        self.send_message(GameMessage::UpdateDeck);
+        if self.send_messages {
+            let msg = GameMessage::UpdateDeck(self.clone());
+            self.message_sender.send(msg).unwrap();
+        }
 
         self.nest.clear();
 
         self.dealer = (self.dealer + 1) % self.players.len();
-        self.send_message(GameMessage::UpdateDealer(self.dealer, self.players.len()));
+        if self.send_messages {
+            let msg = GameMessage::UpdateDealer(self.clone());
+            self.message_sender.send(msg).unwrap();
+        }
 
         self.active_player = (self.dealer + 1) % self.players.len();
 
@@ -322,7 +328,6 @@ impl Game {
 
     /// Deals the given number of cards to each player.
     pub fn deal_cards(&mut self, count: usize) {
-        let mut messages = Vec::new();
         let p_count = self.players.len();
 
         // Start with the player to the dealer's left.
@@ -331,7 +336,11 @@ impl Game {
         for _ in 0..(count * p_count) {
             if let Some(id) = self.deck.pop() {
                 self.players[deal_to].add_to_hand(id);
-                messages.push(GameMessage::UpdateHand(deal_to));
+
+                if self.send_messages {
+                    let msg = GameMessage::UpdateHand(self.clone(), deal_to);
+                    self.message_sender.send(msg).unwrap();
+                }
             }
             deal_to = (deal_to + 1) % p_count;
         }
@@ -340,7 +349,10 @@ impl Game {
         for p in 0..self.players.len() {
             if !self.player_is_bot(p) {
                 self.sort_hand(p);
-                messages.push(GameMessage::UpdateHand(p));
+                if self.send_messages {
+                    let msg = GameMessage::UpdateHand(self.clone(), p);
+                    self.message_sender.send(msg).unwrap();
+                }
             }
         }
 
@@ -351,11 +363,6 @@ impl Game {
             if let Some(card) = self.cards.get_mut(self.nest[i]) {
                 card.face_up = true;
             }
-        }
-        messages.push(GameMessage::UpdateNest);
-
-        for m in messages {
-            self.send_message(m);
         }
     }
 
@@ -672,12 +679,12 @@ impl Game {
         (makers_score, defenders_score)
     }
 
-    fn send_message(&self, message: GameMessage) {
-        if self.send_messages {
-            println!("message: {:?}", message);
-            self.message_sender.send(message).unwrap();
-        }
-    }
+    // fn send_message(&self, message: GameMessage) {
+    //     if self.send_messages {
+    //         //println!("message: {:?}", message);
+    //         self.message_sender.send(message).unwrap();
+    //     }
+    // }
 
     pub fn do_next_action(&mut self) {
         if let Some(action) = self.action_queue.pop_front() {
@@ -703,7 +710,10 @@ impl Game {
                 //     self.action_queue.push_back(WaitForBid);
                 // }
                 WaitForBid => {
-                    self.send_message(GameMessage::GetBid(self.active_player));
+                    if self.send_messages {
+                        let msg = GameMessage::GetBid(self.clone());
+                        self.message_sender.send(msg).unwrap();
+                    }
                     println!("game: WaitForBid");
                 }
                 MoveNestToHand => {

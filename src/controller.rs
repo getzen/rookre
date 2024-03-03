@@ -89,32 +89,31 @@ impl Controller {
         let received = self.game_message_receiver.try_recv();
         if let Ok(message) = received {
             match message {
-                GameMessage::UpdateDeck => {
+                GameMessage::UpdateDeck(_) => {
                     self.view
-                        .queue_message(message.clone(), Some(self.game.clone()));
+                        .queue_message(message, Some(self.game.clone()));
                     self.view.queue_message(GameMessage::Delay(2.0), None);
                 }
-                GameMessage::UpdateNest => {
+                GameMessage::UpdateNest(_) => {
                     self.view
-                        .queue_message(message.clone(), Some(self.game.clone()));
+                        .queue_message(message, Some(self.game.clone()));
                     self.view.queue_message(GameMessage::Delay(0.1), None);
                 }
-                GameMessage::UpdateHand(p) => {
+                GameMessage::UpdateHand(..) => {
                     self.view
-                        .queue_message(message.clone(), Some(self.game.clone()));
+                        .queue_message(message, Some(self.game.clone()));
                     self.view.queue_message(GameMessage::Delay(0.1), None);
                 }
-                GameMessage::UpdateDealer(..) => self.view.queue_message(message.clone(), None),
-                GameMessage::GetBid(_) => {
+                GameMessage::UpdateDealer(..) => self.view.queue_message(message, None),
+                GameMessage::GetBid(..) => {
                     self.view
-                        .queue_message(message.clone(), Some(self.game.clone()));
+                        .queue_message(message, None);
                     if self.game.active_player_is_bot() {
                         self.spawn_make_bid_bot();
                         self.view.queue_message(GameMessage::Delay(1.0), None);
                     }
                 }
-
-                _ => {}
+                GameMessage::Delay(_) => todo!(),
             }
         }
 

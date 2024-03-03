@@ -145,16 +145,15 @@ impl View {
         BidSelector::new(pos, tex, gfx, sender)
     }
 
-    /// Add the action to the queue. It will occur after the last action already
-    /// in the queue, if any.
-    pub fn queue_message(&mut self, message: GameMessage, game_clone: Option<Game>) {
+    /// Add the action to the queue.
+    pub fn queue_message(&mut self, message: GameMessage) {
         // The Delay action is used to push back subsequent actions.
         let delay = match message {
             GameMessage::Delay(d) => d,
             _ => 0.0,
         };
-        self.last_action_time += delay;
-        let action = Action::new(message, self.last_action_time, game_clone);
+        //self.last_action_time += delay;
+        let action = Action::new(message, delay, game_clone);
         self.action_queue.push_back(action);
         self.queue_empty = false;
     }
@@ -174,7 +173,7 @@ impl View {
 
         // Create angle animator if needed.
         if (sprite.transform.angle() - angle).abs() > 0.01 {
-            let animator = AngleAnimator::new(sprite.transform.angle(), angle, 3.0);
+            let animator = AngleAnimator::new(sprite.transform.angle(), angle, 6.0);
             sprite.angle_animator = Some(animator);
         }
 
@@ -202,6 +201,10 @@ impl View {
         }
     }
 
+    fn move_card_to_hand(&mut self, card_id: CardId, player_id: PlayerId) {
+
+    }
+
     fn update_nest(&mut self, game: &Game, display: bool) {
         for (idx, id) in game.nest.iter().enumerate() {
             let card = game.cards.get(*id).expect("No card with id: {id}");
@@ -214,7 +217,9 @@ impl View {
         }
     }
 
-    fn update_dealer(&mut self, p: PlayerId, count: usize) {
+    fn update_dealer(&mut self, game: &Game) {
+        let p = game.dealer;
+        let count = game.players.len();
         let pos = ViewFn::dealer_marker_position(p, count);
         let angle = ViewFn::player_rotation(p, count);
         self.dealer_marker.transform.set_translation(pos);
@@ -285,44 +290,52 @@ impl ViewTrait for View {
     fn update(&mut self, app: &mut App, time_delta: f32) {
         // Update when the last action will occur. Used in add_action() to properly
         // queue up actions.
-        self.last_action_time -= time_delta;
-        self.last_action_time = self.last_action_time.max(0.0);
+        //self.last_action_time -= time_delta;
+        //self.last_action_time = self.last_action_time.max(0.0);
 
-        for action in &mut self.action_queue {
+        // Adjust the delay for the next action in the queue.
+        if let Some(action) = self.action_queue.front_mut() {
             action.delay -= time_delta;
         }
-
+        
         // Move the ready-to-fire actions from the queue and add to a temporary Vec.
         let mut actions_to_fire = Vec::new();
-        loop {
-            if let Some(action) = self.action_queue.front() {
-                if action.delay <= 0.0 {
-                    actions_to_fire.push(self.action_queue.pop_front().unwrap());
-                    continue;
-                }
+
+        if let Some(action) = self.action_queue.front() {
+            if action.delay <= 0.0 {
+                actions_to_fire.push(self.action_queue.pop_front().unwrap());
             }
-            break;
         }
+        // loop {
+        //     if let Some(action) = self.action_queue.front() {
+        //         if action.delay <= 0.0 {
+        //             actions_to_fire.push(self.action_queue.pop_front().unwrap());
+        //             continue;
+        //         }
+        //     }
+        //     break;
+        // }
 
         // Fire the actions.
         for action in &actions_to_fire {
             match &action.message {
-                GameMessage::UpdateDeck => {
-                    self.update_deck(action.game.as_ref().unwrap());
+                GameMessage::UpdateDeck(game) => {
+                    self.update_deck(game);
                 }
-                GameMessage::UpdateNest => {
-                    self.update_nest(action.game.as_ref().unwrap(), true);
+                GameMessage::UpdateNest(game) => {
+                    self.update_nest(game, true);
                 }
-                GameMessage::UpdateHand(p) => {
-                    self.update_hand(action.game.as_ref().unwrap(), *p);
+                GameMessage::UpdateHand(game, p) => {
+                    self.update_hand(game, *p);
                 }
-                GameMessage::UpdateDealer(p, count) => {
-                    self.update_dealer(*p, *count);
+                GameMessage::UpdateDealer(game) => {
+                    self.update_dealer(game);
                 }
-                GameMessage::GetBid(_) => {
-                    self.get_bid(action.game.as_ref().unwrap());
+                GameMessage::GetBid(game) => {
+                    self.get_bid(game);
                 }
                 GameMessage::Delay(_) => {}
+                
             };
         }
 
