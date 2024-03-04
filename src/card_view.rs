@@ -1,7 +1,7 @@
 use notan::{
     draw::{Draw, DrawImages, DrawTransform},
     math::{Affine2, Vec2},
-    prelude::{Color, Graphics, Texture},
+    prelude::{Color, Texture},
     Event,
 };
 use slotmap::DefaultKey;
@@ -13,14 +13,13 @@ use crate::{
     view_trait::ViewTrait,
 };
 
-pub struct Sprite {
+pub struct CardView {
     pub id: DefaultKey,
     pub visible: bool,
     pub z_order: usize,
     pub transform: Transform,
     pub texture: Texture,
     pub color: Color,
-    pub children: Vec<Box<Sprite>>,
     /// Enabled for mouse events. Default is false.
     pub enabled: bool,
     /// True means face-down card. Default is false.
@@ -33,7 +32,7 @@ pub struct Sprite {
     pub angle_animator: Option<AngleAnimator>,
 }
 
-impl Sprite {
+impl CardView {
     pub fn new(
         id: DefaultKey,
         texture: Texture,
@@ -49,7 +48,6 @@ impl Sprite {
             transform,
             texture,
             color: Color::WHITE,
-            children: Vec::new(),
             enabled: false,
             use_alt_texture: false,
             alt_texture,
@@ -60,7 +58,7 @@ impl Sprite {
     }
 }
 
-impl ViewTrait for Sprite {
+impl ViewTrait for CardView {
     fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {
         if let Some(animator) = &mut self.translation_animator {
             self.transform.set_translation(animator.update(time_delta));
@@ -82,25 +80,14 @@ impl ViewTrait for Sprite {
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
-        mut send_msg: bool,
+        send_msg: bool,
     ) -> bool {
-        // If not visible, don't check this view or its children.
         if !self.visible {
             return false;
         }
 
         let mut contains = false;
 
-        let affine = *parent_affine * self.transform.affine2();
-        // Check children reverse to check on-top kids first.
-        for child in self.children.iter_mut().rev() {
-            if child.handle_mouse_event(event, screen_pt, &affine, send_msg) {
-                send_msg = false;
-                contains = true;
-            }
-        }
-
-        // Now check self.
         if self.transform.contains_screen_point(screen_pt, parent_affine) {
             if send_msg {
                 self.send_message_for_event(event);
@@ -120,7 +107,7 @@ impl ViewTrait for Sprite {
                 //         return true;
                 //     }
                 // }
-                println!("Sprite: mouse up");
+                println!("Card {:?}: mouse up", self.id);
             }
             _ => {}
         }
@@ -143,13 +130,6 @@ impl ViewTrait for Sprite {
             .transform(self.transform.mat3_with_parent(parent_affine))
             .size(size_x, size_y)
             .color(self.color);
-
-        if !self.children.is_empty() {
-            let affine = *parent_affine * self.transform.affine2();
-            for child in &mut self.children {
-                child.draw(draw, &affine);
-            }
-        }
     }
 
     

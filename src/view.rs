@@ -17,7 +17,7 @@ use crate::{
     image::Image,
     image_button::ImageButton,
     player::PlayerId,
-    sprite::Sprite,
+    card_view::CardView,
     view_fn::ViewFn,
     view_trait::ViewTrait,
 };
@@ -26,8 +26,8 @@ pub struct View {
     game_message_queue: VecDeque<GameMessage>,
     last_action_time: f32,
     queue_empty: bool,
-    sprites: Vec<Sprite>,
-    sprites_z_order_dirty: bool,
+    card_views: Vec<CardView>,
+    card_views_z_order_dirty: bool,
 
     pub dealer_marker: Image,
     pub deal_button: ImageButton<PlayerAction>,
@@ -51,8 +51,8 @@ impl View {
             game_message_queue: VecDeque::new(),
             last_action_time: 0.0,
             queue_empty: true,
-            sprites,
-            sprites_z_order_dirty: false,
+            card_views: sprites,
+            card_views_z_order_dirty: false,
 
             dealer_marker,
             deal_button,
@@ -62,7 +62,7 @@ impl View {
         }
     }
 
-    pub fn create_card_sprites(cards: &SlotMap<CardId, Card>, gfx: &mut Graphics) -> Vec<Sprite> {
+    pub fn create_card_sprites(cards: &SlotMap<CardId, Card>, gfx: &mut Graphics) -> Vec<CardView> {
         let mut sprites = Vec::new();
 
         let face_down_tex = gfx
@@ -78,9 +78,9 @@ impl View {
         sprites
     }
 
-    fn create_card_sprite(card: &Card, face_down_tex: &Texture, gfx: &mut Graphics) -> Sprite {
+    fn create_card_sprite(card: &Card, face_down_tex: &Texture, gfx: &mut Graphics) -> CardView {
         let face_up_tex = ViewFn::load_card_texture(gfx, card);
-        let sprite = Sprite::new(
+        let sprite = CardView::new(
             card.id,
             face_up_tex,
             Vec2::ZERO,
@@ -145,7 +145,7 @@ impl View {
     }
 
     fn update_card(&mut self, id: &CardId, pos: Vec2, angle: f32, z_order: usize, face_up: bool) {
-        let sprite = self.sprites.iter_mut().find(|s| s.id == *id).unwrap();
+        let sprite = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
 
         // Create translation animator if needed.
         if !sprite.transform.translation().abs_diff_eq(pos, 0.1) {
@@ -164,7 +164,7 @@ impl View {
         }
 
         sprite.z_order = z_order;
-        self.sprites_z_order_dirty = true;
+        self.card_views_z_order_dirty = true;
 
         sprite.use_alt_texture = !face_up;
     }
@@ -245,7 +245,7 @@ impl ViewTrait for View {
         }
 
         // Iterate in reverse to check on-top sprites first.
-        for sprite in self.sprites.iter_mut().rev() {
+        for sprite in self.card_views.iter_mut().rev() {
             if sprite.handle_mouse_event(event, screen_pt, parent_affine, send_msg) {
                 send_msg = false;
             }
@@ -305,14 +305,14 @@ impl ViewTrait for View {
         }
 
         // Update the sprites
-        for sprite in &mut self.sprites {
+        for sprite in &mut self.card_views {
             sprite.update(time_delta, app);
         }
 
         // Sort the sprites by z-order if needed.
-        if self.sprites_z_order_dirty {
-            self.sprites.sort_by(|a, b| a.z_order.cmp(&b.z_order));
-            self.sprites_z_order_dirty = false;
+        if self.card_views_z_order_dirty {
+            self.card_views.sort_by(|a, b| a.z_order.cmp(&b.z_order));
+            self.card_views_z_order_dirty = false;
         }
 
         self.fps_update -= time_delta;
@@ -321,7 +321,7 @@ impl ViewTrait for View {
     fn draw(&mut self, draw: &mut notan::draw::Draw, parent_affine: &Affine2) {
         let now = std::time::Instant::now();
 
-        for sprite in &mut self.sprites {
+        for sprite in &mut self.card_views {
             sprite.draw(draw, parent_affine);
         }
 
