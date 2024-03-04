@@ -6,6 +6,7 @@ use notan::math::Affine2;
 use notan::math::Vec2;
 use notan::prelude::*;
 
+use crate::bid::Bid;
 use crate::card::CardSuit;
 use crate::game::PlayerAction;
 use crate::image_button::ImageButton;
@@ -76,7 +77,7 @@ impl BidSelector {
             String::new(),
             Some(sender),
         );
-        button.mouse_up_message = None; //
+        button.mouse_up_message = Some(PlayerAction::MakeBid(Bid::Pass));
         button
     }
 
@@ -91,7 +92,7 @@ impl BidSelector {
             let tex_enabled = ViewFn::load_suit_texture(gfx, suit);
             let tex_mouse_over = Some(ViewFn::load_suit_mouse_over_texture(gfx, suit));
             let pos = vec2(32. + 50. * idx as f32, 53.);
-            let button = ImageButton::new(
+            let mut button = ImageButton::new(
                 pos,
                 tex_enabled,
                 tex_mouse_over,
@@ -99,6 +100,7 @@ impl BidSelector {
                 String::new(),
                 Some(sender.clone()),
             );
+            button.mouse_up_message = Some(PlayerAction::ChooseTrump(Some(*suit)));
             buttons.push(button);
         }
         buttons
