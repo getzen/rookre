@@ -73,7 +73,8 @@ impl Controller {
             | Event::MouseUp { button: _, x, y } => {
                 let screen_pt = Vec2::new(x as f32, y as f32);
                 let affine = &notan::math::Affine2::IDENTITY;
-                self.view.handle_mouse_event(&event, screen_pt, &affine, true);
+                self.view
+                    .handle_mouse_event(&event, screen_pt, &affine, true);
             }
             // Event::KeyDown { key }
             _ => {}

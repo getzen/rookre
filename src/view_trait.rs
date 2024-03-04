@@ -49,7 +49,7 @@ pub trait ViewTrait {
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
-        mut _send_msg: bool
+        mut _send_msg: bool,
     ) -> bool {
         false
     }
@@ -69,7 +69,6 @@ pub trait ViewTrait {
         // }
         false
     }
-
 
     // fn keyboard_event_handled...
 }

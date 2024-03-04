@@ -13,18 +13,17 @@ use crate::{
     bid::Bid,
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit},
+    card_view::{self, CardView},
     game::{Game, GameAction, GameMessage, PlayerAction},
     image::Image,
     image_button::ImageButton,
     player::PlayerId,
-    card_view::CardView,
     view_fn::ViewFn,
     view_trait::ViewTrait,
 };
 
 pub struct View {
     game_message_queue: VecDeque<GameMessage>,
-    last_action_time: f32,
     queue_empty: bool,
     card_views: Vec<CardView>,
     card_views_z_order_dirty: bool,
@@ -49,7 +48,6 @@ impl View {
 
         Self {
             game_message_queue: VecDeque::new(),
-            last_action_time: 0.0,
             queue_empty: true,
             card_views: sprites,
             card_views_z_order_dirty: false,
@@ -145,28 +143,28 @@ impl View {
     }
 
     fn update_card(&mut self, id: &CardId, pos: Vec2, angle: f32, z_order: usize, face_up: bool) {
-        let sprite = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
+        let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
 
         // Create translation animator if needed.
-        if !sprite.transform.translation().abs_diff_eq(pos, 0.1) {
+        if !card_view.transform.translation().abs_diff_eq(pos, 0.1) {
             let animator = TranslationAnimator::new(
-                sprite.transform.translation(),
+                card_view.transform.translation(),
                 pos,
                 500.0, // velocity
             );
-            sprite.translation_animator = Some(animator);
+            card_view.translation_animator = Some(animator);
         }
 
         // Create angle animator if needed.
-        if (sprite.transform.angle() - angle).abs() > 0.01 {
-            let animator = AngleAnimator::new(sprite.transform.angle(), angle, 6.0);
-            sprite.angle_animator = Some(animator);
+        if (card_view.transform.angle() - angle).abs() > 0.01 {
+            let animator = AngleAnimator::new(card_view.transform.angle(), angle, 6.0);
+            card_view.angle_animator = Some(animator);
         }
 
-        sprite.z_order = z_order;
+        card_view.z_order = z_order;
         self.card_views_z_order_dirty = true;
 
-        sprite.use_alt_texture = !face_up;
+        card_view.use_alt_texture = !face_up;
     }
 
     fn update_deck(&mut self, game: &Game) {
@@ -245,8 +243,8 @@ impl ViewTrait for View {
         }
 
         // Iterate in reverse to check on-top sprites first.
-        for sprite in self.card_views.iter_mut().rev() {
-            if sprite.handle_mouse_event(event, screen_pt, parent_affine, send_msg) {
+        for card_view in self.card_views.iter_mut().rev() {
+            if card_view.handle_mouse_event(event, screen_pt, parent_affine, send_msg) {
                 send_msg = false;
             }
         }
@@ -304,12 +302,12 @@ impl ViewTrait for View {
             self.queue_empty = true;
         }
 
-        // Update the sprites
-        for sprite in &mut self.card_views {
-            sprite.update(time_delta, app);
+        // Update the cards.
+        for card_view in &mut self.card_views {
+            card_view.update(time_delta, app);
         }
 
-        // Sort the sprites by z-order if needed.
+        // Sort the cards by z-order if needed.
         if self.card_views_z_order_dirty {
             self.card_views.sort_by(|a, b| a.z_order.cmp(&b.z_order));
             self.card_views_z_order_dirty = false;
@@ -319,10 +317,10 @@ impl ViewTrait for View {
     }
 
     fn draw(&mut self, draw: &mut notan::draw::Draw, parent_affine: &Affine2) {
-        let now = std::time::Instant::now();
+        //let now = std::time::Instant::now();
 
-        for sprite in &mut self.card_views {
-            sprite.draw(draw, parent_affine);
+        for card_view in &mut self.card_views {
+            card_view.draw(draw, parent_affine);
         }
 
         // Images

@@ -88,16 +88,19 @@ impl ViewTrait for CardView {
 
         let mut contains = false;
 
-        if self.transform.contains_screen_point(screen_pt, parent_affine) {
+        if self
+            .transform
+            .contains_screen_point(screen_pt, parent_affine)
+        {
             if send_msg {
                 self.send_message_for_event(event);
             }
             contains = true;
         }
-  
+
         contains
     }
-    
+
     fn send_message_for_event(&mut self, event: &Event) -> bool {
         match event {
             Event::MouseUp { .. } => {
@@ -131,8 +134,4 @@ impl ViewTrait for CardView {
             .size(size_x, size_y)
             .color(self.color);
     }
-
-    
-
-   
 }

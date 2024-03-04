@@ -113,7 +113,7 @@ impl ViewTrait for BidSelector {
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
-        mut send_msg: bool
+        mut send_msg: bool,
     ) -> bool {
         if !self.visible {
             return false;
@@ -132,9 +132,10 @@ impl ViewTrait for BidSelector {
 
         if self
             .pass_button
-            .handle_mouse_event(event, screen_pt, &affine, send_msg) {
-                contains = true;
-            }
+            .handle_mouse_event(event, screen_pt, &affine, send_msg)
+        {
+            contains = true;
+        }
 
         contains
     }

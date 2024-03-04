@@ -78,7 +78,7 @@ impl<T: Copy> ViewTrait for TextButton<T> {
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
-        mut _send_msg: bool
+        mut _send_msg: bool,
     ) -> bool {
         if !self.visible {
             return false;
