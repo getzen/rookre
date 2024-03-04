@@ -86,7 +86,7 @@ impl ViewTrait for Sprite {
         }
     }
 
-    fn mouse_event_handled(
+    fn update_with_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
@@ -102,7 +102,7 @@ impl ViewTrait for Sprite {
         let affine = *parent_affine * self.transform.affine2();
         // Check children reverse to check on-top kids first.
         for child in self.children.iter_mut().rev() {
-            hit |= child.mouse_event_handled(event, screen_pt, &affine);
+            hit |= child.update_with_mouse_event(event, screen_pt, &affine);
         }
 
         // Now check self.
@@ -129,7 +129,7 @@ impl ViewTrait for Sprite {
         hit
     }
 
-    fn update(&mut self, _app: &mut notan::app::App, time_delta: f32) {
+    fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {
         if let Some(animator) = &mut self.translation_animator {
             self.transform.set_translation(animator.update(time_delta));
             if animator.completed {

@@ -108,9 +108,7 @@ impl BidSelector {
 }
 
 impl ViewTrait for BidSelector {
-    fn update(&mut self, _app: &mut notan::app::App, _time_delta: f32) {}
-
-    fn mouse_event_handled(
+    fn update_with_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
@@ -125,12 +123,12 @@ impl ViewTrait for BidSelector {
         let affine = *parent_affine * self.transform.affine2();
 
         for button in &mut self.suit_buttons {
-            hit |= button.mouse_event_handled(event, screen_pt, &affine);
+            hit |= button.update_with_mouse_event(event, screen_pt, &affine);
         }
 
         hit |= self
             .pass_button
-            .mouse_event_handled(event, screen_pt, &affine);
+            .update_with_mouse_event(event, screen_pt, &affine);
 
         hit
     }

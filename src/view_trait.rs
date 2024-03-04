@@ -32,9 +32,9 @@ pub trait ViewTrait {
 
     // Get time_delta at controller level using app.timer.delta_f32(). No point in
     // calling that function over and over for each view.
-    fn update(&mut self, _app: &mut notan::app::App, _time_delta: f32) {}
+    fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {}
 
-    // fn contains_pt(&self, _screen_pt: Vec2, _parent_affine: Option<&Affine2>) -> bool {
+    // fn contains_pt(&self, _mouse_pt: Vec2, _parent_affine: &Affine2) -> bool {
     //     false
     //     // Sample - easiest, for rect shapes
     //     //self.transform.contains_screen_point(screen_pt, parent_affine)
@@ -44,7 +44,7 @@ pub trait ViewTrait {
     //     // pt.distance(self.transform.translation()) <= self.radius
     // }
 
-    fn mouse_event_handled(
+    fn update_with_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
@@ -52,20 +52,20 @@ pub trait ViewTrait {
     ) -> bool {
         false
     }
-    // Sample implementation
-    // let mut hit = false; // assume not an event hit
+    // Sample implementation:
     // let affine = *parent_affine * self.transform.affine2();
-    // if self.transform.contains_screen_point(screen_pt, affine) {
-    //     hit = true
-    //     match event {
-    //         Event::MouseUp { button, x, y } => {
-    //             println!("mouse up");
-    //             return true;
-    //         },
-    //         _ => {},
-    //     }
+    // let hit = self.transform.contains_screen_point(screen_pt, affine);
+    // if hit {
+    //     // Change appearance for mouse over.
+    // } else {
+    //    // Change appearance for not mouse over.
     // }
     // hit
+
+    fn send_message_for_event(&mut self, event: &Event) -> bool {
+        false
+    }
+
 
     // fn keyboard_event_handled...
 }

@@ -220,7 +220,7 @@ impl View {
 }
 
 impl ViewTrait for View {
-    fn mouse_event_handled(
+    fn update_with_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
@@ -230,21 +230,21 @@ impl ViewTrait for View {
 
         if self
             .deal_button
-            .mouse_event_handled(event, screen_pt, parent_affine)
+            .update_with_mouse_event(event, screen_pt, parent_affine)
         {
             return true;
         }
 
         if self
             .bid_selector
-            .mouse_event_handled(event, screen_pt, parent_affine)
+            .update_with_mouse_event(event, screen_pt, parent_affine)
         {
             return true;
         }
 
         // Iterate in reverse to check on-top sprites first.
         for sprite in self.sprites.iter_mut().rev() {
-            if sprite.mouse_event_handled(event, screen_pt, parent_affine) {
+            if sprite.update_with_mouse_event(event, screen_pt, parent_affine) {
                 return true;
             }
         }
@@ -261,7 +261,7 @@ impl ViewTrait for View {
         false
     }
 
-    fn update(&mut self, app: &mut App, time_delta: f32) {
+    fn update(&mut self, time_delta: f32, app: &mut App) {
         // Move the ready-to-go actions from the queue and add to a temporary Vec.
         let mut messages_ready = Vec::new();
 
@@ -314,7 +314,7 @@ impl ViewTrait for View {
 
         // Update the sprites
         for sprite in &mut self.sprites {
-            sprite.update(app, time_delta);
+            sprite.update(time_delta, app);
         }
 
         // Sort the sprites by z-order if needed.

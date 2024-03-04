@@ -73,9 +73,7 @@ impl<T> TextButton<T> {
 }
 
 impl<T: Copy> ViewTrait for TextButton<T> {
-    fn update(&mut self, _app: &mut notan::app::App, _time_delta: f32) {}
-
-    fn mouse_event_handled(
+    fn update_with_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
