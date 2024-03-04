@@ -227,6 +227,44 @@ impl ViewFn {
         builder.build().unwrap()
     }
 
+    pub fn load_suit_texture(gfx: &mut Graphics, suit: &CardSuit) -> Texture {
+        let builder = match suit {
+            CardSuit::Club => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/club.png")),
+            CardSuit::Diamond => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/diamond.png")),
+            CardSuit::Heart => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/heart.png")),
+            CardSuit::Spade => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/spade.png")),
+            _ => panic!(),
+        };
+        builder.build().unwrap()
+    }
+
+    pub fn load_suit_mouse_over_texture(gfx: &mut Graphics, suit: &CardSuit) -> Texture {
+        let builder = match suit {
+            CardSuit::Club => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/club_mouse_over.png")),
+            CardSuit::Diamond => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/diamond_mouse_over.png")),
+            CardSuit::Heart => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/heart_mouse_over.png")),
+            CardSuit::Spade => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/spade_mouse_over.png")),
+            _ => panic!(),
+        };
+        builder.build().unwrap()
+    }
+
     /*
         pub fn create_dealer_marker(gfx: &mut Graphics) -> Imager {
             let texture = gfx
@@ -415,7 +453,7 @@ impl ViewFn {
     }
 
     pub fn bid_view_position(player_id: usize, player_count: usize) -> Vec2 {
-        let distance_from_center = 200.0;
+        let distance_from_center = 180.0;
         let radians = ViewFn::player_radians_from_center(player_id, player_count);
         ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
     }

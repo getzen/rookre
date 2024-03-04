@@ -6,9 +6,11 @@ use notan::math::Affine2;
 use notan::math::Vec2;
 use notan::prelude::*;
 
+use crate::card::CardSuit;
 use crate::game::PlayerAction;
 use crate::image_button::ImageButton;
 use crate::transform::Transform;
+use crate::view_fn::ViewFn;
 use crate::view_trait::ViewTrait;
 
 pub struct BidSelector {
@@ -17,65 +19,36 @@ pub struct BidSelector {
     pub z_order: usize,
     pub texture: Texture,
 
-    pub accept_button: ImageButton<PlayerAction>,
     pub pass_button: ImageButton<PlayerAction>,
+    suit_buttons: Vec<ImageButton<PlayerAction>>,
 }
 
 impl BidSelector {
-    pub fn new(
-        position: Vec2,
-        texture: Texture,
-        gfx: &mut Graphics,
-        sender: Sender<PlayerAction>,
-    ) -> Self {
+    pub fn new(suits: Vec<CardSuit>, gfx: &mut Graphics, sender: Sender<PlayerAction>) -> Self {
+        let texture = gfx
+            .create_texture()
+            .from_image(include_bytes!("assets/bid_selector.png"))
+            .build()
+            .unwrap();
+
         let trans = Transform::from_pos_tex_scale_centered(
-            position,
+            ViewFn::bid_view_position(0, 4),
             &texture,
             crate::view_fn::TEX_SCALE,
             true,
         );
 
-        let accept_button = BidSelector::create_accept_button(gfx, sender.clone());
         let pass_button = BidSelector::create_pass_button(gfx, sender.clone());
+        let suit_buttons = BidSelector::create_suit_buttons(suits, gfx, sender.clone());
 
         Self {
             visible: false,
             transform: trans,
             z_order: 0,
             texture,
-            accept_button,
             pass_button,
+            suit_buttons,
         }
-    }
-
-    fn create_accept_button(
-        gfx: &mut Graphics,
-        sender: Sender<PlayerAction>,
-    ) -> ImageButton<PlayerAction> {
-        let enabled = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/accept_enabled.png"))
-            .build()
-            .unwrap();
-
-        let mouse_over = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/accept_mouse_over.png"))
-            .build()
-            .unwrap();
-
-        let pos = vec2(104., 55.);
-        let mut button = ImageButton::new(
-            pos,
-            enabled,
-            Some(mouse_over),
-            None,
-            1.0,
-            String::new(),
-            Some(sender),
-        );
-        button.mouse_up_message = None; //
-        button
     }
 
     fn create_pass_button(
@@ -94,18 +67,41 @@ impl BidSelector {
             .build()
             .unwrap();
 
-        let pos = vec2(214., 55.);
+        let pos = vec2(266., 55.);
         let mut button = ImageButton::new(
             pos,
             enabled,
             Some(mouse_over),
             None,
-            1.0,
             String::new(),
             Some(sender),
         );
         button.mouse_up_message = None; //
         button
+    }
+
+    fn create_suit_buttons(
+        suits: Vec<CardSuit>,
+        gfx: &mut Graphics,
+        sender: Sender<PlayerAction>,
+    ) -> Vec<ImageButton<PlayerAction>> {
+        let mut buttons = Vec::new();
+
+        for (idx, suit) in suits.iter().enumerate() {
+            let tex_enabled = ViewFn::load_suit_texture(gfx, suit);
+            let tex_mouse_over = Some(ViewFn::load_suit_mouse_over_texture(gfx, suit));
+            let pos = vec2(32. + 50. * idx as f32, 53.);
+            let button = ImageButton::new(
+                pos,
+                tex_enabled,
+                tex_mouse_over,
+                None,
+                String::new(),
+                Some(sender.clone()),
+            );
+            buttons.push(button);
+        }
+        buttons
     }
 }
 
@@ -124,10 +120,13 @@ impl ViewTrait for BidSelector {
 
         let affine = *parent_affine * self.transform.affine2();
 
-        if self
-            .accept_button
-            .mouse_event_handled(event, screen_pt, &affine)
-        {
+        let mut button_hit = false;
+        for button in &mut self.suit_buttons {
+            if button.mouse_event_handled(event, screen_pt, &affine) {
+                button_hit = true;
+            }
+        }
+        if button_hit {
             return true;
         }
 
@@ -152,7 +151,9 @@ impl ViewTrait for BidSelector {
             .size(size_x, size_y);
 
         let affine = *parent_affine * self.transform.affine2();
-        self.accept_button.draw(draw, &affine);
+        for button in &mut self.suit_buttons {
+            button.draw(draw, &affine);
+        }
         self.pass_button.draw(draw, &affine);
     }
 }

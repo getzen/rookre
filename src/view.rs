@@ -12,7 +12,7 @@ use crate::{
     animators::{AngleAnimator, TranslationAnimator},
     bid::Bid,
     bid_selector::BidSelector,
-    card::{Card, CardId},
+    card::{Card, CardId, CardSuit},
     game::{Game, GameAction, GameMessage, PlayerAction},
     image::Image,
     image_button::ImageButton,
@@ -121,7 +121,6 @@ impl View {
             enabled,
             Some(mouse_over),
             None,
-            0.5,
             String::new(),
             Some(sender),
         );
@@ -130,14 +129,13 @@ impl View {
     }
 
     fn create_bid_selector_1(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> BidSelector {
-        let tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/bid_selector_1.png"))
-            .build()
-            .unwrap();
-
-        let pos = ViewFn::bid_view_position(0, 4);
-        BidSelector::new(pos, tex, gfx, sender)
+        let suits = vec![
+            CardSuit::Club,
+            CardSuit::Diamond,
+            CardSuit::Heart,
+            CardSuit::Spade,
+        ];
+        BidSelector::new(suits, gfx, sender)
     }
 
     /// Add the action to the queue.
@@ -230,14 +228,6 @@ impl ViewTrait for View {
     ) -> bool {
         let screen_pt = vec2(screen_pt.x, screen_pt.y);
 
-        // Check bid chooser first since it is on top (if visible).
-        // if self
-        //     .trump_chooser_view
-        //     .event_handled(&event, &mut self.draw, pt)
-        // {
-        //     return true;
-        // }
-
         if self
             .deal_button
             .mouse_event_handled(event, screen_pt, parent_affine)
@@ -281,8 +271,7 @@ impl ViewTrait for View {
                     GameMessage::Delay(mut time) => {
                         time -= time_delta;
                         if time > 0.0 {
-                            self.game_message_queue
-                            .push_front(GameMessage::Delay(time));
+                            self.game_message_queue.push_front(GameMessage::Delay(time));
                             //println!("{time}");
                         }
                         break;

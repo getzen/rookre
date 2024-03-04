@@ -31,17 +31,6 @@ use notan::{
     prelude::*,
 };
 
-// HashMaps cannot normally be initialized as static variables. The once_cell crate
-// comes to the rescue:
-// use once_cell::sync::Lazy;
-// static TEXTURES: Lazy<Mutex<HashMap<usize, Texture>>> = Lazy::new(|| {
-//let mut textures = HashMap::new();
-//textures.insert(...);
-//Mutex::new(textures)
-// or simply:
-// Mutex::new(HashMap::new())
-// });
-
 // Globals
 use std::sync::Mutex;
 static PIXEL_RATIO: Mutex<f32> = Mutex::new(0.0);

@@ -43,7 +43,6 @@ impl<T> ImageButton<T> {
         tex_enabled: Texture,
         tex_mouse_over: Option<Texture>,
         tex_disabled: Option<Texture>,
-        texture_scale: f32,
         text: String,
         sender: Option<Sender<T>>,
     ) -> Self {
