@@ -108,29 +108,35 @@ impl BidSelector {
 }
 
 impl ViewTrait for BidSelector {
-    fn update_with_mouse_event(
+    fn handle_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
+        mut send_msg: bool
     ) -> bool {
         if !self.visible {
             return false;
         }
 
-        let mut hit = false;
+        let mut contains = false;
 
         let affine = *parent_affine * self.transform.affine2();
 
         for button in &mut self.suit_buttons {
-            hit |= button.update_with_mouse_event(event, screen_pt, &affine);
+            if button.handle_mouse_event(event, screen_pt, &affine, send_msg) {
+                send_msg = false;
+                contains = true;
+            }
         }
 
-        hit |= self
+        if self
             .pass_button
-            .update_with_mouse_event(event, screen_pt, &affine);
+            .handle_mouse_event(event, screen_pt, &affine, send_msg) {
+                contains = true;
+            }
 
-        hit
+        contains
     }
 
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {

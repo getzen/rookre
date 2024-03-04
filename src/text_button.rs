@@ -73,11 +73,12 @@ impl<T> TextButton<T> {
 }
 
 impl<T: Copy> ViewTrait for TextButton<T> {
-    fn update_with_mouse_event(
+    fn handle_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
+        mut _send_msg: bool
     ) -> bool {
         if !self.visible {
             return false;
@@ -86,13 +87,13 @@ impl<T: Copy> ViewTrait for TextButton<T> {
             return false;
         }
 
-        let mut hit = false;
+        let mut contains = false;
 
         if self
             .transform
             .contains_screen_point(screen_pt, parent_affine)
         {
-            hit = true;
+            contains = true;
             match event {
                 Event::MouseDown { button, .. } => match button {
                     MouseButton::Left => self.state = ButtonState::MouseDown,
@@ -100,12 +101,7 @@ impl<T: Copy> ViewTrait for TextButton<T> {
                 },
                 Event::MouseUp { button, .. } => match button {
                     MouseButton::Left => {
-                        if let Some(sender) = &self.sender {
-                            if let Some(message) = &self.mouse_up_message {
-                                sender.send(*message).expect("Message send error.");
-                                return true;
-                            }
-                        }
+                        self.send_message_for_event(event);
                     }
                     _ => {}
                 },
@@ -115,7 +111,22 @@ impl<T: Copy> ViewTrait for TextButton<T> {
             // Mouse is not over button, so set plain Enabled state.
             self.state = ButtonState::Enabled;
         }
-        hit
+        contains
+    }
+
+    fn send_message_for_event(&mut self, event: &Event) -> bool {
+        match event {
+            Event::MouseUp { .. } => {
+                if let Some(sender) = &self.sender {
+                    if let Some(message) = self.mouse_up_message {
+                        sender.send(message).expect("Message send error.");
+                        return true;
+                    }
+                }
+            }
+            _ => {}
+        }
+        false
     }
 
     fn draw(&mut self, draw: &mut Draw, _parent_affine: &Affine2) {

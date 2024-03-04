@@ -77,11 +77,12 @@ impl<T> ImageButton<T> {
 }
 
 impl<T: Copy> ViewTrait for ImageButton<T> {
-    fn update_with_mouse_event(
+    fn handle_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
+        mut _send_msg: bool,
     ) -> bool {
         if !self.visible {
             return false;
@@ -90,13 +91,13 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
             return false;
         }
 
-        let mut hit = false;
+        let mut contains = false;
 
         if self
             .transform
             .contains_screen_point(screen_pt, parent_affine)
         {
-            hit = true;
+            contains = true;
             match event {
                 Event::MouseDown { button, .. } => match button {
                     MouseButton::Left => self.state = ButtonState::MouseDown,
@@ -119,7 +120,7 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
             // Mouse is not over button, so set plain Enabled state.
             self.state = ButtonState::Enabled;
         }
-        hit
+        contains
     }
 
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {

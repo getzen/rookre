@@ -220,45 +220,37 @@ impl View {
 }
 
 impl ViewTrait for View {
-    fn update_with_mouse_event(
+    /// Set send_msg to false once a hit is found to ensure only one object sends a message.
+    fn handle_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
+        mut send_msg: bool,
     ) -> bool {
         let screen_pt = vec2(screen_pt.x, screen_pt.y);
 
         if self
             .deal_button
-            .update_with_mouse_event(event, screen_pt, parent_affine)
+            .handle_mouse_event(event, screen_pt, parent_affine, send_msg)
         {
-            return true;
+            send_msg = false;
         }
 
         if self
             .bid_selector
-            .update_with_mouse_event(event, screen_pt, parent_affine)
+            .handle_mouse_event(event, screen_pt, parent_affine, send_msg)
         {
-            return true;
+            send_msg = false;
         }
 
         // Iterate in reverse to check on-top sprites first.
         for sprite in self.sprites.iter_mut().rev() {
-            if sprite.update_with_mouse_event(event, screen_pt, parent_affine) {
-                return true;
+            if sprite.handle_mouse_event(event, screen_pt, parent_affine, send_msg) {
+                send_msg = false;
             }
         }
-
-        // if self.okay_button.event_handled(&event, &mut self.draw, pt) {
-        //     return true;
-        // }
-
-        // if let Some(bid_select) = &mut self.bid_select_view {
-        //     if bid_select.event_handled(&event, &mut self.draw, pt) {
-        //         return true;
-        //     }
-        // }
-        false
+        !send_msg
     }
 
     fn update(&mut self, time_delta: f32, app: &mut App) {

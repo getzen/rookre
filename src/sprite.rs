@@ -61,6 +61,72 @@ impl Sprite {
 }
 
 impl ViewTrait for Sprite {
+    fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {
+        if let Some(animator) = &mut self.translation_animator {
+            self.transform.set_translation(animator.update(time_delta));
+            if animator.completed {
+                self.translation_animator = None;
+            }
+        }
+
+        if let Some(animator) = &mut self.angle_animator {
+            self.transform.set_angle(animator.update(time_delta));
+            if animator.completed {
+                self.angle_animator = None;
+            }
+        }
+    }
+
+    fn handle_mouse_event(
+        &mut self,
+        event: &Event,
+        screen_pt: Vec2,
+        parent_affine: &Affine2,
+        mut send_msg: bool,
+    ) -> bool {
+        // If not visible, don't check this view or its children.
+        if !self.visible {
+            return false;
+        }
+
+        let mut contains = false;
+
+        let affine = *parent_affine * self.transform.affine2();
+        // Check children reverse to check on-top kids first.
+        for child in self.children.iter_mut().rev() {
+            if child.handle_mouse_event(event, screen_pt, &affine, send_msg) {
+                send_msg = false;
+                contains = true;
+            }
+        }
+
+        // Now check self.
+        if self.transform.contains_screen_point(screen_pt, parent_affine) {
+            if send_msg {
+                self.send_message_for_event(event);
+            }
+            contains = true;
+        }
+  
+        contains
+    }
+    
+    fn send_message_for_event(&mut self, event: &Event) -> bool {
+        match event {
+            Event::MouseUp { .. } => {
+                // if let Some(sender) = &self.sender {
+                //     if let Some(message) = self.mouse_up_message {
+                //         sender.send(message).expect("Message send error.");
+                //         return true;
+                //     }
+                // }
+                println!("Sprite: mouse up");
+            }
+            _ => {}
+        }
+        false
+    }
+
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
         if !self.visible {
             return;
@@ -86,62 +152,7 @@ impl ViewTrait for Sprite {
         }
     }
 
-    fn update_with_mouse_event(
-        &mut self,
-        event: &Event,
-        screen_pt: Vec2,
-        parent_affine: &Affine2,
-    ) -> bool {
-        // If not visible, don't check this view or its children.
-        if !self.visible {
-            return false;
-        }
+    
 
-        let mut hit = false;
-
-        let affine = *parent_affine * self.transform.affine2();
-        // Check children reverse to check on-top kids first.
-        for child in self.children.iter_mut().rev() {
-            hit |= child.update_with_mouse_event(event, screen_pt, &affine);
-        }
-
-        // Now check self.
-        if self
-            .transform
-            .contains_screen_point(screen_pt, parent_affine)
-        {
-            hit = true;
-            match event {
-                Event::MouseUp { .. } => {
-                    println!("mouse up");
-
-                    // if let Some(sender) = &self.message_sender {
-                    //     if let Some(message) = self.mouse_up_message {
-                    //         sender.send(message).expect("Message send error.");
-                    //     }
-                    // }
-
-                    return true;
-                }
-                _ => {}
-            }
-        }
-        hit
-    }
-
-    fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {
-        if let Some(animator) = &mut self.translation_animator {
-            self.transform.set_translation(animator.update(time_delta));
-            if animator.completed {
-                self.translation_animator = None;
-            }
-        }
-
-        if let Some(animator) = &mut self.angle_animator {
-            self.transform.set_angle(animator.update(time_delta));
-            if animator.completed {
-                self.angle_animator = None;
-            }
-        }
-    }
+   
 }

@@ -44,25 +44,29 @@ pub trait ViewTrait {
     //     // pt.distance(self.transform.translation()) <= self.radius
     // }
 
-    fn update_with_mouse_event(
+    fn handle_mouse_event(
         &mut self,
         event: &Event,
         screen_pt: Vec2,
         parent_affine: &Affine2,
+        mut _send_msg: bool
     ) -> bool {
         false
     }
     // Sample implementation:
-    // let affine = *parent_affine * self.transform.affine2();
-    // let hit = self.transform.contains_screen_point(screen_pt, affine);
-    // if hit {
-    //     // Change appearance for mouse over.
-    // } else {
-    //    // Change appearance for not mouse over.
-    // }
-    // hit
 
     fn send_message_for_event(&mut self, event: &Event) -> bool {
+        // match event {
+        //     Event::MouseUp { .. } => {
+        //         if let Some(sender) = &self.sender {
+        //             if let Some(message) = self.mouse_up_message {
+        //                 sender.send(message).expect("Message send error.");
+        //                 return true;
+        //             }
+        //         }
+        //     }
+        //     _ => {}
+        // }
         false
     }
 
