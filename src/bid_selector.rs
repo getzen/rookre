@@ -120,26 +120,19 @@ impl ViewTrait for BidSelector {
             return false;
         }
 
+        let mut hit = false;
+
         let affine = *parent_affine * self.transform.affine2();
 
-        let mut button_hit = false;
         for button in &mut self.suit_buttons {
-            if button.mouse_event_handled(event, screen_pt, &affine) {
-                button_hit = true;
-            }
-        }
-        if button_hit {
-            return true;
+            hit |= button.mouse_event_handled(event, screen_pt, &affine);
         }
 
-        if self
+        hit |= self
             .pass_button
-            .mouse_event_handled(event, screen_pt, &affine)
-        {
-            return true;
-        }
+            .mouse_event_handled(event, screen_pt, &affine);
 
-        false
+        hit
     }
 
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {

@@ -53,8 +53,10 @@ pub trait ViewTrait {
         false
     }
     // Sample implementation
+    // let mut hit = false; // assume not an event hit
     // let affine = *parent_affine * self.transform.affine2();
     // if self.transform.contains_screen_point(screen_pt, affine) {
+    //     hit = true
     //     match event {
     //         Event::MouseUp { button, x, y } => {
     //             println!("mouse up");
@@ -63,7 +65,7 @@ pub trait ViewTrait {
     //         _ => {},
     //     }
     // }
-    // false
+    // hit
 
     // fn keyboard_event_handled...
 }

@@ -92,10 +92,13 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
             return false;
         }
 
+        let mut hit = false;
+
         if self
             .transform
             .contains_screen_point(screen_pt, parent_affine)
         {
+            hit = true;
             match event {
                 Event::MouseDown { button, .. } => match button {
                     MouseButton::Left => self.state = ButtonState::MouseDown,
@@ -114,12 +117,11 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
                 },
                 _ => self.state = ButtonState::MouseOver,
             }
-            return true;
         } else {
             // Mouse is not over button, so set plain Enabled state.
             self.state = ButtonState::Enabled;
         }
-        false
+        hit
     }
 
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {

@@ -97,12 +97,12 @@ impl ViewTrait for Sprite {
             return false;
         }
 
+        let mut hit = false;
+
         let affine = *parent_affine * self.transform.affine2();
         // Check children reverse to check on-top kids first.
         for child in self.children.iter_mut().rev() {
-            if child.mouse_event_handled(event, screen_pt, &affine) {
-                return true;
-            }
+            hit |= child.mouse_event_handled(event, screen_pt, &affine);
         }
 
         // Now check self.
@@ -110,6 +110,7 @@ impl ViewTrait for Sprite {
             .transform
             .contains_screen_point(screen_pt, parent_affine)
         {
+            hit = true;
             match event {
                 Event::MouseUp { .. } => {
                     println!("mouse up");
@@ -125,7 +126,7 @@ impl ViewTrait for Sprite {
                 _ => {}
             }
         }
-        false
+        hit
     }
 
     fn update(&mut self, _app: &mut notan::app::App, time_delta: f32) {
