@@ -90,11 +90,11 @@ impl Controller {
         let received = self.game_message_receiver.try_recv();
         if let Ok(message) = received {
             match message {
-                GameMessage::UpdateDeck(_) => {
+                GameMessage::UpdateDeck(..) => {
                     self.view.queue_message(message);
                     self.view.queue_message(GameMessage::Delay(2.0));
                 }
-                GameMessage::UpdateNest(_) => {
+                GameMessage::UpdateNest(..) => {
                     self.view.queue_message(message);
                     self.view.queue_message(GameMessage::Delay(0.1));
                 }
@@ -102,6 +102,7 @@ impl Controller {
                     self.view.queue_message(message);
                     self.view.queue_message(GameMessage::Delay(0.1));
                 }
+                GameMessage::UpdateActivePlayer(..)=> self.view.queue_message(message),
                 GameMessage::UpdateDealer(..) => self.view.queue_message(message),
                 GameMessage::GetBid(..) => {
                     self.view.queue_message(message);
@@ -121,9 +122,9 @@ impl Controller {
                 PlayerAction::DealCards => {
                     self.view.deal_button.visible = false;
                 }
-                PlayerAction::MakeBid(bid) => {
+                PlayerAction::MakeBid(..) => {
                     self.view.bid_selector.visible = false;
-                    self.game.make_bid(bid);
+                    self.game.perform_player_action(&action);
                 },
                 PlayerAction::ChooseTrump(_) => todo!(),
                 PlayerAction::PlayCard(_, _) => todo!(),

@@ -52,6 +52,7 @@ pub enum GameMessage {
     UpdateDeck(Game),
     UpdateNest(Game),
     UpdateHand(Game, PlayerId),
+    UpdateActivePlayer(Game),
     UpdateDealer(Game),
     GetBid(Game),
     Delay(f32),
@@ -155,6 +156,10 @@ impl Game {
             if self.active_player().active {
                 break;
             }
+        }
+        if self.send_messages {
+            let msg = GameMessage::UpdateActivePlayer(self.clone());
+            self.message_sender.send(msg).unwrap();
         }
     }
 
@@ -294,6 +299,10 @@ impl Game {
         }
 
         self.active_player = (self.dealer + 1) % self.players.len();
+        if self.send_messages {
+            let msg = GameMessage::UpdateActivePlayer(self.clone());
+            self.message_sender.send(msg).unwrap();
+        }
 
         self.trick = Trick::new(self.players.len());
         self.tricks_played = 0;

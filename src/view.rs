@@ -28,6 +28,7 @@ pub struct View {
     card_views: Vec<CardView>,
     card_views_z_order_dirty: bool,
 
+    pub active_player_marker: Image,
     pub dealer_marker: Image,
     pub deal_button: ImageButton<PlayerAction>,
     pub bid_selector: BidSelector,
@@ -41,7 +42,8 @@ impl View {
         cards: &SlotMap<CardId, Card>,
         sender: Sender<PlayerAction>,
     ) -> Self {
-        let sprites = View::create_card_sprites(cards, gfx);
+        let card_views = View::create_card_sprites(cards, gfx);
+        let active_player_marker = View::create_active_player_marker(gfx);
         let dealer_marker = View::create_dealer_marker(gfx);
         let deal_button = View::create_deal_button(gfx, sender.clone());
         let bid_selector = View::create_bid_selector_1(gfx, sender.clone());
@@ -49,9 +51,10 @@ impl View {
         Self {
             game_message_queue: VecDeque::new(),
             queue_empty: true,
-            card_views: sprites,
+            card_views,
             card_views_z_order_dirty: false,
 
+            active_player_marker,
             dealer_marker,
             deal_button,
             bid_selector,
@@ -85,6 +88,17 @@ impl View {
             Some(face_down_tex.clone()),
         );
         sprite
+    }
+
+    fn create_active_player_marker(gfx: &mut Graphics) -> Image {
+        let tex = gfx
+            .create_texture()
+            .from_image(include_bytes!("assets/active_player.png"))
+            .build()
+            .unwrap();
+        let mut marker = Image::new(tex, Vec2::ZERO);
+        marker.visible = false;
+        marker
     }
 
     fn create_dealer_marker(gfx: &mut Graphics) -> Image {
@@ -197,6 +211,16 @@ impl View {
         }
     }
 
+    fn update_active_player(&mut self, game: &Game) {
+        let p = game.active_player;
+        let count = game.players.len();
+        let pos = ViewFn::active_player_marker_position(p, count);
+        let angle = ViewFn::player_rotation(p, count);
+        self.active_player_marker.transform.set_translation(pos);
+        self.active_player_marker.transform.set_angle(angle);
+        self.active_player_marker.visible = true;
+    }
+
     fn update_dealer(&mut self, game: &Game) {
         let p = game.dealer;
         let count = game.players.len();
@@ -287,6 +311,9 @@ impl ViewTrait for View {
                 GameMessage::UpdateHand(game, p) => {
                     self.update_hand(&game, *p);
                 }
+                GameMessage::UpdateActivePlayer(game) => {
+                    self.update_active_player(game);
+                }
                 GameMessage::UpdateDealer(game) => {
                     self.update_dealer(&game);
                 }
@@ -324,6 +351,7 @@ impl ViewTrait for View {
         }
 
         // Images
+        self.active_player_marker.draw(draw, parent_affine);
         self.dealer_marker.draw(draw, parent_affine);
 
         // Buttons
