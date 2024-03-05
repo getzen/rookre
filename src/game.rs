@@ -381,25 +381,25 @@ impl Game {
         }
     }
 
-    /// Calculate the minimum and maximum bids based on the card points available.
-    pub fn bid_min_max_increment(&self) -> (usize, usize, usize) {
-        let mut max = 0;
-        for card in self.cards.values() {
-            max += card.points as usize;
-        }
+    // /// Calculate the minimum and maximum bids based on the card points available.
+    // pub fn bid_min_max_increment(&self) -> (usize, usize, usize) {
+    //     let mut max = 0;
+    //     for card in self.cards.values() {
+    //         max += card.points as usize;
+    //     }
 
-        let min = match &self.high_bid {
-            Some(high_bid) => match high_bid {
-                Bid::Pass => max / 2,
-                Bid::Points(points) => points + self.options.bid_increment,
-                _ => panic!(),
-            },
-            None => max / 2,
-        };
-        (min, max, self.options.bid_increment)
-    }
+    //     let min = match &self.high_bid {
+    //         Some(high_bid) => match high_bid {
+    //             Bid::Pass => max / 2,
+    //             Bid::Points(points) => points + self.options.bid_increment,
+    //             _ => panic!(),
+    //         },
+    //         None => max / 2,
+    //     };
+    //     (min, max, self.options.bid_increment)
+    // }
 
-    fn make_bid(&mut self, bid: Bid) {
+    pub fn make_bid(&mut self, bid: Bid) {
         self.active_player_mut().bid = Some(bid);
         match bid {
             Bid::Pass => {}
@@ -411,34 +411,18 @@ impl Game {
     fn active_bidders_remaining(&self) -> usize {
         let mut active_count = 0;
         match self.options.bidding_kind {
-            BiddingKind::None => todo!(),
-            BiddingKind::Points => {
-                for p in &self.players {
-                    match p.bid {
-                        Some(bid) => match bid {
-                            Bid::Pass => {}
-                            Bid::Points(_) => active_count += 1,
-                            _ => panic!(),
-                        },
-                        None => active_count += 1, // haven't bidded yet
-                    }
-                }
-            }
-            BiddingKind::Tricks => todo!(),
-            BiddingKind::TricksAndSuit => todo!(),
             BiddingKind::Euchre => {
                 for p in &self.players {
                     match p.bid {
                         Some(bid) => match bid {
-                            Bid::Pass => {}
-                            Bid::PickItUp(_) => active_count += 1,
-                            Bid::Suit(_, _) => active_count += 1,
-                            _ => panic!(),
+                            Bid::Pass => {active_count += 1}
+                            Bid::Suit(_) => { return 0;},
                         },
-                        None => {}
+                        None => {active_count += 1}
                     }
                 }
             }
+            _ => {panic!("BiddingKind not implemented.")}
         }
         active_count
     }
@@ -644,16 +628,10 @@ impl Game {
 
     pub fn makers_and_defenders_score(&self) -> (isize, isize) {
         let (makers_pts, defenders_pts) = self.makers_and_defenders_points();
-        let bid = self.high_bid.unwrap();
-        let points_needed = match bid {
-            Bid::PickItUp(p) => p,
-            Bid::Suit(_, p) => p,
-            Bid::Points(p) => p,
-            _ => panic!("Can't handle that type of bid yet."),
-        };
+        let points_needed = 70; ////////// read from GameOptions instead
 
-        let mut makers_score = 0;
-        let mut defenders_score = 0;
+        let makers_score;
+        let defenders_score;
 
         if makers_pts >= points_needed as isize {
             // Bid successful

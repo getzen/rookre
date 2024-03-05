@@ -121,7 +121,10 @@ impl Controller {
                 PlayerAction::DealCards => {
                     self.view.deal_button.visible = false;
                 }
-                PlayerAction::MakeBid(_) => todo!(),
+                PlayerAction::MakeBid(bid) => {
+                    self.view.bid_selector.visible = false;
+                    self.game.make_bid(bid);
+                },
                 PlayerAction::ChooseTrump(_) => todo!(),
                 PlayerAction::PlayCard(_, _) => todo!(),
                 PlayerAction::MoveCardToNest(_) => todo!(),

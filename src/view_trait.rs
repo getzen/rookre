@@ -51,9 +51,21 @@ pub trait ViewTrait {
         parent_affine: &Affine2,
         mut _send_msg: bool,
     ) -> bool {
-        false
+        let mut contains = false;
+
+        // Sample:
+        // if self
+        //     .transform
+        //     .contains_screen_point(screen_pt, parent_affine)
+        // {
+        //     if send_msg {
+        //         self.send_message_for_event(event);
+        //     }
+        //     contains = true;
+        // }
+
+        contains
     }
-    // Sample implementation:
 
     fn send_message_for_event(&mut self, event: &Event) -> bool {
         // match event {
