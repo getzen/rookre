@@ -366,6 +366,16 @@ impl Game {
 
         // Remaining cards to nest
         self.nest.append(&mut self.deck);
+        // Flip top card
+        if let Some(id) = self.nest.last() {
+            if let Some(card) = self.cards.get_mut(*id) {
+                card.face_up = true;
+            }
+        }
+        if self.send_messages {
+            let msg = GameMessage::UpdateNest(self.clone());
+            self.message_sender.send(msg).unwrap();
+        }
 
         for i in 0..self.options.nest_face_up {
             if let Some(card) = self.cards.get_mut(self.nest[i]) {
