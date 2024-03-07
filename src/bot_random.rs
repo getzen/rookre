@@ -14,21 +14,21 @@ impl BotRandom {
 
 impl Bot for BotRandom {
     // Pass
-    fn make_bid(&self, _game: &Game) -> Bid {
-        Bid::Pass
+    fn make_bid(&self, _game: &Game) -> Option<CardSuit> {
+        None
     }
 
     // Choose a random suit.
-    fn choose_trump(&self, _game: &Game) -> CardSuit {
-        let suits = [
-            CardSuit::Club,
-            CardSuit::Diamond,
-            CardSuit::Heart,
-            CardSuit::Spade,
-        ];
-        let rand_idx = fastrand::usize(0..suits.len());
-        suits[rand_idx]
-    }
+    // fn choose_trump(&self, _game: &Game) -> CardSuit {
+    //     let suits = [
+    //         CardSuit::Club,
+    //         CardSuit::Diamond,
+    //         CardSuit::Heart,
+    //         CardSuit::Spade,
+    //     ];
+    //     let rand_idx = fastrand::usize(0..suits.len());
+    //     suits[rand_idx]
+    // }
 
     // Play a random playable card.
     fn play_card(&self, game: &Game) -> CardId {

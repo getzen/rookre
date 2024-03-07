@@ -266,31 +266,6 @@ impl ViewFn {
     }
 
     /*
-        pub fn create_dealer_marker(gfx: &mut Graphics) -> Imager {
-            let texture = gfx
-                .create_texture()
-                .from_image(include_bytes!("assets/dealer_2x.png"))
-                .build()
-                .unwrap(); // 70 x 24
-            Imager::with_size((35., 12.), texture)
-        }
-
-        pub fn create_active_player_marker(gfx: &mut Graphics) -> Imager {
-            let texture = gfx
-                .create_texture()
-                .from_image(include_bytes!("assets/active_player_2x.png"))
-                .build()
-                .unwrap(); // 159 x 20
-            Imager::with_size((79., 10.), texture)
-        }
-
-        pub fn create_okay_button(font: Font, game_action_sender: Sender<PlayerAction>) -> Button {
-            let mut button = Button::new("okay", (80., 24.), OKAY_BUTTON_POS, font, 20.);
-            button.visible = false;
-            button.eventer.sender = Some(game_action_sender.clone());
-            button
-        }
-
         pub fn create_trump_view(gfx: &mut Graphics) -> TrumpView {
             let mut suit_textures = Vec::new();
             for i in 0..4 {

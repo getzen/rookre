@@ -11,8 +11,8 @@ use crate::game::{Game, PlayerAction};
 
 #[allow(unused_variables)]
 pub trait Bot {
-    fn make_bid(&self, game: &Game) -> Bid;
-    fn choose_trump(&self, game: &Game) -> CardSuit;
+    fn make_bid(&self, game: &Game) -> Option<CardSuit>;
+    //fn choose_trump(&self, game: &Game) -> CardSuit;
     fn play_card(&self, game: &Game) -> CardId;
 }
 
@@ -37,14 +37,14 @@ impl BotMgr {
             .expect("BotMessage send error.");
     }
 
-    pub fn choose_trump(game: &Game, sender: Sender<PlayerAction>) {
-        let player = &game.active_player();
-        let bot = BotMgr::get_bot(player.bot_kind.unwrap());
-        let suit = bot.choose_trump(game);
-        sender
-            .send(PlayerAction::ChooseTrump(Some(suit)))
-            .expect("BotMessage send error.");
-    }
+    // pub fn choose_trump(game: &Game, sender: Sender<PlayerAction>) {
+    //     let player = &game.active_player();
+    //     let bot = BotMgr::get_bot(player.bot_kind.unwrap());
+    //     let suit = bot.choose_trump(game);
+    //     sender
+    //         .send(PlayerAction::MakeBid(Some(suit)))
+    //         .expect("BotMessage send error.");
+    // }
 
     pub fn play_card(game: &Game, sender: Sender<PlayerAction>) {
         let player = &game.active_player();

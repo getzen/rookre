@@ -17,12 +17,11 @@ use crate::trick::Trick;
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum PlayerAction {
     DealCards,
-    MakeBid(Bid),
-    ChooseTrump(Option<CardSuit>),
-    PlayCard(PlayerId, CardId),
+    MakeBid(Option<CardSuit>), // None = pass
     MoveCardToNest(CardId),
     TakeCardFromNest(CardId),
     EndNestExchange,
+    PlayCard(PlayerId, CardId),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -487,23 +486,18 @@ impl Game {
         self.sort_hand(player_id);
     }
 
-    pub fn set_trump(&mut self, suit: &Option<CardSuit>) {
-        match suit {
-            Some(suit) => {
-                // Mark the cards matching trump.
-                for card in self.cards.values_mut() {
-                    if !card.is_wild {
-                        if card.suit == *suit
-                            || card.kind == CardKind::Joker
-                            || card.kind == CardKind::Bird
-                        {
-                            card.suit = *suit;
-                            card.is_trump = true;
-                        }
-                    }
+    pub fn set_trump(&mut self, suit: CardSuit) {
+        // Mark the cards matching trump.
+        for card in self.cards.values_mut() {
+            if !card.is_wild {
+                if card.suit == suit
+                    || card.kind == CardKind::Joker
+                    || card.kind == CardKind::Bird
+                {
+                    card.suit = suit;
+                    card.is_trump = true;
                 }
             }
-            None => {}
         }
     }
 
@@ -748,7 +742,50 @@ impl Game {
         }
     }
 
-    // Pop, perform, and return action in queue. Add next action.
+    pub fn perform_player_action(&mut self, player_action: &PlayerAction) {
+        match player_action {
+            PlayerAction::DealCards => {
+                self.action_queue.push_back(DealCards);
+            }
+            PlayerAction::MakeBid(opt_suit) => {
+                match opt_suit {
+                    Some(suit) => {
+                        self.set_trump(*suit);
+                        self.action_queue.push_back(MoveNestToHand)
+                    },
+                    None => {
+                        println!("Player {}: pass.", self.active_player);
+                        self.advance_active_player();
+                        self.action_queue.push_back(WaitForBid);
+                    },
+                }
+            }
+            PlayerAction::MoveCardToNest(id) => {
+                println!("MoveCardToNest");
+                self.discard_to_nest(vec![*id]);
+            }
+            PlayerAction::TakeCardFromNest(id) => {
+                println!("TakeCardFroNest");
+                self.undiscard_from_nest(id);
+            }
+            PlayerAction::EndNestExchange => {
+                self.action_queue.push_back(PreChooseTrump);
+            }
+           
+            PlayerAction::PlayCard(_, c_id) => {
+                self.play_card_id(c_id);
+                if self.trick_completed() {
+                    let winner = self.trick.winner.unwrap();
+                    self.action_queue.push_back(AwardTrick(winner));
+                } else {
+                    self.action_queue.push_back(PrePlayCard);
+                }
+            }
+        }
+    }
+}
+
+// Pop, perform, and return action in queue. Add next action.
     // pub fn update(&mut self, time_delta: f32) -> Option<GameAction> {
     //     if let Some(action) = self.action_queue.pop_front() {
     //         match action {
@@ -812,48 +849,3 @@ impl Game {
     //     }
     //     None
     // }
-
-    pub fn perform_player_action(&mut self, player_action: &PlayerAction) {
-        match player_action {
-            PlayerAction::DealCards => {
-                self.action_queue.push_back(DealCards);
-            }
-            PlayerAction::MakeBid(bid) => {
-                println!("MakeBid");
-                self.make_bid(*bid);
-                match self.active_bidders_remaining() {
-                    0 => panic!("All players passed. Event not handled yet."),
-                    1 => {
-                        self.assign_makers_and_defenders();
-                        //self.action_queue.push_back(MoveNestToHand);
-                    }
-                    _ => self.action_queue.push_back(PreBid),
-                }
-            }
-            PlayerAction::MoveCardToNest(id) => {
-                println!("MoveCardToNest");
-                self.discard_to_nest(vec![*id]);
-            }
-            PlayerAction::TakeCardFromNest(id) => {
-                println!("TakeCardFroNest");
-                self.undiscard_from_nest(id);
-            }
-            PlayerAction::EndNestExchange => {
-                self.action_queue.push_back(PreChooseTrump);
-            }
-            PlayerAction::ChooseTrump(suit) => {
-                self.set_trump(suit);
-                self.action_queue.push_back(PrepareForNewTrick);
-            }
-            PlayerAction::PlayCard(_, c_id) => {
-                self.play_card_id(c_id);
-                if self.trick_completed() {
-                    let winner = self.trick.winner.unwrap();
-                    self.action_queue.push_back(AwardTrick(winner));
-                } else {
-                    self.action_queue.push_back(PrePlayCard);
-                }
-            }
-        }
-    }
-}

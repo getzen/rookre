@@ -105,10 +105,11 @@ impl Controller {
                 GameMessage::UpdateActivePlayer(..)=> self.view.queue_message(message),
                 GameMessage::UpdateDealer(..) => self.view.queue_message(message),
                 GameMessage::GetBid(..) => {
-                    self.view.queue_message(message);
                     if self.game.active_player_is_bot() {
                         self.spawn_make_bid_bot();
                         self.view.queue_message(GameMessage::Delay(1.0));
+                    } else {
+                        self.view.queue_message(message);
                     }
                 }
                 GameMessage::Delay(_) => todo!(),
@@ -124,9 +125,8 @@ impl Controller {
                 }
                 PlayerAction::MakeBid(..) => {
                     self.view.bid_selector.visible = false;
-                    self.game.perform_player_action(&action);
+                    self.game.perform_player_action(&action)
                 },
-                PlayerAction::ChooseTrump(_) => todo!(),
                 PlayerAction::PlayCard(_, _) => todo!(),
                 PlayerAction::MoveCardToNest(_) => todo!(),
                 PlayerAction::TakeCardFromNest(_) => todo!(),
@@ -153,16 +153,16 @@ impl Controller {
     }
 
     // Turn the bot loose on the world.
-    fn spawn_choose_trump_bot(&self) {
-        if !self.game.active_player_is_bot() {
-            return;
-        }
-        let game_clone = self.game.clone();
-        let sender = self.player_action_sender.clone();
-        std::thread::spawn(move || {
-            BotMgr::choose_trump(&game_clone, sender);
-        });
-    }
+    // fn spawn_choose_trump_bot(&self) {
+    //     if !self.game.active_player_is_bot() {
+    //         return;
+    //     }
+    //     let game_clone = self.game.clone();
+    //     let sender = self.player_action_sender.clone();
+    //     std::thread::spawn(move || {
+    //         BotMgr::choose_trump(&game_clone, sender);
+    //     });
+    // }
 
     // Turn the bot loose on the world.
     fn spawn_play_card_bot(&self) {
