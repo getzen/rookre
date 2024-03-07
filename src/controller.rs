@@ -100,7 +100,7 @@ impl Controller {
                 }
                 GameMessage::UpdateHand(..) => {
                     self.view.queue_message(message);
-                    self.view.queue_message(GameMessage::Delay(0.1));
+                    self.view.queue_message(GameMessage::Delay(0.02));
                 }
                 GameMessage::UpdateActivePlayer(..)=> self.view.queue_message(message),
                 GameMessage::UpdateDealer(..) => self.view.queue_message(message),

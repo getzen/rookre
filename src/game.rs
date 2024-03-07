@@ -463,18 +463,30 @@ impl Game {
         cards
     }
 
-    pub fn move_nest_cards_to_hand(&mut self) {
-        let player_id = self.bid_winner.unwrap();
-        self.players[player_id].hand.append(&mut self.nest);
-        self.sort_hand(player_id);
+    pub fn move_nest_card_to_hand(&mut self) {
+        let p = self.bid_winner.unwrap();
+        if let Some(card) = self.nest.pop() {
+            self.players[p].hand.push(card);
+        }
+        if self.send_messages {
+            let msg = GameMessage::UpdateHand(self.clone(), p);
+            self.message_sender.send(msg).unwrap();
+        }
+        self.sort_hand(p);
     }
 
     pub fn discard_to_nest(&mut self, ids: Vec<CardId>) {
-        let player_id = self.bid_winner.unwrap();
-        let winner = &mut self.players[player_id];
+        let p = self.bid_winner.unwrap();
+        let winner = &mut self.players[p];
         for id in ids {
             winner.remove_from_hand(&id);
             self.nest.push(id);
+        }
+        if self.send_messages {
+            let msg = GameMessage::UpdateHand(self.clone(), p);
+            self.message_sender.send(msg).unwrap();
+            let msg = GameMessage::UpdateNest(self.clone());
+            self.message_sender.send(msg).unwrap();
         }
     }
 
@@ -698,7 +710,8 @@ impl Game {
                     println!("game: WaitForBid");
                 }
                 MoveNestToHand => {
-                    self.move_nest_cards_to_hand();
+                    println!("game: MoveNestToHand");
+                    self.move_nest_card_to_hand();
                     self.action_queue.push_back(WaitForDiscards);
                     self.do_next_action();
                 }
@@ -708,13 +721,8 @@ impl Game {
                 WaitForDiscards => {
                     println!("game::WaitForDiscards");
                 }
-                PreChooseTrump => {
-                    self.action_queue.push_back(WaitForChooseTrump);
-                    self.do_next_action();
-                }
-                WaitForChooseTrump => {
-                    println!("game: WaitForChooseTrump");
-                }
+                PreChooseTrump => {}
+                WaitForChooseTrump => {}
                 PrepareForNewTrick => {
                     self.prepare_for_new_trick();
                     self.action_queue.push_back(WaitForPlayCard);
@@ -751,6 +759,7 @@ impl Game {
                 match opt_suit {
                     Some(suit) => {
                         self.set_trump(*suit);
+                        self.bid_winner = Some(self.active_player);
                         self.action_queue.push_back(MoveNestToHand)
                     },
                     None => {
