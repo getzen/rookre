@@ -189,12 +189,12 @@ impl View {
     }
 
     fn update_hand(&mut self, game: &Game, player_id: PlayerId) {
-        let p_count = game.players.len();
+        let count = game.player_count;
         let hand = &game.players[player_id].hand;
         let is_bot = game.player_is_bot(player_id);
         for (idx, id) in hand.iter().enumerate() {
-            let pos = ViewFn::hand_card_position(player_id, p_count, is_bot, idx, hand.len());
-            let angle = ViewFn::player_rotation(player_id, p_count);
+            let pos = ViewFn::hand_card_position(player_id, count, is_bot, idx, hand.len());
+            let angle = ViewFn::player_rotation(player_id, count);
             self.update_card(id, pos, angle, 100 + idx, !is_bot); // adding 100 so hand cards are higher than deck cards
         }
     }
@@ -213,7 +213,7 @@ impl View {
 
     fn update_active_player(&mut self, game: &Game) {
         let p = game.active_player;
-        let count = game.players.len();
+        let count = game.player_count;
         let pos = ViewFn::active_player_marker_position(p, count);
         let angle = ViewFn::player_rotation(p, count);
         self.active_player_marker.transform.set_translation(pos);
@@ -223,7 +223,7 @@ impl View {
 
     fn update_dealer(&mut self, game: &Game) {
         let p = game.dealer;
-        let count = game.players.len();
+        let count = game.player_count;
         let pos = ViewFn::dealer_marker_position(p, count);
         let angle = ViewFn::player_rotation(p, count);
         self.dealer_marker.transform.set_translation(pos);
@@ -235,8 +235,10 @@ impl View {
         if game.active_player_is_bot() {
             println!("bot bidding: {}", game.active_player);
         } else {
-            println!("bid_selector visible");
+            let suits = game.available_trump_suits();
+            self.bid_selector.set_enabled_suits(suits);
             self.bid_selector.visible = true;
+            println!("bid_selector visible");
         }
     }
 }

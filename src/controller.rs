@@ -102,7 +102,7 @@ impl Controller {
                     self.view.queue_message(message);
                     self.view.queue_message(GameMessage::Delay(0.02));
                 }
-                GameMessage::UpdateActivePlayer(..)=> self.view.queue_message(message),
+                GameMessage::UpdateActivePlayer(..) => self.view.queue_message(message),
                 GameMessage::UpdateDealer(..) => self.view.queue_message(message),
                 GameMessage::GetBid(..) => {
                     if self.game.active_player_is_bot() {
@@ -125,7 +125,7 @@ impl Controller {
                 }
                 PlayerAction::MakeBid(..) => {
                     self.view.bid_selector.visible = false;
-                },
+                }
                 PlayerAction::PlayCard(_, _) => todo!(),
                 PlayerAction::MoveCardToNest(_) => todo!(),
                 PlayerAction::TakeCardFromNest(_) => todo!(),

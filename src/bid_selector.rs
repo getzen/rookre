@@ -8,6 +8,7 @@ use notan::prelude::*;
 
 use crate::card::CardSuit;
 use crate::game::PlayerAction;
+use crate::image_button::ButtonState;
 use crate::image_button::ImageButton;
 use crate::transform::Transform;
 use crate::view_fn::ViewFn;
@@ -90,12 +91,13 @@ impl BidSelector {
         for (idx, suit) in suits.iter().enumerate() {
             let tex_enabled = ViewFn::load_suit_texture(gfx, suit);
             let tex_mouse_over = Some(ViewFn::load_suit_mouse_over_texture(gfx, suit));
+            let tex_disabled = Some(ViewFn::load_suit_disabled_texture(gfx, suit));
             let pos = vec2(32. + 50. * idx as f32, 53.);
             let mut button = ImageButton::new(
                 pos,
                 tex_enabled,
                 tex_mouse_over,
-                None,
+                tex_disabled,
                 String::new(),
                 Some(sender.clone()),
             );
@@ -103,6 +105,19 @@ impl BidSelector {
             buttons.push(button);
         }
         buttons
+    }
+
+    pub fn set_enabled_suits(&mut self, suits: Vec<CardSuit>) {
+        println!("setting enabled suits");
+        let all_suits = vec![CardSuit::Club, CardSuit::Diamond, CardSuit::Heart, CardSuit::Spade];
+        for (idx, button) in self.suit_buttons.iter_mut().enumerate() {
+            let button_suit = all_suits[idx];
+            if suits.contains(&button_suit) {
+                button.state = ButtonState::Enabled;
+            } else {
+                button.state = ButtonState::Disabled;
+            }
+        }
     }
 }
 

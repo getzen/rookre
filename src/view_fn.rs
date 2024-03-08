@@ -265,6 +265,25 @@ impl ViewFn {
         builder.build().unwrap()
     }
 
+    pub fn load_suit_disabled_texture(gfx: &mut Graphics, suit: &CardSuit) -> Texture {
+        let builder = match suit {
+            CardSuit::Club => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/club_disabled.png")),
+            CardSuit::Diamond => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/diamond_disabled.png")),
+            CardSuit::Heart => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/heart_disabled.png")),
+            CardSuit::Spade => gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/spade_disabled.png")),
+            _ => panic!(),
+        };
+        builder.build().unwrap()
+    }
+
     /*
         pub fn create_trump_view(gfx: &mut Graphics) -> TrumpView {
             let mut suit_textures = Vec::new();

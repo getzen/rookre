@@ -62,7 +62,7 @@ impl Bot for BotMonte {
             hidden_cards.push(*id);
         }
 
-        for p in 0..game.players.len() {
+        for p in 0..game.player_count {
             if p == game.active_player {
                 continue;
             }
@@ -106,7 +106,7 @@ impl Bot for BotMonte {
                 //println!("=== id {} of {}", i, playable_ids.len());
                 let mut monte_game = sim_game.clone();
 
-                // for idx in 0..monte_game.players.len() {
+                // for idx in 0..monte_game.player_count {
                 //     println!("{}: {:?}", idx, monte_game.players[idx].partner);
                 // }
 

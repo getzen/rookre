@@ -66,10 +66,12 @@ pub struct Game {
     pub deck: Vec<CardId>,
     pub nest: Vec<CardId>,
 
+    pub player_count: usize,
     pub players: Vec<Player>,
     pub dealer: PlayerId,
     pub active_player: PlayerId,
 
+    pub pass_count: u8,
     pub high_bid: Option<Bid>,
     pub bid_winner: Option<PlayerId>,
 
@@ -113,9 +115,11 @@ impl Game {
             cards: SlotMap::new(),
             deck: Vec::new(),
             nest: Vec::new(),
+            player_count,
             players,
             dealer: 2,
             active_player: 0,
+            pass_count: 0,
             high_bid: None,
             bid_winner: None,
             trick: Trick::new(player_count),
@@ -151,7 +155,7 @@ impl Game {
 
     pub fn advance_active_player(&mut self) {
         loop {
-            self.active_player = (self.active_player + 1) % self.players.len();
+            self.active_player = (self.active_player + 1) % self.player_count;
             if self.active_player().active {
                 break;
             }
@@ -163,8 +167,8 @@ impl Game {
     }
 
     pub fn assign_across_partners(&mut self) {
-        if self.players.len() != 4 {
-            panic!("Can't assign partners for {} players.", self.players.len());
+        if self.player_count != 4 {
+            panic!("Can't assign partners for {} players.", self.player_count);
         }
         self.players[0].partner = Some(2);
         self.players[1].partner = Some(3);
@@ -174,7 +178,7 @@ impl Game {
     }
 
     fn assign_called_partner(&mut self, caller: PlayerId, card_id: CardId) {
-        for p in 0..self.players.len() {
+        for p in 0..self.player_count {
             if self.players[p].hand.contains(&card_id) {
                 self.players[p].partner = Some(caller);
                 self.players[caller].partner = Some(p);
@@ -291,19 +295,21 @@ impl Game {
 
         self.nest.clear();
 
-        self.dealer = (self.dealer + 1) % self.players.len();
+        self.dealer = (self.dealer + 1) % self.player_count;
         if self.send_messages {
             let msg = GameMessage::UpdateDealer(self.clone());
             self.message_sender.send(msg).unwrap();
         }
 
-        self.active_player = (self.dealer + 1) % self.players.len();
+        self.active_player = (self.dealer + 1) % self.player_count;
         if self.send_messages {
             let msg = GameMessage::UpdateActivePlayer(self.clone());
             self.message_sender.send(msg).unwrap();
         }
 
-        self.trick = Trick::new(self.players.len());
+        self.pass_count = 0;
+
+        self.trick = Trick::new(self.player_count);
         self.tricks_played = 0;
         self.trump_broken = !self.options.trump_must_be_broken;
 
@@ -336,12 +342,10 @@ impl Game {
 
     /// Deals the given number of cards to each player.
     pub fn deal_cards(&mut self, count: usize) {
-        let p_count = self.players.len();
-
         // Start with the player to the dealer's left.
-        let mut deal_to = (self.dealer + 1) % p_count;
+        let mut deal_to = (self.dealer + 1) % self.player_count;
 
-        for _ in 0..(count * p_count) {
+        for _ in 0..(count * self.player_count) {
             if let Some(id) = self.deck.pop() {
                 self.players[deal_to].add_to_hand(id);
 
@@ -350,11 +354,11 @@ impl Game {
                     self.message_sender.send(msg).unwrap();
                 }
             }
-            deal_to = (deal_to + 1) % p_count;
+            deal_to = (deal_to + 1) % self.player_count;
         }
 
         // Sort human hands.
-        for p in 0..self.players.len() {
+        for p in 0..self.player_count {
             if !self.player_is_bot(p) {
                 self.sort_hand(p);
                 if self.send_messages {
@@ -399,6 +403,33 @@ impl Game {
         }
     }
 
+    pub fn available_trump_suits(&self) -> Vec<CardSuit> {
+        let top_nest_id = self.nest.last().unwrap();
+        let card = self.cards.get(*top_nest_id).unwrap();
+
+        if self.pass_count < self.player_count as u8 {
+            // Still round one of bidding.
+            return vec![card.suit];
+        } else {
+            // Second round of bidding.
+            let all_suits = vec![
+                CardSuit::Club,
+                CardSuit::Diamond,
+                CardSuit::Heart,
+                CardSuit::Spade,
+            ];
+            let mut suits = Vec::new();
+            for suit in all_suits {
+                if suit == card.suit {
+                    continue;
+                } else {
+                    suits.push(suit);
+                }
+            }
+            return suits;
+        }
+    }
+
     // /// Calculate the minimum and maximum bids based on the card points available.
     // pub fn bid_min_max_increment(&self) -> (usize, usize, usize) {
     //     let mut max = 0;
@@ -420,10 +451,12 @@ impl Game {
     pub fn make_bid(&mut self, bid: Bid) {
         self.active_player_mut().bid = Some(bid);
         match bid {
-            Bid::Pass => {}
+            Bid::Pass => {
+                self.pass_count += 1;
+                self.advance_active_player();
+            }
             _ => self.bid_winner = Some(self.active_player),
         }
-        self.advance_active_player();
     }
 
     fn active_bidders_remaining(&self) -> usize {
@@ -433,14 +466,18 @@ impl Game {
                 for p in &self.players {
                     match p.bid {
                         Some(bid) => match bid {
-                            Bid::Pass => {active_count += 1}
-                            Bid::Suit(_) => { return 0;},
+                            Bid::Pass => active_count += 1,
+                            Bid::Suit(_) => {
+                                return 0;
+                            }
                         },
-                        None => {active_count += 1}
+                        None => active_count += 1,
                     }
                 }
             }
-            _ => {panic!("BiddingKind not implemented.")}
+            _ => {
+                panic!("BiddingKind not implemented.")
+            }
         }
         active_count
     }
@@ -512,9 +549,7 @@ impl Game {
         // Mark the cards matching trump.
         for card in self.cards.values_mut() {
             if !card.is_wild {
-                if card.suit == suit
-                    || card.kind == CardKind::Joker
-                    || card.kind == CardKind::Bird
+                if card.suit == suit || card.kind == CardKind::Joker || card.kind == CardKind::Bird
                 {
                     card.suit = suit;
                     card.is_trump = true;
@@ -606,7 +641,7 @@ impl Game {
         if !self.active_player().active {
             self.advance_active_player();
         }
-        self.trick = Trick::new(self.players.len());
+        self.trick = Trick::new(self.player_count);
     }
 
     pub fn hand_completed(&self) -> bool {
@@ -765,20 +800,18 @@ impl Game {
             PlayerAction::DealCards => {
                 self.action_queue.push_back(DealCards);
             }
-            PlayerAction::MakeBid(opt_suit) => {
-                match opt_suit {
-                    Some(suit) => {
-                        self.set_trump(*suit);
-                        self.bid_winner = Some(self.active_player);
-                        self.action_queue.push_back(MoveNestToHand)
-                    },
-                    None => {
-                        println!("Player {}: pass.", self.active_player);
-                        self.advance_active_player();
-                        self.action_queue.push_back(WaitForBid);
-                    },
+            PlayerAction::MakeBid(opt_suit) => match opt_suit {
+                Some(suit) => {
+                    self.set_trump(*suit);
+                    self.bid_winner = Some(self.active_player);
+                    self.action_queue.push_back(MoveNestToHand)
                 }
-            }
+                None => {
+                    println!("Player {}: pass.", self.active_player);
+                    self.advance_active_player();
+                    self.action_queue.push_back(WaitForBid);
+                }
+            },
             PlayerAction::MoveCardToNest(id) => {
                 println!("MoveCardToNest");
                 self.discard_to_nest(vec![*id]);
@@ -790,7 +823,7 @@ impl Game {
             PlayerAction::EndNestExchange => {
                 self.action_queue.push_back(PreChooseTrump);
             }
-           
+
             PlayerAction::PlayCard(_, c_id) => {
                 self.play_card_id(c_id);
                 if self.trick_completed() {
@@ -805,66 +838,66 @@ impl Game {
 }
 
 // Pop, perform, and return action in queue. Add next action.
-    // pub fn update(&mut self, time_delta: f32) -> Option<GameAction> {
-    //     if let Some(action) = self.action_queue.pop_front() {
-    //         match action {
-    //             Setup => {
-    //                 self.create_cards();
-    //                 self.action_queue.push_back(PrepareForNewHand(Vec::new()));
-    //             }
-    //             PrepareForNewHand(_) => {
-    //                 self.prepare_for_new_hand();
-    //                 self.action_queue.push_back(DealCards);
-    //             }
-    //             DealCards => {
-    //                 self.deal_cards(self.options.hand_size);
-    //                 self.action_queue.push_back(PresentNest);
-    //             }
-    //             PresentNest => {
-    //                 self.action_queue.push_back(PreBid);
-    //             }
-    //             PreBid => {
-    //                 self.action_queue.push_back(WaitForBid);
-    //             }
-    //             WaitForBid => {}
-    //             MoveNestToHand => {
-    //                 self.move_nest_cards_to_hand();
-    //                 self.action_queue.push_back(PreDiscard);
-    //             }
-    //             PreDiscard => {
-    //                 self.action_queue.push_back(WaitForDiscards);
-    //             }
-    //             WaitForDiscards => {}
-    //             PreChooseTrump => {
-    //                 self.action_queue.push_back(WaitForChooseTrump);
-    //             }
-    //             WaitForChooseTrump => {} // just wait
-    //             PrepareForNewTrick => {
-    //                 self.prepare_for_new_trick();
-    //                 self.action_queue.push_back(PrePlayCard);
-    //             }
-    //             PrePlayCard => {
-    //                 self.action_queue.push_back(WaitForPlayCard);
-    //             }
-    //             WaitForPlayCard => {} // just wait
-    //             AwardTrick(p_id) => {
-    //                 self.award_trick();
-    //                 self.action_queue.push_back(PrepareForNewTrick);
-    //             }
-    //             EndHand => {
-    //                 self.award_nest();
-    //                 println!("========= End of Hand ========")
-    //             }
-    //             EndGame => todo!(),
-    //             Delay(mut time) => {
-    //                 time -= time_delta;
-    //                 if time > 0.0 {
-    //                     self.action_queue.push_front(GameAction::Delay(time));
-    //                 }
-    //             }
-    //             _ => {}
-    //         }
-    //         return Some(action);
-    //     }
-    //     None
-    // }
+// pub fn update(&mut self, time_delta: f32) -> Option<GameAction> {
+//     if let Some(action) = self.action_queue.pop_front() {
+//         match action {
+//             Setup => {
+//                 self.create_cards();
+//                 self.action_queue.push_back(PrepareForNewHand(Vec::new()));
+//             }
+//             PrepareForNewHand(_) => {
+//                 self.prepare_for_new_hand();
+//                 self.action_queue.push_back(DealCards);
+//             }
+//             DealCards => {
+//                 self.deal_cards(self.options.hand_size);
+//                 self.action_queue.push_back(PresentNest);
+//             }
+//             PresentNest => {
+//                 self.action_queue.push_back(PreBid);
+//             }
+//             PreBid => {
+//                 self.action_queue.push_back(WaitForBid);
+//             }
+//             WaitForBid => {}
+//             MoveNestToHand => {
+//                 self.move_nest_cards_to_hand();
+//                 self.action_queue.push_back(PreDiscard);
+//             }
+//             PreDiscard => {
+//                 self.action_queue.push_back(WaitForDiscards);
+//             }
+//             WaitForDiscards => {}
+//             PreChooseTrump => {
+//                 self.action_queue.push_back(WaitForChooseTrump);
+//             }
+//             WaitForChooseTrump => {} // just wait
+//             PrepareForNewTrick => {
+//                 self.prepare_for_new_trick();
+//                 self.action_queue.push_back(PrePlayCard);
+//             }
+//             PrePlayCard => {
+//                 self.action_queue.push_back(WaitForPlayCard);
+//             }
+//             WaitForPlayCard => {} // just wait
+//             AwardTrick(p_id) => {
+//                 self.award_trick();
+//                 self.action_queue.push_back(PrepareForNewTrick);
+//             }
+//             EndHand => {
+//                 self.award_nest();
+//                 println!("========= End of Hand ========")
+//             }
+//             EndGame => todo!(),
+//             Delay(mut time) => {
+//                 time -= time_delta;
+//                 if time > 0.0 {
+//                     self.action_queue.push_front(GameAction::Delay(time));
+//                 }
+//             }
+//             _ => {}
+//         }
+//         return Some(action);
+//     }
+//     None
+// }
