@@ -1,6 +1,5 @@
-use crate::bid::Bid;
 use crate::bot::BotKind;
-use crate::card::CardId;
+use crate::card::{CardId, CardSuit};
 use crate::trick::Trick;
 
 pub type PlayerId = usize;
@@ -17,7 +16,7 @@ pub struct Player {
     pub partner: Option<PlayerId>,
     pub active: bool, // alive in hand?
     pub hand: Vec<CardId>,
-    pub bid: Option<Bid>,
+    pub bid: Option<CardSuit>,
     pub tricks: Vec<Trick>,
     pub points_this_hand: isize,
     pub score: isize,

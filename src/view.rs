@@ -10,7 +10,6 @@ use slotmap::SlotMap;
 
 use crate::{
     animators::{AngleAnimator, TranslationAnimator},
-    bid::Bid,
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit},
     card_view::{self, CardView},

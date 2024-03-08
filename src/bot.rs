@@ -2,7 +2,6 @@ use std::sync::mpsc::Sender;
 use std::thread;
 use std::time::Duration;
 
-use crate::bid::Bid;
 use crate::bot_monte::BotMonte;
 use crate::bot_random::BotRandom;
 

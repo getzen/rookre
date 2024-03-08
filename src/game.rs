@@ -4,7 +4,6 @@ use std::sync::mpsc::Sender;
 
 use slotmap::SlotMap;
 
-use crate::bid::Bid;
 use crate::bot::BotKind;
 use crate::card::{Card, CardId, CardKind, CardSuit};
 use crate::game::GameAction::*;
@@ -72,7 +71,7 @@ pub struct Game {
     pub active_player: PlayerId,
 
     pub pass_count: u8,
-    pub high_bid: Option<Bid>,
+    pub high_bid: Option<CardSuit>,
     pub bid_winner: Option<PlayerId>,
 
     pub trick: Trick,
@@ -448,39 +447,52 @@ impl Game {
     //     (min, max, self.options.bid_increment)
     // }
 
-    pub fn make_bid(&mut self, bid: Bid) {
-        self.active_player_mut().bid = Some(bid);
+    pub fn make_bid(&mut self, bid: Option<CardSuit>) {
+        self.active_player_mut().bid = bid;
         match bid {
-            Bid::Pass => {
+            Some(suit) => {
+                self.bid_winner = Some(self.active_player);
+                self.set_trump(suit);
+                self.high_bid = bid;
+                if self.pass_count < self.player_count as u8 {
+                    // Do card exchange.
+                    self.action_queue.push_back(MoveNestToHand)
+                } else {
+                    // Skip card exchange.
+                    self.action_queue.push_back(PrepareForNewTrick)
+                }
+            },
+            None => {
                 self.pass_count += 1;
+                println!("pass count: {}", self.pass_count);
                 self.advance_active_player();
-            }
-            _ => self.bid_winner = Some(self.active_player),
+                self.action_queue.push_back(WaitForBid);
+            },
         }
     }
 
-    fn active_bidders_remaining(&self) -> usize {
-        let mut active_count = 0;
-        match self.options.bidding_kind {
-            BiddingKind::Euchre => {
-                for p in &self.players {
-                    match p.bid {
-                        Some(bid) => match bid {
-                            Bid::Pass => active_count += 1,
-                            Bid::Suit(_) => {
-                                return 0;
-                            }
-                        },
-                        None => active_count += 1,
-                    }
-                }
-            }
-            _ => {
-                panic!("BiddingKind not implemented.")
-            }
-        }
-        active_count
-    }
+    // fn active_bidders_remaining(&self) -> usize {
+    //     let mut active_count = 0;
+    //     match self.options.bidding_kind {
+    //         BiddingKind::Euchre => {
+    //             for p in &self.players {
+    //                 match p.bid {
+    //                     Some(bid) => match bid {
+    //                         Bid::Pass => active_count += 1,
+    //                         Bid::Suit(_) => {
+    //                             return 0;
+    //                         }
+    //                     },
+    //                     None => active_count += 1,
+    //                 }
+    //             }
+    //         }
+    //         _ => {
+    //             panic!("BiddingKind not implemented.")
+    //         }
+    //     }
+    //     active_count
+    // }
 
     pub fn assign_makers_and_defenders(&mut self) {
         let maker = self.bid_winner.unwrap();
@@ -800,18 +812,9 @@ impl Game {
             PlayerAction::DealCards => {
                 self.action_queue.push_back(DealCards);
             }
-            PlayerAction::MakeBid(opt_suit) => match opt_suit {
-                Some(suit) => {
-                    self.set_trump(*suit);
-                    self.bid_winner = Some(self.active_player);
-                    self.action_queue.push_back(MoveNestToHand)
-                }
-                None => {
-                    println!("Player {}: pass.", self.active_player);
-                    self.advance_active_player();
-                    self.action_queue.push_back(WaitForBid);
-                }
-            },
+            PlayerAction::MakeBid(bid) => {
+                self.make_bid(*bid)
+            }
             PlayerAction::MoveCardToNest(id) => {
                 println!("MoveCardToNest");
                 self.discard_to_nest(vec![*id]);

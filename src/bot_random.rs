@@ -1,4 +1,3 @@
-use crate::bid::Bid;
 use crate::bot::Bot;
 use crate::card::{CardId, CardSuit};
 use crate::game::Game;
