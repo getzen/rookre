@@ -95,7 +95,7 @@ impl GameOptions {
     pub fn new() -> Self {
         Self {
             deck_kind: DeckKind::Standard53,
-            remove_ranks: vec![2, 3, 4, 6],
+            remove_ranks: vec![2, 3, 4],
             remove_cards: vec![],
             bird_joker_rank: 15.0, // default = 16.0
             bird_joker_points: 0,
@@ -104,7 +104,7 @@ impl GameOptions {
             player_count_default: 4,
             partner_kind: PartnerKind::Across,
             hand_size: 9,
-            nest_size: 1,
+            nest_size: 5,
             nest_face_up: 1,
             bidding_kind: BiddingKind::Euchre,
             bidding_progression: BiddingProgression::OneBidderLeft,

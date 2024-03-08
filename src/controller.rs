@@ -125,7 +125,6 @@ impl Controller {
                 }
                 PlayerAction::MakeBid(..) => {
                     self.view.bid_selector.visible = false;
-                    self.game.perform_player_action(&action)
                 },
                 PlayerAction::PlayCard(_, _) => todo!(),
                 PlayerAction::MoveCardToNest(_) => todo!(),

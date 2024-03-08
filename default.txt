@@ -3,7 +3,6 @@ remove_ranks:
 - 2
 - 3
 - 4
-- 6
 remove_cards: []
 bird_joker_rank: 15.0
 bird_joker_points: 0
@@ -20,7 +19,7 @@ face_rank_points:
 player_count_default: 4
 partner_kind: Across
 hand_size: 9
-nest_size: 1
+nest_size: 5
 nest_face_up: 1
 bidding_kind: Euchre
 bidding_progression: OneBidderLeft

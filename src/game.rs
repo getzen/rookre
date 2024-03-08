@@ -475,14 +475,14 @@ impl Game {
 
     pub fn move_nest_card_to_hand(&mut self) {
         let p = self.bid_winner.unwrap();
-        if let Some(card) = self.nest.pop() {
-            self.players[p].hand.push(card);
+        if let Some(id) = self.nest.pop() {
+            self.players[p].hand.push(id);
         }
+        self.sort_hand(p);
         if self.send_messages {
             let msg = GameMessage::UpdateHand(self.clone(), p);
             self.message_sender.send(msg).unwrap();
         }
-        self.sort_hand(p);
     }
 
     pub fn discard_to_nest(&mut self, ids: Vec<CardId>) {
