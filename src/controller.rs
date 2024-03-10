@@ -112,6 +112,14 @@ impl Controller {
                         self.view.queue_message(message);
                     }
                 }
+                GameMessage::GetDiscard(..) => {
+                    if self.game.active_player_is_bot() {
+                        //self.spawn_make_bid_bot();
+                        self.view.queue_message(GameMessage::Delay(1.0));
+                    } else {
+                        self.view.queue_message(message);
+                    }
+                }
                 GameMessage::Delay(_) => todo!(),
             }
         }

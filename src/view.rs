@@ -13,6 +13,7 @@ use crate::{
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit},
     card_view::{self, CardView},
+    discard_panel::{self, DiscardPanel},
     game::{Game, GameAction, GameMessage, PlayerAction},
     image::Image,
     image_button::ImageButton,
@@ -31,6 +32,7 @@ pub struct View {
     pub dealer_marker: Image,
     pub deal_button: ImageButton<PlayerAction>,
     pub bid_selector: BidSelector,
+    pub discard_panel: DiscardPanel,
 
     fps_update: f32,
 }
@@ -41,11 +43,12 @@ impl View {
         cards: &SlotMap<CardId, Card>,
         sender: Sender<PlayerAction>,
     ) -> Self {
-        let card_views = View::create_card_sprites(cards, gfx);
+        let card_views = View::create_card_views(cards, gfx);
         let active_player_marker = View::create_active_player_marker(gfx);
         let dealer_marker = View::create_dealer_marker(gfx);
         let deal_button = View::create_deal_button(gfx, sender.clone());
-        let bid_selector = View::create_bid_selector_1(gfx, sender.clone());
+        let bid_selector = View::create_bid_selector(gfx, sender.clone());
+        let discard_panel = View::create_discard_panel(gfx, sender.clone());
 
         Self {
             game_message_queue: VecDeque::new(),
@@ -57,36 +60,20 @@ impl View {
             dealer_marker,
             deal_button,
             bid_selector,
+            discard_panel,
 
             fps_update: 0.0,
         }
     }
 
-    pub fn create_card_sprites(cards: &SlotMap<CardId, Card>, gfx: &mut Graphics) -> Vec<CardView> {
-        let mut sprites = Vec::new();
-
-        let face_down_tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/cards/back.png"))
-            .build()
-            .unwrap();
+    pub fn create_card_views(cards: &SlotMap<CardId, Card>, gfx: &mut Graphics) -> Vec<CardView> {
+        let mut card_views = Vec::new();
 
         for (_, card) in cards {
-            let sprite = View::create_card_sprite(card, &face_down_tex, gfx);
-            sprites.push(sprite);
+            let card_view = CardView::new(card, gfx);
+            card_views.push(card_view);
         }
-        sprites
-    }
-
-    fn create_card_sprite(card: &Card, face_down_tex: &Texture, gfx: &mut Graphics) -> CardView {
-        let face_up_tex = ViewFn::load_card_texture(gfx, card);
-        let sprite = CardView::new(
-            card.id,
-            face_up_tex,
-            Vec2::ZERO,
-            Some(face_down_tex.clone()),
-        );
-        sprite
+        card_views
     }
 
     fn create_active_player_marker(gfx: &mut Graphics) -> Image {
@@ -139,7 +126,7 @@ impl View {
         button
     }
 
-    fn create_bid_selector_1(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> BidSelector {
+    fn create_bid_selector(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> BidSelector {
         let suits = vec![
             CardSuit::Club,
             CardSuit::Diamond,
@@ -147,6 +134,10 @@ impl View {
             CardSuit::Spade,
         ];
         BidSelector::new(suits, gfx, sender)
+    }
+
+    fn create_discard_panel(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> DiscardPanel {
+        DiscardPanel::new(gfx, sender)
     }
 
     /// Add the action to the queue.
@@ -177,7 +168,7 @@ impl View {
         card_view.z_order = z_order;
         self.card_views_z_order_dirty = true;
 
-        card_view.use_alt_texture = !face_up;
+        card_view.face_down = !face_up;
     }
 
     fn update_deck(&mut self, game: &Game) {
@@ -240,6 +231,17 @@ impl View {
             println!("bid_selector visible");
         }
     }
+
+    fn get_discard(&mut self, game: &Game) {
+        if game.active_player_is_bot() {
+            println!("bot choosing discard: {}", game.active_player);
+        } else {
+            self.discard_panel.visible = true;
+
+            // Set eligible cards.
+
+        }
+    }
 }
 
 impl ViewTrait for View {
@@ -267,10 +269,19 @@ impl ViewTrait for View {
             send_msg = false;
         }
 
+        if self
+            .discard_panel
+            .handle_mouse_event(event, screen_pt, parent_affine, send_msg)
+        {
+            send_msg = false;
+        }
+
         // Iterate in reverse to check on-top sprites first.
         for card_view in self.card_views.iter_mut().rev() {
             if card_view.handle_mouse_event(event, screen_pt, parent_affine, send_msg) {
                 send_msg = false;
+
+
             }
         }
         !send_msg
@@ -321,6 +332,9 @@ impl ViewTrait for View {
                 GameMessage::GetBid(game) => {
                     self.get_bid(&game);
                 }
+                GameMessage::GetDiscard(game) => {
+                    self.get_discard(&game);
+                }
                 GameMessage::Delay(_) => {}
             };
         }
@@ -355,10 +369,12 @@ impl ViewTrait for View {
         self.active_player_marker.draw(draw, parent_affine);
         self.dealer_marker.draw(draw, parent_affine);
 
-        // Buttons
+        // Buttons and panels
         self.deal_button.draw(draw, parent_affine);
 
         self.bid_selector.draw(draw, parent_affine);
+
+        self.discard_panel.draw(draw, parent_affine);
 
         // FPS
         if self.fps_update < 0.0 {

@@ -53,6 +53,7 @@ pub enum GameMessage {
     UpdateActivePlayer(Game),
     UpdateDealer(Game),
     GetBid(Game),
+    GetDiscard(Game),
     Delay(f32),
 }
 
@@ -456,18 +457,22 @@ impl Game {
                 self.high_bid = bid;
                 if self.pass_count < self.player_count as u8 {
                     // Do card exchange.
-                    self.action_queue.push_back(MoveNestToHand)
+                    self.action_queue.push_back(MoveNestToHand);
+                    if self.send_messages {
+                        let msg = GameMessage::GetDiscard(self.clone());
+                        self.message_sender.send(msg).unwrap();
+                    }
                 } else {
                     // Skip card exchange.
                     self.action_queue.push_back(PrepareForNewTrick)
                 }
-            },
+            }
             None => {
                 self.pass_count += 1;
                 println!("pass count: {}", self.pass_count);
                 self.advance_active_player();
                 self.action_queue.push_back(WaitForBid);
-            },
+            }
         }
     }
 
@@ -812,9 +817,7 @@ impl Game {
             PlayerAction::DealCards => {
                 self.action_queue.push_back(DealCards);
             }
-            PlayerAction::MakeBid(bid) => {
-                self.make_bid(*bid)
-            }
+            PlayerAction::MakeBid(bid) => self.make_bid(*bid),
             PlayerAction::MoveCardToNest(id) => {
                 println!("MoveCardToNest");
                 self.discard_to_nest(vec![*id]);

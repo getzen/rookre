@@ -1,16 +1,10 @@
 use notan::{
-    draw::{Draw, DrawImages, DrawTransform},
-    math::{Affine2, Vec2},
-    prelude::{Color, Texture},
-    Event,
+    app::Graphics, draw::{Draw, DrawImages, DrawTransform}, math::{Affine2, Vec2}, prelude::{Color, Texture}, Event
 };
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator},
-    transform::Transform,
-    view_fn::CARD_SCALE,
-    view_trait::ViewTrait,
+    animators::{AngleAnimator, TranslationAnimator}, card::Card, transform::Transform, view_fn::{ViewFn, CARD_SCALE}, view_trait::ViewTrait
 };
 
 pub struct CardView {
@@ -18,15 +12,19 @@ pub struct CardView {
     pub visible: bool,
     pub z_order: usize,
     pub transform: Transform,
-    pub texture: Texture,
+    pub face_tex: Texture,
+
+    pub face_down: bool,
+    pub back_tex: Texture,
+
+    pub mouse_over: bool,
+    pub mouse_over_tex: Texture,
+   
     pub color: Color,
+
     /// Enabled for mouse events. Default is false.
     pub enabled: bool,
-    /// True means face-down card. Default is false.
-    pub use_alt_texture: bool,
-    /// Card back
-    pub alt_texture: Option<Texture>,
-
+    
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
     pub angle_animator: Option<AngleAnimator>,
@@ -34,23 +32,42 @@ pub struct CardView {
 
 impl CardView {
     pub fn new(
-        id: DefaultKey,
-        texture: Texture,
-        position: Vec2,
-        alt_texture: Option<Texture>,
+        card: &Card,
+        gfx: &mut Graphics,
     ) -> Self {
+        let face_tex = ViewFn::load_card_texture(gfx, card);
+
         let transform =
-            Transform::from_pos_tex_scale_centered(position, &texture, CARD_SCALE, true); //
+            Transform::from_pos_tex_scale_centered(Vec2::ZERO, &face_tex, CARD_SCALE, true);
+
+        let back_tex = gfx
+            .create_texture()
+            .from_image(include_bytes!("assets/cards/back.png"))
+            .build()
+            .unwrap();
+
+        let mouse_over_tex = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/cards/outline_solid.png"))
+        .build()
+        .unwrap();
+
         Self {
-            id,
+            id: card.id,
             visible: true,
             z_order: 0,
             transform,
-            texture,
+            face_tex,
+
+            face_down: false,
+            back_tex,
+
+            mouse_over: false,
+            mouse_over_tex,
+
             color: Color::WHITE,
             enabled: false,
-            use_alt_texture: false,
-            alt_texture,
+           
 
             translation_animator: None,
             angle_animator: None,
@@ -92,10 +109,14 @@ impl ViewTrait for CardView {
             .transform
             .contains_screen_point(screen_pt, parent_affine)
         {
+            self.mouse_over = send_msg;
             if send_msg {
                 self.send_message_for_event(event);
             }
             contains = true;
+            
+        } else {
+            self.mouse_over = false;
         }
 
         contains
@@ -122,10 +143,10 @@ impl ViewTrait for CardView {
             return;
         }
 
-        let tex = if self.use_alt_texture {
-            self.alt_texture.as_ref().unwrap()
+        let tex = if self.face_down {
+            &self.back_tex
         } else {
-            &self.texture
+            &self.face_tex
         };
 
         let (size_x, size_y) = self.transform.size().into();
@@ -133,5 +154,12 @@ impl ViewTrait for CardView {
             .transform(self.transform.mat3_with_parent(parent_affine))
             .size(size_x, size_y)
             .color(self.color);
+
+        if self.mouse_over {
+            draw.image(&self.mouse_over_tex)
+            .transform(self.transform.mat3_with_parent(parent_affine))
+            .size(size_x, size_y)
+            .color(self.color);
+        }
     }
 }

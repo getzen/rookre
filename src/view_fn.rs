@@ -407,7 +407,7 @@ impl ViewFn {
     }
 
     pub fn nest_display_position(index: usize, count: usize) -> Vec2 {
-        let x_spacing = CARD_SIZE.0 + 2.0;
+        let x_spacing = CARD_SIZE.0 / 2.0;
         let mut pt = VIEW_CENTER;
         pt.x -= (count - 1) as f32 * x_spacing / 2.0;
         pt.x += index as f32 * x_spacing;
@@ -450,5 +450,9 @@ impl ViewFn {
         let distance_from_center = 180.0;
         let radians = ViewFn::player_radians_from_center(player_id, player_count);
         ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
+    }
+
+    pub fn discard_panel_position() -> Vec2 {
+        vec2(VIEW_CENTER.x, VIEW_CENTER.y + 180.0)
     }
 }

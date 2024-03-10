@@ -8,6 +8,7 @@ mod bot_random;
 mod card;
 mod card_view;
 mod controller;
+mod discard_panel;
 mod game;
 mod game_options;
 mod image;
