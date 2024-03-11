@@ -8,18 +8,7 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator},
-    bid_selector::BidSelector,
-    card::{Card, CardId, CardSuit},
-    card_view::CardView,
-    discard_panel::{self, DiscardPanel},
-    game::{Game, GameAction, GameMessage, PlayerAction},
-    image::Image,
-    image_button::ImageButton,
-    player::PlayerId,
-    texture_loader::ViewFn,
-    view_geom::{ViewGeom, BUTTON_POS},
-    view_trait::ViewTrait,
+    animators::{AngleAnimator, TranslationAnimator}, bid_selector::BidSelector, card::{Card, CardId, CardSuit}, card_location::{CardGroup, CardLocation}, card_view::CardView, discard_panel::{self, DiscardPanel}, game::{Game, GameAction, GameMessage, PlayerAction}, image::Image, image_button::ImageButton, player::PlayerId, texture_loader::ViewFn, view_geom::{ViewGeom, BUTTON_POS}, view_trait::ViewTrait
 };
 
 pub struct View {
@@ -169,6 +158,42 @@ impl View {
         self.card_views_z_order_dirty = true;
 
         card_view.face_down = !face_up;
+    }
+
+    fn update_card_new(&mut self, card: &Card, location: CardLocation) {
+        let mut card_view = self.card_views.iter_mut().find(|s| s.id == card.id).unwrap();
+
+        // Create translation animator if needed.
+        let new_trans = location.translation();
+        if !card_view.transform.translation().abs_diff_eq(new_trans, 0.1) {
+            let animator = TranslationAnimator::new(
+                card_view.transform.translation(),
+                new_trans,
+                500.0, // velocity
+            );
+            card_view.translation_animator = Some(animator);
+        }
+
+        // Create angle animator if needed.
+        let new_angle = location.angle();
+        if (card_view.transform.angle() - new_angle).abs() > 0.01 {
+            let animator = AngleAnimator::new(card_view.transform.angle(), new_angle, 6.0);
+            card_view.angle_animator = Some(animator);
+        }
+
+        card_view.z_order = location.z_order();
+        self.card_views_z_order_dirty = true;
+
+        card_view.face_down = !card.face_up;
+    }
+
+    fn update_deck_new(&mut self, game: &Game) {
+        for (idx, id) in game.deck.iter().enumerate() {
+            if let Some(card) = game.cards.get(id) {
+                let location = CardLocation { group: CardGroup::Deck, group_index: idx, ..Default::default()};
+                self.update_card_new(card, location)
+            }
+        }
     }
 
     fn update_deck(&mut self, game: &Game) {

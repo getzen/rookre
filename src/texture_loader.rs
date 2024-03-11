@@ -12,6 +12,7 @@ pub const DEEP_GREEN: Color = Color::new(0. / 255., 175. / 255., 0. / 255., 1.);
 pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 1.);
 pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.);
 
+
 pub struct ViewFn {}
 
 impl ViewFn {
@@ -327,4 +328,5 @@ impl ViewFn {
             play_outline
         }
     */
+    
 }

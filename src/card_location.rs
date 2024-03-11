@@ -109,4 +109,15 @@ impl CardLocation {
             CardGroup::TrickAside => ViewGeom::player_rotation(self.player, self.player_len),
         }
     }
+
+    pub fn z_order(&self) -> usize {
+        match &self.group {
+            CardGroup::Deck => self.group_index,
+            CardGroup::NestExchange => todo!(),
+            CardGroup::NestAside => todo!(),
+            CardGroup::Hand => todo!(),
+            CardGroup::TrickActive => todo!(),
+            CardGroup::TrickAside => todo!(),
+        }
+    }
 }
