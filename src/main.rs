@@ -6,6 +6,7 @@ mod bot;
 mod bot_monte;
 mod bot_random;
 mod card;
+mod card_location;
 mod card_view;
 mod controller;
 mod discard_panel;
@@ -22,8 +23,9 @@ mod transform;
 mod trick;
 // mod trump_chooser_view;
 // mod trump_view;
+mod texture_loader;
 mod view;
-mod view_fn;
+mod view_geom;
 mod view_trait;
 
 use controller::Controller;

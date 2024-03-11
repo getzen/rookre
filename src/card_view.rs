@@ -1,10 +1,19 @@
 use notan::{
-    app::Graphics, draw::{Draw, DrawImages, DrawTransform}, math::{vec2, Affine2, Vec2}, prelude::{Color, Texture}, Event
+    app::Graphics,
+    draw::{Draw, DrawImages, DrawTransform},
+    math::{Affine2, Vec2},
+    prelude::{Color, Texture},
+    Event,
 };
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, card::Card, transform::Transform, view_fn::{ViewFn, CARD_SCALE}, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator},
+    card::Card,
+    card_location::CardLocation,
+    texture_loader::{ViewFn, CARD_TEX_SCALE},
+    transform::Transform,
+    view_trait::ViewTrait,
 };
 
 pub struct CardView {
@@ -19,28 +28,24 @@ pub struct CardView {
 
     pub mouse_over: bool,
     pub mouse_over_tex: Texture,
-   
+
     pub color: Color,
 
-    /// Enabled for mouse events. Default is false.
-    pub enabled: bool,
-    
+    pub selectable: bool,
+
+    pub location: CardLocation,
+
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
     pub angle_animator: Option<AngleAnimator>,
-    pub select_anim: Option<TranslationAnimator>,
-    pub unselect_anim: Option<TranslationAnimator>,
 }
 
 impl CardView {
-    pub fn new(
-        card: &Card,
-        gfx: &mut Graphics,
-    ) -> Self {
+    pub fn new(card: &Card, gfx: &mut Graphics) -> Self {
         let face_tex = ViewFn::load_card_texture(gfx, card);
 
         let transform =
-            Transform::from_pos_tex_scale_centered(Vec2::ZERO, &face_tex, CARD_SCALE, true);
+            Transform::from_pos_tex_scale_centered(Vec2::ZERO, &face_tex, CARD_TEX_SCALE, true);
 
         let back_tex = gfx
             .create_texture()
@@ -49,10 +54,10 @@ impl CardView {
             .unwrap();
 
         let mouse_over_tex = gfx
-        .create_texture()
-        .from_image(include_bytes!("assets/cards/outline_solid.png"))
-        .build()
-        .unwrap();
+            .create_texture()
+            .from_image(include_bytes!("assets/cards/outline_solid.png"))
+            .build()
+            .unwrap();
 
         Self {
             id: card.id,
@@ -68,32 +73,14 @@ impl CardView {
             mouse_over_tex,
 
             color: Color::WHITE,
-            enabled: false,
-           
+            selectable: false,
+
+            location: CardLocation::default(),
 
             translation_animator: None,
             angle_animator: None,
-
-            select_anim: None,
-            unselect_anim: None,
         }
     }
-
-    // pub fn select(&mut self) {
-    //     if self.select_anim.is_some() { return }
-    //     self.unselect_anim = None;
-    //     let start = self.transform.translation();
-    //     let end = start - vec2(0.0, 50.0);
-    //     self.select_anim = Some(TranslationAnimator::new(start, end, 100.0));
-    // }
-
-    // pub fn unselect(&mut self) {
-    //     if self.select_anim.is_some() { return }
-    //     self.select_anim = None;
-    //     let start = self.transform.translation();
-    //     let end = start + vec2(0.0, 50.0);
-    //     self.unselect_anim = Some(TranslationAnimator::new(start, end, 100.0));
-    // }
 }
 
 impl ViewTrait for CardView {
@@ -109,20 +96,6 @@ impl ViewTrait for CardView {
             self.transform.set_angle(animator.update(time_delta));
             if animator.completed {
                 self.angle_animator = None;
-            }
-        }
-
-        if let Some(animator) = &mut self.select_anim {
-            self.transform.set_translation(animator.update(time_delta));
-            if animator.completed {
-                self.select_anim = None;
-            }
-        }
-
-        if let Some(animator) = &mut self.unselect_anim {
-            self.transform.set_translation(animator.update(time_delta));
-            if animator.completed {
-                self.select_anim = None;
             }
         }
     }
@@ -149,7 +122,6 @@ impl ViewTrait for CardView {
                 self.send_message_for_event(event);
             }
             contains = true;
-            
         } else {
             self.mouse_over = false;
         }
@@ -192,8 +164,8 @@ impl ViewTrait for CardView {
 
         if self.mouse_over {
             draw.image(&self.mouse_over_tex)
-            .transform(self.transform.mat3_with_parent(parent_affine))
-            .size(size_x, size_y);
+                .transform(self.transform.mat3_with_parent(parent_affine))
+                .size(size_x, size_y);
         }
     }
 }

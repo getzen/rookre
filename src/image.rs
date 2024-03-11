@@ -6,7 +6,7 @@ use notan::{
     prelude::{Color, Texture},
 };
 
-use crate::{transform::Transform, view_fn::TEX_SCALE, view_trait::ViewTrait};
+use crate::{texture_loader::TEX_SCALE, transform::Transform, view_trait::ViewTrait};
 
 pub struct Image {
     pub visible: bool,

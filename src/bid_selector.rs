@@ -10,8 +10,9 @@ use crate::card::CardSuit;
 use crate::game::PlayerAction;
 use crate::image_button::ButtonState;
 use crate::image_button::ImageButton;
+use crate::texture_loader::ViewFn;
 use crate::transform::Transform;
-use crate::view_fn::ViewFn;
+use crate::view_geom::ViewGeom;
 use crate::view_trait::ViewTrait;
 
 pub struct BidSelector {
@@ -33,9 +34,9 @@ impl BidSelector {
             .unwrap();
 
         let trans = Transform::from_pos_tex_scale_centered(
-            ViewFn::bid_view_position(0, 4),
+            ViewGeom::bid_view_position(0, 4),
             &texture,
-            crate::view_fn::TEX_SCALE,
+            crate::texture_loader::TEX_SCALE,
             true,
         );
 

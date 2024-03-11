@@ -565,11 +565,10 @@ impl Game {
     pub fn set_trump(&mut self, suit: CardSuit) {
         // Mark the cards matching trump.
         for card in self.cards.values_mut() {
-                if card.suit == suit || card.kind == CardKind::Joker || card.kind == CardKind::Bird
-                {
-                    card.suit = suit;
-                    card.is_trump = true;
-                }
+            if card.suit == suit || card.kind == CardKind::Joker || card.kind == CardKind::Bird {
+                card.suit = suit;
+                card.is_trump = true;
+            }
         }
     }
 

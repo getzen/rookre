@@ -1,36 +1,16 @@
-use std::f32::consts::PI;
-use std::sync::mpsc::Sender;
+use notan::prelude::*;
 
-use notan::math::{vec2, Vec2};
-use notan::{draw::*, prelude::*};
-
-//use crate::bid_view::BidView;
-//use crate::button::Button;
 use crate::card::CardSuit;
-use crate::card::{Card, CardId, CardKind};
-//use crate::card_view::{CardView, CARD_SIZE};
-use crate::game::PlayerAction;
-//use crate::message_view::MessageView;
-use crate::player::PlayerId;
-//use crate::trump_view::TrumpView;
+use crate::card::{Card, CardKind};
 
 pub const TEX_SCALE: f32 = 2.0; // Default texture images are double size.
-pub const CARD_SCALE: f32 = 3.0; // Card images are triple size.
+pub const CARD_TEX_SCALE: f32 = 3.0; // Card images are triple size.
 
 // Colors
 pub const TABLE_COLOR: Color = Color::from_rgb(0.3, 0.3, 0.3);
 pub const DEEP_GREEN: Color = Color::new(0. / 255., 175. / 255., 0. / 255., 1.);
 pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 1.);
 pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.);
-
-pub const CARD_SIZE: (f32, f32) = (80., 120.); // texture is 240 x 360
-
-pub const VIEW_CENTER: Vec2 = vec2(400., 400.);
-
-pub const BUTTON_POS: Vec2 = vec2(400., 480.);
-
-pub const MESSAGE_POS: (f32, f32) = (1100., 910.);
-pub const MOVE_DUR: f32 = 0.5;
 
 pub struct ViewFn {}
 
@@ -347,117 +327,4 @@ impl ViewFn {
             play_outline
         }
     */
-    pub fn message_view_position(p_id: Option<PlayerId>, player_count: usize) -> Vec2 {
-        match p_id {
-            Some(p_id) => ViewFn::bid_view_position(p_id, player_count),
-            None => vec2(400., 350.),
-        }
-    }
-
-    pub fn position_from(start_pos: Vec2, radians: f32, magnitude: f32) -> Vec2 {
-        vec2(
-            start_pos.x + radians.cos() * magnitude,
-            start_pos.y + radians.sin() * magnitude,
-        )
-    }
-
-    pub fn player_radians_from_center(player_id: usize, player_count: usize) -> f32 {
-        player_id as f32 * PI * 2.0 / player_count as f32 + PI / 2.0
-    }
-
-    pub fn player_rotation(player_id: usize, player_count: usize) -> f32 {
-        player_id as f32 * PI * 2.0 / player_count as f32
-    }
-
-    pub fn deck_position() -> Vec2 {
-        //vec2(740., 720.)
-        VIEW_CENTER
-    }
-
-    pub fn hand_position(player_id: usize, player_count: usize) -> Vec2 {
-        let distance_from_center = 300.0;
-        let radians = ViewFn::player_radians_from_center(player_id, player_count);
-        ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
-    }
-
-    pub fn hand_card_position(
-        p_id: usize,
-        p_count: usize,
-        is_bot: bool,
-        card_idx: usize,
-        card_count: usize,
-        is_selected: bool,
-    ) -> Vec2 {
-        let max_width = match is_bot {
-            true => 280.,
-            false => 500.,
-        };
-        let max_spacing: f32 = 85.;
-
-        let computed_width = max_width / card_count as f32;
-        let x_spacing = max_spacing.min(computed_width);
-
-        let mut x_offset = (card_count - 1) as f32 * -x_spacing / 2.0;
-        x_offset += card_idx as f32 * x_spacing;
-
-        let radians = ViewFn::player_rotation(p_id, p_count);
-        let mut pos = ViewFn::hand_position(p_id, p_count);
-        pos.x += x_offset * radians.cos();
-        pos.y += x_offset * radians.sin();
-
-        if is_selected {
-            pos.y + 50.0;
-        }
-        pos
-    }
-
-    pub fn nest_display_position(index: usize, count: usize) -> Vec2 {
-        let x_spacing = CARD_SIZE.0 / 2.0;
-        let mut pt = VIEW_CENTER;
-        pt.x -= (count - 1) as f32 * x_spacing / 2.0;
-        pt.x += index as f32 * x_spacing;
-        pt
-    }
-
-    pub fn nest_side_position(index: usize, count: usize) -> Vec2 {
-        let x_spacing = 10.;
-        let mut pt = vec2(730., 730.0);
-        pt.x -= (count - 1) as f32 * x_spacing / 2.0;
-        pt.x += index as f32 * x_spacing;
-        pt
-    }
-
-    pub fn in_play_position(player_id: usize, player_count: usize) -> Vec2 {
-        let distance_from_center = 100.0;
-        let radians = ViewFn::player_radians_from_center(player_id, player_count);
-        ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
-    }
-
-    pub fn trick_won_position(player_id: usize, player_count: usize) -> Vec2 {
-        let distance_from_center = 500.0;
-        let radians = ViewFn::player_radians_from_center(player_id, player_count);
-        ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
-    }
-
-    pub fn dealer_marker_position(player_id: usize, player_count: usize) -> Vec2 {
-        let distance_from_center = 380.0;
-        let radians = ViewFn::player_radians_from_center(player_id, player_count);
-        ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
-    }
-
-    pub fn active_player_marker_position(player_id: usize, player_count: usize) -> Vec2 {
-        let distance_from_center = 370.0;
-        let radians = ViewFn::player_radians_from_center(player_id, player_count);
-        ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
-    }
-
-    pub fn bid_view_position(player_id: usize, player_count: usize) -> Vec2 {
-        let distance_from_center = 180.0;
-        let radians = ViewFn::player_radians_from_center(player_id, player_count);
-        ViewFn::position_from(VIEW_CENTER, radians, distance_from_center)
-    }
-
-    pub fn discard_panel_position() -> Vec2 {
-        vec2(VIEW_CENTER.x, VIEW_CENTER.y + 180.0)
-    }
 }

@@ -2,7 +2,6 @@ use std::{collections::VecDeque, sync::mpsc::Sender};
 
 use notan::{
     app::{App, Graphics},
-    graphics::Texture,
     math::{vec2, Affine2, Vec2},
     Event,
 };
@@ -12,13 +11,14 @@ use crate::{
     animators::{AngleAnimator, TranslationAnimator},
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit},
-    card_view::{self, CardView},
+    card_view::CardView,
     discard_panel::{self, DiscardPanel},
     game::{Game, GameAction, GameMessage, PlayerAction},
     image::Image,
     image_button::ImageButton,
     player::PlayerId,
-    view_fn::ViewFn,
+    texture_loader::ViewFn,
+    view_geom::{ViewGeom, BUTTON_POS},
     view_trait::ViewTrait,
 };
 
@@ -115,7 +115,7 @@ impl View {
             .unwrap();
 
         let mut button = ImageButton::new(
-            ViewFn::deck_position(),
+            BUTTON_POS,
             enabled,
             Some(mouse_over),
             None,
@@ -184,7 +184,14 @@ impl View {
         let is_bot = game.player_is_bot(player_id);
         for (idx, id) in hand.iter().enumerate() {
             let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
-            let pos = ViewFn::hand_card_position(player_id, count, is_bot, idx, hand.len(), card_view.mouse_over);
+            let pos = ViewFn::hand_card_position(
+                player_id,
+                count,
+                is_bot,
+                idx,
+                hand.len(),
+                card_view.mouse_over,
+            );
             let angle = ViewFn::player_rotation(player_id, count);
             self.update_card(id, pos, angle, 100 + idx, !is_bot); // adding 100 so hand cards are higher than deck cards
         }
@@ -205,8 +212,8 @@ impl View {
     fn update_active_player(&mut self, game: &Game) {
         let p = game.active_player;
         let count = game.player_count;
-        let pos = ViewFn::active_player_marker_position(p, count);
-        let angle = ViewFn::player_rotation(p, count);
+        let pos = ViewGeom::active_player_marker_position(p, count);
+        let angle = ViewGeom::player_rotation(p, count);
         self.active_player_marker.transform.set_translation(pos);
         self.active_player_marker.transform.set_angle(angle);
         self.active_player_marker.visible = true;
@@ -215,8 +222,8 @@ impl View {
     fn update_dealer(&mut self, game: &Game) {
         let p = game.dealer;
         let count = game.player_count;
-        let pos = ViewFn::dealer_marker_position(p, count);
-        let angle = ViewFn::player_rotation(p, count);
+        let pos = ViewGeom::dealer_marker_position(p, count);
+        let angle = ViewGeom::player_rotation(p, count);
         self.dealer_marker.transform.set_translation(pos);
         self.dealer_marker.transform.set_angle(angle);
         self.dealer_marker.visible = true;
@@ -240,7 +247,6 @@ impl View {
             self.discard_panel.visible = true;
 
             // Set eligible cards.
-
         }
     }
 }
@@ -282,7 +288,6 @@ impl ViewTrait for View {
             if card_view.handle_mouse_event(event, screen_pt, parent_affine, send_msg) {
                 send_msg = false;
                 card_view.mouse_over = true;
-
             } else {
                 card_view.mouse_over = false;
             }

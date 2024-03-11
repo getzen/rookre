@@ -49,7 +49,7 @@ impl<T> ImageButton<T> {
         let trans = Transform::from_pos_tex_scale_centered(
             position,
             &tex_enabled,
-            crate::view_fn::TEX_SCALE,
+            crate::texture_loader::TEX_SCALE,
             true,
         );
 

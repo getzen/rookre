@@ -23,9 +23,9 @@ pub enum ButtonState {
 impl ButtonState {
     fn fill_color(&self) -> Color {
         match *self {
-            ButtonState::Enabled => crate::view_fn::LIGHT_GRAY,
+            ButtonState::Enabled => crate::texture_loader::LIGHT_GRAY,
             ButtonState::Disabled => Color::GRAY,
-            ButtonState::MouseOver => crate::view_fn::LIGHT_GRAY,
+            ButtonState::MouseOver => crate::texture_loader::LIGHT_GRAY,
             ButtonState::MouseDown => Color::WHITE,
         }
     }

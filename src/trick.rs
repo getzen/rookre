@@ -50,14 +50,14 @@ impl Trick {
                 return false;
             }
         } else {
-                if let Some(lead_card) = &self.lead_card {
-                    if cards_matching_lead > 0 {
-                        // we have matching suit in hand
-                        if card.suit != lead_card.suit {
-                            return false;
-                        }
+            if let Some(lead_card) = &self.lead_card {
+                if cards_matching_lead > 0 {
+                    // we have matching suit in hand
+                    if card.suit != lead_card.suit {
+                        return false;
                     }
                 }
+            }
         }
         true
     }
