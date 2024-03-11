@@ -386,6 +386,7 @@ impl ViewFn {
         is_bot: bool,
         card_idx: usize,
         card_count: usize,
+        is_selected: bool,
     ) -> Vec2 {
         let max_width = match is_bot {
             true => 280.,
@@ -403,6 +404,10 @@ impl ViewFn {
         let mut pos = ViewFn::hand_position(p_id, p_count);
         pos.x += x_offset * radians.cos();
         pos.y += x_offset * radians.sin();
+
+        if is_selected {
+            pos.y + 50.0;
+        }
         pos
     }
 

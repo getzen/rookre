@@ -1,5 +1,5 @@
 use notan::{
-    app::Graphics, draw::{Draw, DrawImages, DrawTransform}, math::{Affine2, Vec2}, prelude::{Color, Texture}, Event
+    app::Graphics, draw::{Draw, DrawImages, DrawTransform}, math::{vec2, Affine2, Vec2}, prelude::{Color, Texture}, Event
 };
 use slotmap::DefaultKey;
 
@@ -28,6 +28,8 @@ pub struct CardView {
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
     pub angle_animator: Option<AngleAnimator>,
+    pub select_anim: Option<TranslationAnimator>,
+    pub unselect_anim: Option<TranslationAnimator>,
 }
 
 impl CardView {
@@ -71,8 +73,27 @@ impl CardView {
 
             translation_animator: None,
             angle_animator: None,
+
+            select_anim: None,
+            unselect_anim: None,
         }
     }
+
+    // pub fn select(&mut self) {
+    //     if self.select_anim.is_some() { return }
+    //     self.unselect_anim = None;
+    //     let start = self.transform.translation();
+    //     let end = start - vec2(0.0, 50.0);
+    //     self.select_anim = Some(TranslationAnimator::new(start, end, 100.0));
+    // }
+
+    // pub fn unselect(&mut self) {
+    //     if self.select_anim.is_some() { return }
+    //     self.select_anim = None;
+    //     let start = self.transform.translation();
+    //     let end = start + vec2(0.0, 50.0);
+    //     self.unselect_anim = Some(TranslationAnimator::new(start, end, 100.0));
+    // }
 }
 
 impl ViewTrait for CardView {
@@ -88,6 +109,20 @@ impl ViewTrait for CardView {
             self.transform.set_angle(animator.update(time_delta));
             if animator.completed {
                 self.angle_animator = None;
+            }
+        }
+
+        if let Some(animator) = &mut self.select_anim {
+            self.transform.set_translation(animator.update(time_delta));
+            if animator.completed {
+                self.select_anim = None;
+            }
+        }
+
+        if let Some(animator) = &mut self.unselect_anim {
+            self.transform.set_translation(animator.update(time_delta));
+            if animator.completed {
+                self.select_anim = None;
             }
         }
     }
@@ -158,8 +193,7 @@ impl ViewTrait for CardView {
         if self.mouse_over {
             draw.image(&self.mouse_over_tex)
             .transform(self.transform.mat3_with_parent(parent_affine))
-            .size(size_x, size_y)
-            .color(self.color);
+            .size(size_x, size_y);
         }
     }
 }

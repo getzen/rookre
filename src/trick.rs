@@ -50,7 +50,6 @@ impl Trick {
                 return false;
             }
         } else {
-            if !card.is_wild {
                 if let Some(lead_card) = &self.lead_card {
                     if cards_matching_lead > 0 {
                         // we have matching suit in hand
@@ -59,7 +58,6 @@ impl Trick {
                         }
                     }
                 }
-            }
         }
         true
     }

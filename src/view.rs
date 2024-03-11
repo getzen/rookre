@@ -183,7 +183,8 @@ impl View {
         let hand = &game.players[player_id].hand;
         let is_bot = game.player_is_bot(player_id);
         for (idx, id) in hand.iter().enumerate() {
-            let pos = ViewFn::hand_card_position(player_id, count, is_bot, idx, hand.len());
+            let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
+            let pos = ViewFn::hand_card_position(player_id, count, is_bot, idx, hand.len(), card_view.mouse_over);
             let angle = ViewFn::player_rotation(player_id, count);
             self.update_card(id, pos, angle, 100 + idx, !is_bot); // adding 100 so hand cards are higher than deck cards
         }
@@ -280,8 +281,10 @@ impl ViewTrait for View {
         for card_view in self.card_views.iter_mut().rev() {
             if card_view.handle_mouse_event(event, screen_pt, parent_affine, send_msg) {
                 send_msg = false;
+                card_view.mouse_over = true;
 
-
+            } else {
+                card_view.mouse_over = false;
             }
         }
         !send_msg

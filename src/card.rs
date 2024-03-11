@@ -39,20 +39,8 @@ pub struct Card {
     pub game_rank: GameRank,
     pub face_up: bool, // Not just visual. Bot see face-up nest cards.
     pub is_trump: bool,
-    pub is_wild: bool,
     pub points: CardPoints,
     pub id: CardId,
-    // If this card and the card with the provided id are played in the same trick,
-    // this card outranks it. Like the 0 card in Voodoo Prince outranking the 14.
-    //pub outranks_card_id: Option<CardId>,
-
-    // Should this be in game.rules?
-    // If true, then card is considered a member of the trump suit if is either the
-    // trump suit already (right bower) or is the same color (left bower).
-    // The following ranks then apply, rather than the base rank.
-    // pub is_bower: bool,
-    // pub right_bower_rank: Option<f32>,
-    // pub left_bower_rank: Option<f32>,
 }
 
 impl Card {
@@ -65,7 +53,6 @@ impl Card {
             game_rank: face_rank as f32,
             face_up: false,
             is_trump: false,
-            is_wild: false,
             points: 0,
             id,
         }
