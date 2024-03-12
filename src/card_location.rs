@@ -87,15 +87,14 @@ impl CardLocation {
         let mut x_offset = (self.group_len - 1) as f32 * -x_spacing / 2.0;
         x_offset += self.group_index as f32 * x_spacing;
 
-        let radians = ViewGeom::player_rotation(self.player, self.player_len);
-
         let distance_from_center = if self.mouse_over { 300.0 } else { 270.0 };
 
         let radians = ViewGeom::player_radians_from_center(self.player, self.player_len);
         let mut pos = ViewGeom::position_from(VIEW_CENTER, radians, distance_from_center);
 
-        pos.x += x_offset * radians.cos();
-        pos.y += x_offset * radians.sin();
+        let angle = ViewGeom::player_rotation(self.player, self.player_len);
+        pos.x += x_offset * angle.cos();
+        pos.y += x_offset * angle.sin();
         pos
     }
 
@@ -113,11 +112,11 @@ impl CardLocation {
     pub fn z_order(&self) -> usize {
         match &self.group {
             CardGroup::Deck => self.group_index,
-            CardGroup::NestExchange => todo!(),
-            CardGroup::NestAside => todo!(),
-            CardGroup::Hand => todo!(),
-            CardGroup::TrickActive => todo!(),
-            CardGroup::TrickAside => todo!(),
+            CardGroup::NestExchange => self.group_index,
+            CardGroup::NestAside => self.group_index,
+            CardGroup::Hand => self.group_index + 100,
+            CardGroup::TrickActive => self.group_index,
+            CardGroup::TrickAside => 200,
         }
     }
 }

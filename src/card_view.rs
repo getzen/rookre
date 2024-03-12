@@ -33,7 +33,7 @@ pub struct CardView {
 
     pub selectable: bool,
 
-    pub location: CardLocation,
+    //pub location: CardLocation,
 
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
@@ -75,8 +75,7 @@ impl CardView {
             color: Color::WHITE,
             selectable: false,
 
-            location: CardLocation::default(),
-
+            //location: CardLocation::default(),
             translation_animator: None,
             angle_animator: None,
         }

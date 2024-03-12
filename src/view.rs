@@ -8,7 +8,18 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, bid_selector::BidSelector, card::{Card, CardId, CardSuit}, card_location::{CardGroup, CardLocation}, card_view::CardView, discard_panel::{self, DiscardPanel}, game::{Game, GameAction, GameMessage, PlayerAction}, image::Image, image_button::ImageButton, player::PlayerId, texture_loader::ViewFn, view_geom::{ViewGeom, BUTTON_POS}, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator},
+    bid_selector::BidSelector,
+    card::{Card, CardId, CardSuit},
+    card_location::{CardGroup, CardLocation},
+    card_view::CardView,
+    discard_panel::{self, DiscardPanel},
+    game::{Game, GameAction, GameMessage, PlayerAction},
+    image::Image,
+    image_button::ImageButton,
+    player::PlayerId,
+    view_geom::{ViewGeom, BUTTON_POS},
+    view_trait::ViewTrait,
 };
 
 pub struct View {
@@ -135,37 +146,16 @@ impl View {
         self.queue_empty = false;
     }
 
-    fn update_card(&mut self, id: &CardId, pos: Vec2, angle: f32, z_order: usize, face_up: bool) {
-        let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
-
-        // Create translation animator if needed.
-        if !card_view.transform.translation().abs_diff_eq(pos, 0.1) {
-            let animator = TranslationAnimator::new(
-                card_view.transform.translation(),
-                pos,
-                500.0, // velocity
-            );
-            card_view.translation_animator = Some(animator);
-        }
-
-        // Create angle animator if needed.
-        if (card_view.transform.angle() - angle).abs() > 0.01 {
-            let animator = AngleAnimator::new(card_view.transform.angle(), angle, 6.0);
-            card_view.angle_animator = Some(animator);
-        }
-
-        card_view.z_order = z_order;
-        self.card_views_z_order_dirty = true;
-
-        card_view.face_down = !face_up;
-    }
-
-    fn update_card_new(&mut self, card: &Card, location: CardLocation) {
-        let mut card_view = self.card_views.iter_mut().find(|s| s.id == card.id).unwrap();
+    fn update_card(&mut self, id: CardId, location: &CardLocation, game: &Game) {
+        let card_view = self.card_views.iter_mut().find(|s| s.id == id).unwrap();
 
         // Create translation animator if needed.
         let new_trans = location.translation();
-        if !card_view.transform.translation().abs_diff_eq(new_trans, 0.1) {
+        if !card_view
+            .transform
+            .translation()
+            .abs_diff_eq(new_trans, 0.1)
+        {
             let animator = TranslationAnimator::new(
                 card_view.transform.translation(),
                 new_trans,
@@ -184,53 +174,51 @@ impl View {
         card_view.z_order = location.z_order();
         self.card_views_z_order_dirty = true;
 
-        card_view.face_down = !card.face_up;
-    }
-
-    fn update_deck_new(&mut self, game: &Game) {
-        for (idx, id) in game.deck.iter().enumerate() {
-            if let Some(card) = game.cards.get(id) {
-                let location = CardLocation { group: CardGroup::Deck, group_index: idx, ..Default::default()};
-                self.update_card_new(card, location)
-            }
+        if let Some(card) = game.cards.get(id) {
+            card_view.face_down = !card.face_up;
         }
     }
 
     fn update_deck(&mut self, game: &Game) {
+        let mut location = CardLocation {
+            group: CardGroup::Deck,
+            ..Default::default()
+        };
         for (idx, id) in game.deck.iter().enumerate() {
-            let pos = ViewFn::deck_position();
-            self.update_card(id, pos, 0.0, idx, false);
+            location.group_index = idx;
+            self.update_card(*id, &location, game);
         }
     }
 
     fn update_hand(&mut self, game: &Game, player_id: PlayerId) {
-        let count = game.player_count;
         let hand = &game.players[player_id].hand;
-        let is_bot = game.player_is_bot(player_id);
+
+        let mut location = CardLocation {
+            group: CardGroup::Hand,
+            group_len: hand.len(),
+            player: player_id,
+            player_len: game.player_count,
+            player_is_bot: game.player_is_bot(player_id),
+            ..Default::default()
+        };
+
         for (idx, id) in hand.iter().enumerate() {
             let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
-            let pos = ViewFn::hand_card_position(
-                player_id,
-                count,
-                is_bot,
-                idx,
-                hand.len(),
-                card_view.mouse_over,
-            );
-            let angle = ViewFn::player_rotation(player_id, count);
-            self.update_card(id, pos, angle, 100 + idx, !is_bot); // adding 100 so hand cards are higher than deck cards
+            location.group_index = idx;
+            location.mouse_over = card_view.mouse_over;
+            self.update_card(*id, &location, game);
         }
     }
 
-    fn update_nest(&mut self, game: &Game, display: bool) {
+    fn update_nest(&mut self, game: &Game) {
+        let mut location = CardLocation {
+            group: CardGroup::NestExchange,
+            group_len: game.nest.len(),
+            ..Default::default()
+        };
         for (idx, id) in game.nest.iter().enumerate() {
-            let card = game.cards.get(*id).expect("No card with id: {id}");
-            let pos = if display {
-                ViewFn::nest_display_position(idx, game.nest.len())
-            } else {
-                ViewFn::nest_side_position(idx, game.nest.len())
-            };
-            self.update_card(&id, pos, 0.0, 100 + idx, card.face_up);
+            location.group_index = idx;
+            self.update_card(*id, &location, game);
         }
     }
 
@@ -351,7 +339,7 @@ impl ViewTrait for View {
                     self.update_deck(&game);
                 }
                 GameMessage::UpdateNest(game) => {
-                    self.update_nest(&game, true);
+                    self.update_nest(&game);
                 }
                 GameMessage::UpdateHand(game, p) => {
                     self.update_hand(&game, *p);
