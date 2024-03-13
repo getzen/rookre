@@ -29,6 +29,7 @@ pub struct CardView {
     pub selectable: bool,
 
     pub location: CardLocation,
+    orig_transform: Transform,
 
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
@@ -58,7 +59,7 @@ impl CardView {
             id: card.id,
             visible: true,
             z_order: 0,
-            transform,
+            transform: transform.clone(),
             face_tex,
 
             face_down: false,
@@ -73,7 +74,40 @@ impl CardView {
             location: CardLocation::default(),
             translation_animator: None,
             angle_animator: None,
+
+            orig_transform: transform,
         }
+    }
+
+    pub fn animate_to(&mut self, location: CardLocation, trans_vel: f32, angle_vel: f32) {
+        // Create translation animator if needed.
+        let end_pt = location.translation();
+        if !self
+            .transform
+            .translation()
+            .abs_diff_eq(end_pt, 0.1)
+        {
+            if self.translation_animator.is_none() {
+                let animator = TranslationAnimator::new(
+                    self.transform.translation(),
+                    end_pt,
+                    trans_vel,
+                );
+                self.translation_animator = Some(animator);
+            }
+        }
+
+         // Create angle animator if needed.
+         let end_angle = location.angle();
+         if (self.transform.angle() - end_angle).abs() > 0.01 {
+             let animator = AngleAnimator::new(self.transform.angle(), end_angle, angle_vel);
+             self.angle_animator = Some(animator);
+         }
+
+        self.z_order = location.z_order();
+        self.location = location;
+        self.orig_transform.set_translation(end_pt);
+        self.orig_transform.set_angle(end_angle);
     }
 }
 
@@ -109,9 +143,11 @@ impl ViewTrait for CardView {
 
         if self
             .transform
-            .contains_screen_point(screen_pt, parent_affine)
+            .contains_screen_point(screen_pt, parent_affine) ||
+             self.orig_transform.contains_screen_point(screen_pt, parent_affine)
         {
             self.mouse_over = send_msg;
+
             if send_msg {
                 self.send_message_for_event(event);
             }
@@ -120,7 +156,6 @@ impl ViewTrait for CardView {
             self.mouse_over = false;
         }
 
-        // Proof of concept
         self.location.mouse_over = self.mouse_over;
         // Create translation animator if needed.
         let new_trans = self.location.translation();
@@ -136,14 +171,9 @@ impl ViewTrait for CardView {
                     500.0, // velocity
                 );
                 self.translation_animator = Some(animator);
-
-                // if self.mouse_over {
-                //     let size = CARD_SIZE - vec2(0.0, 30.0)
-                //     self.transform.set_size(size)
-                // }
             }
         }
-
+        
         contains
     }
 
