@@ -8,7 +8,13 @@ use notan::{
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, card::Card, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::CARD_SIZE, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator},
+    card::Card,
+    card_location::CardLocation,
+    texture_loader::{ViewFn, CARD_TEX_SCALE},
+    transform::Transform,
+    view_geom::CARD_SIZE,
+    view_trait::ViewTrait,
 };
 
 pub struct CardView {
@@ -29,7 +35,6 @@ pub struct CardView {
     pub selectable: bool,
 
     pub location: CardLocation,
-    orig_transform: Transform,
 
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
@@ -74,40 +79,28 @@ impl CardView {
             location: CardLocation::default(),
             translation_animator: None,
             angle_animator: None,
-
-            orig_transform: transform,
         }
     }
 
     pub fn animate_to(&mut self, location: CardLocation, trans_vel: f32, angle_vel: f32) {
         // Create translation animator if needed.
         let end_pt = location.translation();
-        if !self
-            .transform
-            .translation()
-            .abs_diff_eq(end_pt, 0.1)
-        {
-            if self.translation_animator.is_none() {
-                let animator = TranslationAnimator::new(
-                    self.transform.translation(),
-                    end_pt,
-                    trans_vel,
-                );
-                self.translation_animator = Some(animator);
-            }
+        if !self.transform.translation().abs_diff_eq(end_pt, 0.1) {
+            let animator =
+                TranslationAnimator::new(self.transform.translation(), end_pt, trans_vel);
+            self.translation_animator = Some(animator);
         }
 
-         // Create angle animator if needed.
-         let end_angle = location.angle();
-         if (self.transform.angle() - end_angle).abs() > 0.01 {
-             let animator = AngleAnimator::new(self.transform.angle(), end_angle, angle_vel);
-             self.angle_animator = Some(animator);
-         }
+        // Create angle animator if needed.
+        let end_angle = location.angle();
+        if (self.transform.angle() - end_angle).abs() > 0.01 {
+            let animator = AngleAnimator::new(self.transform.angle(), end_angle, angle_vel);
+            self.angle_animator = Some(animator);
+        }
 
         self.z_order = location.z_order();
+        self.face_down = location.face_down();
         self.location = location;
-        self.orig_transform.set_translation(end_pt);
-        self.orig_transform.set_angle(end_angle);
     }
 }
 
@@ -138,13 +131,11 @@ impl ViewTrait for CardView {
         if !self.visible {
             return false;
         }
-
         let mut contains = false;
 
         if self
             .transform
-            .contains_screen_point(screen_pt, parent_affine) ||
-             self.orig_transform.contains_screen_point(screen_pt, parent_affine)
+            .contains_screen_point(screen_pt, parent_affine)
         {
             self.mouse_over = send_msg;
 
@@ -156,24 +147,6 @@ impl ViewTrait for CardView {
             self.mouse_over = false;
         }
 
-        self.location.mouse_over = self.mouse_over;
-        // Create translation animator if needed.
-        let new_trans = self.location.translation();
-        if !self
-            .transform
-            .translation()
-            .abs_diff_eq(new_trans, 0.1)
-        {
-            if self.translation_animator.is_none() {
-                let animator = TranslationAnimator::new(
-                    self.transform.translation(),
-                    new_trans,
-                    500.0, // velocity
-                );
-                self.translation_animator = Some(animator);
-            }
-        }
-        
         contains
     }
 
@@ -210,10 +183,10 @@ impl ViewTrait for CardView {
             .size(size_x, size_y)
             .color(self.color);
 
-        // if self.mouse_over {
-        //     draw.image(&self.mouse_over_tex)
-        //         .transform(self.transform.mat3_with_parent(parent_affine))
-        //         .size(size_x, size_y);
-        // }
+        if self.mouse_over && self.selectable {
+            draw.image(&self.mouse_over_tex)
+                .transform(self.transform.mat3_with_parent(parent_affine))
+                .size(size_x, size_y);
+        }
     }
 }

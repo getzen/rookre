@@ -148,37 +148,10 @@ impl View {
 
     fn update_card(&mut self, id: CardId, location: CardLocation, game: &Game) {
         let card_view = self.card_views.iter_mut().find(|s| s.id == id).unwrap();
-
         card_view.animate_to(location, 500.0, 6.0);
-
-        // // Create translation animator if needed.
-        // let new_trans = location.translation();
-        // if !card_view
-        //     .transform
-        //     .translation()
-        //     .abs_diff_eq(new_trans, 0.1)
-        // {
-        //     let animator = TranslationAnimator::new(
-        //         card_view.transform.translation(),
-        //         new_trans,
-        //         500.0, // velocity
-        //     );
-        //     card_view.translation_animator = Some(animator);
-        // }
-
-        // // Create angle animator if needed.
-        // let new_angle = location.angle();
-        // if (card_view.transform.angle() - new_angle).abs() > 0.01 {
-        //     let animator = AngleAnimator::new(card_view.transform.angle(), new_angle, 6.0);
-        //     card_view.angle_animator = Some(animator);
-        // }
-
-        //card_view.z_order = location.z_order();
         self.card_views_z_order_dirty = true;
 
-        if let Some(card) = game.cards.get(id) {
-            card_view.face_down = !card.face_up;
-        }
+        card_view.selectable = true; /////////////////// TEMP
     }
 
     fn update_deck(&mut self, game: &Game) {
@@ -205,9 +178,7 @@ impl View {
         };
 
         for (idx, id) in hand.iter().enumerate() {
-            let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
             location.group_index = idx;
-            location.mouse_over = card_view.mouse_over;
             self.update_card(*id, location.clone(), game);
         }
     }
@@ -304,6 +275,7 @@ impl ViewTrait for View {
                 send_msg = false;
             }
         }
+
         !send_msg
     }
 

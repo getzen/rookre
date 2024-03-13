@@ -119,4 +119,15 @@ impl CardLocation {
             CardGroup::TrickAside => 200,
         }
     }
+
+    pub fn face_down(&self) -> bool {
+        match &self.group {
+            CardGroup::Deck => true,
+            CardGroup::NestExchange => false,
+            CardGroup::NestAside => true,
+            CardGroup::Hand => self.player_is_bot,
+            CardGroup::TrickActive => false,
+            CardGroup::TrickAside => true,
+        }
+    }
 }
