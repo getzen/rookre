@@ -1,19 +1,14 @@
 use notan::{
     app::Graphics,
     draw::{Draw, DrawImages, DrawTransform},
-    math::{Affine2, Vec2},
+    math::{vec2, Affine2, Vec2},
     prelude::{Color, Texture},
     Event,
 };
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator},
-    card::Card,
-    card_location::CardLocation,
-    texture_loader::{ViewFn, CARD_TEX_SCALE},
-    transform::Transform,
-    view_trait::ViewTrait,
+    animators::{AngleAnimator, TranslationAnimator}, card::Card, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::CARD_SIZE, view_trait::ViewTrait
 };
 
 pub struct CardView {
@@ -33,7 +28,7 @@ pub struct CardView {
 
     pub selectable: bool,
 
-    //pub location: CardLocation,
+    pub location: CardLocation,
 
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
@@ -75,7 +70,7 @@ impl CardView {
             color: Color::WHITE,
             selectable: false,
 
-            //location: CardLocation::default(),
+            location: CardLocation::default(),
             translation_animator: None,
             angle_animator: None,
         }
@@ -125,6 +120,30 @@ impl ViewTrait for CardView {
             self.mouse_over = false;
         }
 
+        // Proof of concept
+        self.location.mouse_over = self.mouse_over;
+        // Create translation animator if needed.
+        let new_trans = self.location.translation();
+        if !self
+            .transform
+            .translation()
+            .abs_diff_eq(new_trans, 0.1)
+        {
+            if self.translation_animator.is_none() {
+                let animator = TranslationAnimator::new(
+                    self.transform.translation(),
+                    new_trans,
+                    500.0, // velocity
+                );
+                self.translation_animator = Some(animator);
+
+                // if self.mouse_over {
+                //     let size = CARD_SIZE - vec2(0.0, 30.0)
+                //     self.transform.set_size(size)
+                // }
+            }
+        }
+
         contains
     }
 
@@ -161,10 +180,10 @@ impl ViewTrait for CardView {
             .size(size_x, size_y)
             .color(self.color);
 
-        if self.mouse_over {
-            draw.image(&self.mouse_over_tex)
-                .transform(self.transform.mat3_with_parent(parent_affine))
-                .size(size_x, size_y);
-        }
+        // if self.mouse_over {
+        //     draw.image(&self.mouse_over_tex)
+        //         .transform(self.transform.mat3_with_parent(parent_affine))
+        //         .size(size_x, size_y);
+        // }
     }
 }

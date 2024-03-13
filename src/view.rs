@@ -148,6 +148,7 @@ impl View {
 
     fn update_card(&mut self, id: CardId, location: &CardLocation, game: &Game) {
         let card_view = self.card_views.iter_mut().find(|s| s.id == id).unwrap();
+        card_view.location = location.clone();
 
         // Create translation animator if needed.
         let new_trans = location.translation();

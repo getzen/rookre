@@ -1,8 +1,9 @@
 use notan::math::{Affine2, Mat3, Vec2};
 
 /*
-Note: Glam docs say Affine2 is much faster than Mat3 for 2D work.
-Using 'scale' to control image size is problematic when it comes to drawing
+Notes:
+- Glam docs say Affine2 is much faster than Mat3 for 2D work.
+- Using 'scale' to control image size is problematic when it comes to drawing
 children. Use the 'draw_size' field to store this value.
 */
 
@@ -13,7 +14,6 @@ pub struct Transform {
     angle: f32,
     /// Default is Vec2::ONE.
     scale: Vec2,
-
     /// For centering and hit detection. Default is Vec2::ZERO.
     size: Vec2,
     /// Default is centered (0.5, 0.5). Children of this transform do not inherit

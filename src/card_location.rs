@@ -87,7 +87,7 @@ impl CardLocation {
         let mut x_offset = (self.group_len - 1) as f32 * -x_spacing / 2.0;
         x_offset += self.group_index as f32 * x_spacing;
 
-        let distance_from_center = if self.mouse_over { 300.0 } else { 270.0 };
+        let distance_from_center = if self.mouse_over { 270.0 } else { 300.0 };
 
         let radians = ViewGeom::player_radians_from_center(self.player, self.player_len);
         let mut pos = ViewGeom::position_from(VIEW_CENTER, radians, distance_from_center);
