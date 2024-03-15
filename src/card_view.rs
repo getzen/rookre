@@ -8,7 +8,7 @@ use notan::{
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, card::Card, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE, LIGHT_GRAY}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator}, card::Card, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
 };
 
 pub enum SelectState {
@@ -186,7 +186,7 @@ impl ViewTrait for CardView {
             },
             SelectState::Dimmed => {
                 self.transform.set_size(CARD_SIZE);
-                color = LIGHT_GRAY;
+                color = crate::view::LIGHT_GRAY;
             },
         }
 

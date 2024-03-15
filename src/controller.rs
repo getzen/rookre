@@ -182,7 +182,7 @@ impl Controller {
 
     pub fn draw(&mut self, gfx: &mut Graphics) {
         let mut draw = gfx.create_draw();
-        draw.clear(crate::texture_loader::TABLE_COLOR);
+        draw.clear(crate::view::TABLE_COLOR);
 
         let affine = notan::math::Affine2::IDENTITY;
         self.view.draw(&mut draw, &affine);

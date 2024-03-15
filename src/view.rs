@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, sync::mpsc::Sender};
 
 use notan::{
-    app::{App, Graphics},
+    app::{App, Color, Graphics},
     math::{vec2, Affine2, Vec2},
     Event,
 };
@@ -21,6 +21,12 @@ use crate::{
     view_geom::{ViewGeom, BUTTON_POS},
     view_trait::ViewTrait,
 };
+
+// Colors
+pub const TABLE_COLOR: Color = Color::from_rgb(0.3, 0.3, 0.3);
+pub const DEEP_GREEN: Color = Color::new(0. / 255., 175. / 255., 0. / 255., 1.);
+pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 1.);
+pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.);
 
 pub struct View {
     game_message_queue: VecDeque<GameMessage>,

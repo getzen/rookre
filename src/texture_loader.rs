@@ -6,12 +6,6 @@ use crate::card::{Card, CardKind};
 pub const TEX_SCALE: f32 = 2.0; // Default texture images are double size.
 pub const CARD_TEX_SCALE: f32 = 3.0; // Card images are triple size.
 
-// Colors
-pub const TABLE_COLOR: Color = Color::from_rgb(0.3, 0.3, 0.3);
-pub const DEEP_GREEN: Color = Color::new(0. / 255., 175. / 255., 0. / 255., 1.);
-pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 1.);
-pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.);
-
 pub struct ViewFn {}
 
 impl ViewFn {
