@@ -47,7 +47,7 @@ impl CardLocation {
         match &self.group {
             CardGroup::Deck => VIEW_CENTER,
             CardGroup::NestExchange => {
-                let x_spacing = CARD_SIZE.0 / 2.0;
+                let x_spacing = CARD_SIZE.x / 2.0;
                 let mut pt = VIEW_CENTER;
                 pt.x -= (self.group_len - 1) as f32 * x_spacing / 2.0;
                 pt.x += self.group_index as f32 * x_spacing;

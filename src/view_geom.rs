@@ -4,7 +4,9 @@ use notan::math::{vec2, Vec2};
 
 use crate::player::PlayerId;
 
-pub const CARD_SIZE: (f32, f32) = (80., 120.); // texture is 240 x 360
+pub const CARD_SIZE: Vec2 = vec2(80., 120.); // texture is 240 x 360
+pub const CARD_SIZE_HOVER: Vec2 = vec2(90., 135.);
+
 pub const VIEW_CENTER: Vec2 = vec2(400., 400.);
 pub const BUTTON_POS: Vec2 = vec2(400., 480.);
 pub const MESSAGE_POS: (f32, f32) = (1100., 910.);

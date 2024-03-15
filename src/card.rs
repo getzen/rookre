@@ -33,6 +33,7 @@ pub type CardId = slotmap::DefaultKey;
 
 #[derive(Clone, Debug)]
 pub struct Card {
+    pub id: CardId,
     pub kind: CardKind,
     pub suit: CardSuit,
     pub face_rank: FaceRank,
@@ -40,13 +41,14 @@ pub struct Card {
     pub face_up: bool, // Not just visual. Bot see face-up nest cards.
     pub is_trump: bool,
     pub points: CardPoints,
-    pub id: CardId,
+    pub selectable: bool,
 }
 
 impl Card {
     pub fn new(kind: CardKind, suit: CardSuit, face_rank: FaceRank) -> Self {
         let id = slotmap::DefaultKey::default();
         Self {
+            id,
             kind,
             suit,
             face_rank,
@@ -54,7 +56,7 @@ impl Card {
             face_up: false,
             is_trump: false,
             points: 0,
-            id,
+            selectable: true,
         }
     }
 

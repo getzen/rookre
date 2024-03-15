@@ -12,7 +12,7 @@ use crate::{
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit},
     card_location::{CardGroup, CardLocation},
-    card_view::CardView,
+    card_view::{CardView, SelectState},
     discard_panel::{self, DiscardPanel},
     game::{Game, GameAction, GameMessage, PlayerAction},
     image::Image,
@@ -151,7 +151,14 @@ impl View {
         card_view.animate_to(location, 500.0, 6.0);
         self.card_views_z_order_dirty = true;
 
-        card_view.selectable = true; /////////////////// TEMP
+        if let Some(card) = game.cards.get(id) { /////////////////////////////////// TESTING
+            if card.suit == CardSuit::Heart {
+                card_view.select_state = SelectState::Dimmed;
+            }
+            if card.suit == CardSuit::Spade {
+                card_view.select_state = SelectState::Selectable;
+            }
+        }
     }
 
     fn update_deck(&mut self, game: &Game) {

@@ -1,40 +1,36 @@
 use notan::{
     app::Graphics,
     draw::{Draw, DrawImages, DrawTransform},
-    math::{vec2, Affine2, Vec2},
+    math::{Affine2, Vec2},
     prelude::{Color, Texture},
     Event,
 };
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator},
-    card::Card,
-    card_location::CardLocation,
-    texture_loader::{ViewFn, CARD_TEX_SCALE},
-    transform::Transform,
-    view_geom::CARD_SIZE,
-    view_trait::ViewTrait,
+    animators::{AngleAnimator, TranslationAnimator}, card::Card, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE, LIGHT_GRAY}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
 };
+
+pub enum SelectState {
+    Selectable, // Expands a bit in size when mouse over.
+    Unselectable, // Normal size and appearance, just unselectable.
+    Dimmed, // Unselectable and shaded in gray to show it.
+}
 
 pub struct CardView {
     pub id: DefaultKey,
     pub visible: bool,
     pub z_order: usize,
     pub transform: Transform,
-    pub face_tex: Texture,
 
+    pub face_tex: Texture,
     pub face_down: bool,
     pub back_tex: Texture,
-
-    pub mouse_over: bool,
-    pub mouse_over_tex: Texture,
-
     pub color: Color,
 
-    pub selectable: bool,
-
     pub location: CardLocation,
+    pub select_state: SelectState,
+    pub mouse_over: bool,
 
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
@@ -54,29 +50,21 @@ impl CardView {
             .build()
             .unwrap();
 
-        let mouse_over_tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/cards/outline_solid.png"))
-            .build()
-            .unwrap();
-
         Self {
             id: card.id,
             visible: true,
             z_order: 0,
             transform: transform.clone(),
-            face_tex,
 
+            face_tex,
             face_down: false,
             back_tex,
-
-            mouse_over: false,
-            mouse_over_tex,
-
             color: Color::WHITE,
-            selectable: false,
 
             location: CardLocation::default(),
+            select_state: SelectState::Unselectable,
+            mouse_over: false,
+
             translation_animator: None,
             angle_animator: None,
         }
@@ -131,6 +119,13 @@ impl ViewTrait for CardView {
         if !self.visible {
             return false;
         }
+
+        match self.select_state {
+            SelectState::Selectable => {},
+            SelectState::Unselectable => return false,
+            SelectState::Dimmed => return false,
+        }
+
         let mut contains = false;
 
         if self
@@ -177,16 +172,29 @@ impl ViewTrait for CardView {
             &self.face_tex
         };
 
+        let mut color = self.color;
+
+        match self.select_state {
+            SelectState::Selectable => {
+                match self.mouse_over {
+                    true => self.transform.set_size(CARD_SIZE_HOVER),
+                    false => self.transform.set_size(CARD_SIZE),
+                }
+            },
+            SelectState::Unselectable => {
+                self.transform.set_size(CARD_SIZE);
+            },
+            SelectState::Dimmed => {
+                self.transform.set_size(CARD_SIZE);
+                color = LIGHT_GRAY;
+            },
+        }
+
         let (size_x, size_y) = self.transform.size().into();
+
         draw.image(tex)
             .transform(self.transform.mat3_with_parent(parent_affine))
             .size(size_x, size_y)
-            .color(self.color);
-
-        if self.mouse_over && self.selectable {
-            draw.image(&self.mouse_over_tex)
-                .transform(self.transform.mat3_with_parent(parent_affine))
-                .size(size_x, size_y);
-        }
+            .color(color);
     }
 }
