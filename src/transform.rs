@@ -101,6 +101,7 @@ impl Transform {
 
     #[allow(dead_code)]
     pub fn set_translation(&mut self, translation: Vec2) {
+        if self.translation == translation { return }
         self.translation = translation;
         self.affine = None;
         self.matrix = None;
@@ -113,6 +114,7 @@ impl Transform {
 
     #[allow(dead_code)]
     pub fn set_angle(&mut self, angle: f32) {
+        if self.angle == angle { return }
         self.angle = angle;
         self.affine = None;
         self.matrix = None;
@@ -125,6 +127,7 @@ impl Transform {
 
     #[allow(dead_code)]
     pub fn set_scale(&mut self, scale: Vec2) {
+        if self.scale == scale { return }
         self.scale = scale;
         self.affine = None;
         self.matrix = None;
@@ -137,6 +140,7 @@ impl Transform {
 
     #[allow(dead_code)]
     pub fn set_size(&mut self, size: Vec2) {
+        if self.size == size { return }
         self.size = size;
         self.affine = None;
         self.matrix = None;
@@ -149,6 +153,7 @@ impl Transform {
 
     #[allow(dead_code)]
     pub fn set_offset(&mut self, offset: Vec2) {
+        if self.offset == offset { return }
         self.offset = offset;
         self.affine = None;
         self.matrix = None;
