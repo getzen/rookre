@@ -5,7 +5,7 @@ use std::sync::mpsc::Sender;
 use slotmap::SlotMap;
 
 use crate::bot::BotKind;
-use crate::card::{Card, CardId, CardKind, CardSuit};
+use crate::card::{Card, CardId, CardKind, CardSuit, SelectState};
 use crate::game::GameAction::*;
 use crate::game_options::{
     BiddingKind, DeckKind, GameOptions, NestPointsOption, PartnerKind, PointsAwarded,
@@ -400,6 +400,14 @@ impl Game {
         self.players[p].hand.clear();
         for card in &sorted_cards {
             self.players[p].add_to_hand(card.id);
+        }
+    }
+
+    pub fn set_select_state(&mut self, state: SelectState, ids: &[CardId]) {
+        for id in ids {
+            if let Some(card) = self.cards.get_mut(*id) {
+                card.select_state = state;
+            }
         }
     }
 

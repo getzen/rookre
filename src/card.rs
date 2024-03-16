@@ -24,6 +24,13 @@ pub enum CardSuit {
     Unique,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum SelectState {
+    Selectable, // Expands a bit in size when mouse over.
+    Unselectable, // Normal size and appearance, just unselectable.
+    Dimmed, // Unselectable and the view should shade in gray to show it.
+}
+
 /// The rank showing on the card face.
 pub type FaceRank = usize;
 /// The rank according to the game rules. Use a maximum of one decimal place, eg 10.5.
@@ -38,10 +45,10 @@ pub struct Card {
     pub suit: CardSuit,
     pub face_rank: FaceRank,
     pub game_rank: GameRank,
-    pub face_up: bool, // Not just visual. Bot see face-up nest cards.
+    pub face_up: bool, // face_up here means exposed to all players
     pub is_trump: bool,
     pub points: CardPoints,
-    pub selectable: bool,
+    pub select_state: SelectState,
 }
 
 impl Card {
@@ -56,7 +63,7 @@ impl Card {
             face_up: false,
             is_trump: false,
             points: 0,
-            selectable: true,
+            select_state: SelectState::Unselectable,
         }
     }
 

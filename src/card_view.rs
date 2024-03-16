@@ -8,14 +8,9 @@ use notan::{
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, card::Card, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator}, card::{Card, SelectState}, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
 };
 
-pub enum SelectState {
-    Selectable, // Expands a bit in size when mouse over.
-    Unselectable, // Normal size and appearance, just unselectable.
-    Dimmed, // Unselectable and shaded in gray to show it.
-}
 
 pub struct CardView {
     pub id: DefaultKey,
@@ -24,7 +19,7 @@ pub struct CardView {
     pub transform: Transform,
 
     pub face_tex: Texture,
-    pub face_down: bool,
+    pub face_up: bool,
     pub back_tex: Texture,
     pub color: Color,
 
@@ -57,7 +52,7 @@ impl CardView {
             transform: transform.clone(),
 
             face_tex,
-            face_down: false,
+            face_up: false,
             back_tex,
             color: Color::WHITE,
 
@@ -87,7 +82,7 @@ impl CardView {
         }
 
         self.z_order = location.z_order();
-        self.face_down = location.face_down();
+        //self.face_down = location.face_down();
         self.location = location;
     }
 }
@@ -166,10 +161,9 @@ impl ViewTrait for CardView {
             return;
         }
 
-        let tex = if self.face_down {
-            &self.back_tex
-        } else {
-            &self.face_tex
+        let tex = match self.face_up {
+            true => &self.face_tex,
+            false => &self.back_tex,
         };
 
         let mut color = self.color;

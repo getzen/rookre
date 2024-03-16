@@ -1,5 +1,6 @@
 use notan::math::{vec2, Vec2};
 
+
 pub struct TranslationAnimator {
     pub current: Vec2,
     end: Vec2,
@@ -33,6 +34,7 @@ impl TranslationAnimator {
         self.current
     }
 }
+
 
 pub struct AngleAnimator {
     pub current: f32,

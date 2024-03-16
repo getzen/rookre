@@ -8,12 +8,11 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator},
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit},
     card_location::{CardGroup, CardLocation},
-    card_view::{CardView, SelectState},
-    discard_panel::{self, DiscardPanel},
+    card_view::CardView,
+    discard_panel::DiscardPanel,
     game::{Game, GameAction, GameMessage, PlayerAction},
     image::Image,
     image_button::ImageButton,
@@ -154,16 +153,15 @@ impl View {
 
     fn update_card(&mut self, id: CardId, location: CardLocation, game: &Game) {
         let card_view = self.card_views.iter_mut().find(|s| s.id == id).unwrap();
+
+        // Location
         card_view.animate_to(location, 500.0, 6.0);
         self.card_views_z_order_dirty = true;
 
-        if let Some(card) = game.cards.get(id) { /////////////////////////////////// TESTING
-            if card.suit == CardSuit::Heart {
-                card_view.select_state = SelectState::Dimmed;
-            }
-            if card.suit == CardSuit::Spade {
-                card_view.select_state = SelectState::Selectable;
-            }
+        // Face up/down and select state
+        if let Some(card) = game.cards.get(id) {
+            card_view.face_up = card.face_up;
+            card_view.select_state = card.select_state;
         }
     }
 
@@ -193,6 +191,12 @@ impl View {
         for (idx, id) in hand.iter().enumerate() {
             location.group_index = idx;
             self.update_card(*id, location.clone(), game);
+
+            // Turn human cards face up.
+            if !game.player_is_bot(player_id) {
+                let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
+                card_view.face_up = true;
+            }
         }
     }
 
