@@ -9,7 +9,7 @@ use slotmap::SlotMap;
 
 use crate::{
     bid_selector::BidSelector,
-    card::{Card, CardId, CardSuit},
+    card::{Card, CardId, CardSuit, SelectState},
     card_location::{CardGroup, CardLocation},
     card_view::CardView,
     discard_panel::DiscardPanel,
@@ -71,7 +71,11 @@ impl View {
         }
     }
 
-    pub fn create_card_views(cards: &SlotMap<CardId, Card>, gfx: &mut Graphics, sender: Sender<PlayerAction>) -> Vec<CardView<PlayerAction>> {
+    pub fn create_card_views(
+        cards: &SlotMap<CardId, Card>,
+        gfx: &mut Graphics,
+        sender: Sender<PlayerAction>,
+    ) -> Vec<CardView<PlayerAction>> {
         let mut card_views = Vec::new();
 
         for (_, card) in cards {
@@ -253,11 +257,12 @@ impl View {
             for id in game.active_hand() {
                 if let Some(card) = game.cards.get(*id) {
                     let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
-                    card_view.select_state = card.select_state;
-                    card_view.mouse_up_message = Some(PlayerAction::MoveCardToNest(*id));
+                    card_view.mouse_up_message = match card.select_state {
+                        SelectState::Selectable => Some(PlayerAction::MoveCardToNest(*id)),
+                        _ => None,
+                    }
                 }
             }
-            
         }
     }
 }

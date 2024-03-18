@@ -551,7 +551,9 @@ impl Game {
         let mut ids = Vec::new();
         for id in &self.active_player().hand {
             if let Some(card) = self.cards.get(*id) {
-                if card.kind == CardKind::Joker { continue }
+                if card.kind == CardKind::Joker {
+                    continue;
+                }
                 ids.push(*id);
             }
         }

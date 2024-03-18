@@ -26,9 +26,9 @@ pub enum CardSuit {
 
 #[derive(Clone, Copy, Debug)]
 pub enum SelectState {
-    Selectable, // Expands a bit in size when mouse over.
+    Selectable,   // Expands a bit in size when mouse over.
     Unselectable, // Normal size and appearance, just unselectable.
-    Dimmed, // Unselectable and the view should shade in gray to show it.
+    Dimmed,       // Unselectable and the view should shade in gray to show it.
 }
 
 /// The rank showing on the card face.

@@ -10,9 +10,15 @@ use notan::{
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, card::{Card, SelectState}, card_location::CardLocation, game::PlayerAction, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator},
+    card::{Card, SelectState},
+    card_location::CardLocation,
+    game::PlayerAction,
+    texture_loader::{ViewFn, CARD_TEX_SCALE},
+    transform::Transform,
+    view_geom::{CARD_SIZE, CARD_SIZE_HOVER},
+    view_trait::ViewTrait,
 };
-
 
 pub struct CardView<T> {
     pub id: DefaultKey,
@@ -95,7 +101,7 @@ impl<T> CardView<T> {
     }
 }
 
-impl<T: Copy> ViewTrait for CardView<T>{
+impl<T: Copy> ViewTrait for CardView<T> {
     fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {
         if let Some(animator) = &mut self.translation_animator {
             self.transform.set_translation(animator.update(time_delta));
@@ -124,7 +130,7 @@ impl<T: Copy> ViewTrait for CardView<T>{
         }
 
         match self.select_state {
-            SelectState::Selectable => {},
+            SelectState::Selectable => {}
             SelectState::Unselectable => return false,
             SelectState::Dimmed => return false,
         }
@@ -177,19 +183,17 @@ impl<T: Copy> ViewTrait for CardView<T>{
         let mut color = self.color;
 
         match self.select_state {
-            SelectState::Selectable => {
-                match self.mouse_over {
-                    true => self.transform.set_size(CARD_SIZE_HOVER),
-                    false => self.transform.set_size(CARD_SIZE),
-                }
+            SelectState::Selectable => match self.mouse_over {
+                true => self.transform.set_size(CARD_SIZE_HOVER),
+                false => self.transform.set_size(CARD_SIZE),
             },
             SelectState::Unselectable => {
                 self.transform.set_size(CARD_SIZE);
-            },
+            }
             SelectState::Dimmed => {
                 self.transform.set_size(CARD_SIZE);
                 color = crate::view::LIGHT_GRAY;
-            },
+            }
         }
 
         let (size_x, size_y) = self.transform.size().into();

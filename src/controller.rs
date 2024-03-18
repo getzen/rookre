@@ -135,9 +135,7 @@ impl Controller {
                     self.view.bid_selector.visible = false;
                 }
                 PlayerAction::PlayCard(_, _) => todo!(),
-                PlayerAction::MoveCardToNest(_) => {
-                    
-                },
+                PlayerAction::MoveCardToNest(_) => {}
                 PlayerAction::TakeCardFromNest(_) => todo!(),
                 PlayerAction::EndNestExchange => todo!(),
             }
