@@ -30,7 +30,7 @@ pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.
 pub struct View {
     game_message_queue: VecDeque<GameMessage>,
     queue_empty: bool,
-    card_views: Vec<CardView>,
+    card_views: Vec<CardView<PlayerAction>>,
     card_views_z_order_dirty: bool,
 
     pub active_player_marker: Image,
@@ -48,7 +48,7 @@ impl View {
         cards: &SlotMap<CardId, Card>,
         sender: Sender<PlayerAction>,
     ) -> Self {
-        let card_views = View::create_card_views(cards, gfx);
+        let card_views = View::create_card_views(cards, gfx, sender.clone());
         let active_player_marker = View::create_active_player_marker(gfx);
         let dealer_marker = View::create_dealer_marker(gfx);
         let deal_button = View::create_deal_button(gfx, sender.clone());
@@ -71,11 +71,11 @@ impl View {
         }
     }
 
-    pub fn create_card_views(cards: &SlotMap<CardId, Card>, gfx: &mut Graphics) -> Vec<CardView> {
+    pub fn create_card_views(cards: &SlotMap<CardId, Card>, gfx: &mut Graphics, sender: Sender<PlayerAction>) -> Vec<CardView<PlayerAction>> {
         let mut card_views = Vec::new();
 
         for (_, card) in cards {
-            let card_view = CardView::new(card, gfx);
+            let card_view = CardView::new(card, gfx, Some(sender.clone()));
             card_views.push(card_view);
         }
         card_views
@@ -250,6 +250,14 @@ impl View {
             self.discard_panel.visible = true;
 
             // Set eligible cards.
+            for id in game.active_hand() {
+                if let Some(card) = game.cards.get(*id) {
+                    let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
+                    card_view.select_state = card.select_state;
+                    card_view.mouse_up_message = Some(PlayerAction::MoveCardToNest(*id));
+                }
+            }
+            
         }
     }
 }

@@ -547,6 +547,17 @@ impl Game {
         }
     }
 
+    pub fn eligible_discards(&self) -> Vec<CardId> {
+        let mut ids = Vec::new();
+        for id in &self.active_player().hand {
+            if let Some(card) = self.cards.get(*id) {
+                if card.kind == CardKind::Joker { continue }
+                ids.push(*id);
+            }
+        }
+        ids
+    }
+
     pub fn discard_to_nest(&mut self, ids: Vec<CardId>) {
         let p = self.bid_winner.unwrap();
         let winner = &mut self.players[p];
@@ -787,6 +798,27 @@ impl Game {
                 // }
                 WaitForDiscards => {
                     println!("game::WaitForDiscards");
+                    let is_bot = self.active_player_is_bot();
+                    let all_ids = self.active_player().hand.clone();
+                    for id in all_ids {
+                        if let Some(card) = self.cards.get_mut(id) {
+                            if is_bot {
+                                card.select_state = SelectState::Unselectable;
+                            } else {
+                                card.select_state = SelectState::Dimmed;
+                            }
+                        }
+                    }
+                    for id in self.eligible_discards() {
+                        if let Some(card) = self.cards.get_mut(id) {
+                            card.select_state = SelectState::Selectable
+                        }
+                    }
+
+                    if !is_bot && self.send_messages {
+                        let msg = GameMessage::UpdateHand(self.clone(), self.active_player);
+                        self.message_sender.send(msg).unwrap();
+                    }
                 }
                 PreChooseTrump => {}
                 WaitForChooseTrump => {}

@@ -1,3 +1,5 @@
+use std::sync::mpsc::Sender;
+
 use notan::{
     app::Graphics,
     draw::{Draw, DrawImages, DrawTransform},
@@ -8,11 +10,11 @@ use notan::{
 use slotmap::DefaultKey;
 
 use crate::{
-    animators::{AngleAnimator, TranslationAnimator}, card::{Card, SelectState}, card_location::CardLocation, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
+    animators::{AngleAnimator, TranslationAnimator}, card::{Card, SelectState}, card_location::CardLocation, game::PlayerAction, texture_loader::{ViewFn, CARD_TEX_SCALE}, transform::Transform, view_geom::{CARD_SIZE, CARD_SIZE_HOVER}, view_trait::ViewTrait
 };
 
 
-pub struct CardView {
+pub struct CardView<T> {
     pub id: DefaultKey,
     pub visible: bool,
     pub z_order: usize,
@@ -30,10 +32,13 @@ pub struct CardView {
     // Animation
     pub translation_animator: Option<TranslationAnimator>,
     pub angle_animator: Option<AngleAnimator>,
+
+    pub sender: Option<Sender<T>>,
+    pub mouse_up_message: Option<T>,
 }
 
-impl CardView {
-    pub fn new(card: &Card, gfx: &mut Graphics) -> Self {
+impl<T> CardView<T> {
+    pub fn new(card: &Card, gfx: &mut Graphics, sender: Option<Sender<T>>) -> Self {
         let face_tex = ViewFn::load_card_texture(gfx, card);
 
         let transform =
@@ -62,6 +67,9 @@ impl CardView {
 
             translation_animator: None,
             angle_animator: None,
+
+            sender,
+            mouse_up_message: None,
         }
     }
 
@@ -87,7 +95,7 @@ impl CardView {
     }
 }
 
-impl ViewTrait for CardView {
+impl<T: Copy> ViewTrait for CardView<T>{
     fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {
         if let Some(animator) = &mut self.translation_animator {
             self.transform.set_translation(animator.update(time_delta));
@@ -143,12 +151,12 @@ impl ViewTrait for CardView {
     fn send_message_for_event(&mut self, event: &Event) -> bool {
         match event {
             Event::MouseUp { .. } => {
-                // if let Some(sender) = &self.sender {
-                //     if let Some(message) = self.mouse_up_message {
-                //         sender.send(message).expect("Message send error.");
-                //         return true;
-                //     }
-                // }
+                if let Some(sender) = &self.sender {
+                    if let Some(message) = &self.mouse_up_message {
+                        sender.send(*message).expect("Message send error.");
+                        return true;
+                    }
+                }
                 println!("Card {:?}: mouse up", self.id);
             }
             _ => {}
