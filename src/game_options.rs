@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
 
-use crate::card::{Points, CardSuit, FaceRank, GameRank};
+use crate::card::{CardSuit, FaceRank, GameRank, Points};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum DeckKind {

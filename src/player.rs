@@ -1,5 +1,5 @@
 use crate::bot::BotKind;
-use crate::card::{CardId, Points, CardSuit};
+use crate::card::{CardId, CardSuit, Points};
 use crate::trick::Trick;
 
 pub type PlayerId = usize;

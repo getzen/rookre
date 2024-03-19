@@ -2,19 +2,13 @@ use std::cmp::Ordering;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum CardKind {
-    Suited,
-    Joker,
-}
-
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum CardSuit {
-    None, // Joker, at first
     Club,
     Diamond,
     Heart,
     Spade,
+    Joker,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -34,7 +28,6 @@ pub type Points = i16; // allow for negative score in case score system changes
 #[derive(Clone, Debug)]
 pub struct Card {
     pub id: CardId,
-    pub kind: CardKind,
     pub suit: CardSuit,
     pub face_rank: FaceRank,
     pub game_rank: GameRank,
@@ -45,17 +38,16 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn new(kind: CardKind, suit: CardSuit, face_rank: FaceRank) -> Self {
+    pub fn new(suit: CardSuit, face_rank: FaceRank) -> Self {
         let id = slotmap::DefaultKey::default();
         Self {
             id,
-            kind,
             suit,
             face_rank,
             game_rank: face_rank as f32,
-            face_up: false,
             is_trump: false,
             points: 0,
+            face_up: false,
             select_state: SelectState::Unselectable,
         }
     }
@@ -72,18 +64,13 @@ impl Card {
 
     /// Used by PartialOrd to determine sort order.
     pub fn sort_order(&self) -> usize {
-        match self.kind {
-            CardKind::Suited => {
-                let rank = (self.game_rank * 10.0) as usize;
-                match self.suit {
-                    CardSuit::Club => rank,
-                    CardSuit::Diamond => 200 + rank,
-                    CardSuit::Heart => 400 + rank,
-                    CardSuit::Spade => 600 + rank,
-                    _ => panic!(),
-                }
-            }
-            CardKind::Joker => 1000,
+        let rank = (self.game_rank * 10.0) as usize;
+        match self.suit {
+            CardSuit::Club => rank,
+            CardSuit::Diamond => 200 + rank,
+            CardSuit::Heart => 400 + rank,
+            CardSuit::Spade => 600 + rank,
+            CardSuit::Joker => 800,
         }
     }
 
@@ -139,7 +126,7 @@ impl core::fmt::Display for Card {
             CardSuit::Club => write!(f, "{rank}♧"),
             CardSuit::Diamond => write!(f, "{rank}♦️"),
             CardSuit::Heart => write!(f, "{rank}♥️"),
-            CardSuit::None => write!(f, "Jk"),
+            CardSuit::Joker => write!(f, "Jk"),
         }
     }
 }

@@ -5,7 +5,7 @@ use std::sync::mpsc::Sender;
 use slotmap::SlotMap;
 
 use crate::bot::BotKind;
-use crate::card::{Card, CardId, CardKind, Points, CardSuit, SelectState};
+use crate::card::{Card, CardId, CardSuit, Points, SelectState};
 use crate::game::GameAction::*;
 use crate::game_options::{
     BiddingKind, DeckKind, GameOptions, NestPointsOption, PartnerKind, PointsAwarded,
@@ -190,7 +190,7 @@ impl Game {
         let cards = match self.options.deck_kind {
             DeckKind::Standard52 => self.create_standard_52(),
             DeckKind::Standard53 => self.create_standard_53(),
-            _ => panic!()
+            _ => panic!(),
         };
         self.assign_ids(cards);
     }
@@ -205,17 +205,13 @@ impl Game {
         }
     }
 
-    fn create_card_ranks(
-        &self,
-        from_rank: u8,
-        to_rank: u8,
-    ) -> Vec<Card> {
+    fn create_card_ranks(&self, from_rank: u8, to_rank: u8) -> Vec<Card> {
         let mut cards = Vec::new();
         for rank in from_rank..=to_rank {
-            cards.push(Card::new(CardKind::Suited, CardSuit::Club, rank));
-            cards.push(Card::new(CardKind::Suited, CardSuit::Diamond, rank));
-            cards.push(Card::new(CardKind::Suited, CardSuit::Heart, rank));
-            cards.push(Card::new(CardKind::Suited, CardSuit::Spade, rank));
+            cards.push(Card::new(CardSuit::Club, rank));
+            cards.push(Card::new(CardSuit::Diamond, rank));
+            cards.push(Card::new(CardSuit::Heart, rank));
+            cards.push(Card::new(CardSuit::Spade, rank));
         }
 
         // Remove certain ranks
@@ -255,7 +251,7 @@ impl Game {
 
     fn create_standard_53(&self) -> Vec<Card> {
         let mut cards = self.create_card_ranks(2, 14);
-        let mut joker = Card::new(CardKind::Joker, CardSuit::None, 0);
+        let mut joker = Card::new(CardSuit::Joker, 0);
         joker.game_rank = self.options.bird_joker_rank;
         joker.points = self.options.bird_joker_points;
         cards.push(joker);
@@ -533,7 +529,7 @@ impl Game {
         let mut ids = Vec::new();
         for id in &self.active_player().hand {
             if let Some(card) = self.cards.get(*id) {
-                if card.kind == CardKind::Joker {
+                if card.suit == CardSuit::Joker {
                     continue;
                 }
                 ids.push(*id);
@@ -565,11 +561,10 @@ impl Game {
         self.sort_hand(player_id);
     }
 
+    /// Mark the cards matching trump.
     pub fn set_trump(&mut self, suit: CardSuit) {
-        // Mark the cards matching trump.
         for card in self.cards.values_mut() {
-            if card.suit == suit || card.kind == CardKind::Joker {
-                card.suit = suit;
+            if card.suit == suit || card.suit == CardSuit::Joker {
                 card.is_trump = true;
             }
         }

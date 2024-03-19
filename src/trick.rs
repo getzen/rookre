@@ -1,4 +1,4 @@
-use crate::card::{Card, CardId, CardKind, Points};
+use crate::card::{Card, CardId, Points};
 use crate::player::PlayerId;
 
 #[derive(Clone, Debug)]
@@ -82,18 +82,13 @@ impl Trick {
     }
 
     pub fn takes_lead(&self, card: &Card) -> bool {
-        // Assume true, it does take lead.
-
         if let Some(winning_card) = &self.winning_card {
             if card.suit == winning_card.suit {
                 return card.game_rank > winning_card.game_rank;
             } else {
-                match card.kind {
-                    CardKind::Suited => return card.is_trump,
-                    CardKind::Joker => {}
-                }
+                return card.is_trump
             }
         }
-        true
+        true // first card played
     }
 }
