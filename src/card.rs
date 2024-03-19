@@ -18,12 +18,13 @@ pub enum SelectState {
     Dimmed,       // Unselectable and the view should shade in gray to show it.
 }
 
+pub type CardId = slotmap::DefaultKey;
 /// The rank showing on the card face.
 pub type FaceRank = u8;
 /// The rank according to the game rules. Use a maximum of one decimal place, eg 10.5.
 pub type GameRank = f32;
-pub type CardId = slotmap::DefaultKey;
-pub type Points = i16; // allow for negative score in case score system changes
+/// Signed int to allow for negative score in case score system changes.
+pub type Points = i16;
 
 #[derive(Clone, Debug)]
 pub struct Card {

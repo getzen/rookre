@@ -86,7 +86,7 @@ impl Trick {
             if card.suit == winning_card.suit {
                 return card.game_rank > winning_card.game_rank;
             } else {
-                return card.is_trump
+                return card.is_trump;
             }
         }
         true // first card played
