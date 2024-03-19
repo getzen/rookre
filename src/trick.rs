@@ -91,7 +91,6 @@ impl Trick {
                 match card.kind {
                     CardKind::Suited => return card.is_trump,
                     CardKind::Joker => {}
-                    CardKind::Bird => {}
                 }
             }
         }

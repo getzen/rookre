@@ -14,9 +14,6 @@ impl ViewFn {
             CardKind::Joker => gfx
                 .create_texture()
                 .from_image(include_bytes!("assets/cards/joker.png")),
-            CardKind::Bird => gfx
-                .create_texture()
-                .from_image(include_bytes!("assets/cards/bird.png")),
 
             CardKind::Suited => {
                 let int_rank = card.face_rank as usize;

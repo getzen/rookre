@@ -253,7 +253,7 @@ impl View {
         } else {
             self.discard_panel.visible = true;
 
-            // Set eligible cards.
+            // Set message for eligible cards.
             for id in game.active_hand() {
                 if let Some(card) = game.cards.get(*id) {
                     let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();

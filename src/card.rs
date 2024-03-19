@@ -6,22 +6,15 @@ use serde::{Deserialize, Serialize};
 pub enum CardKind {
     Suited,
     Joker,
-    Bird,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum CardSuit {
-    /// Cards with no suit do not set the lead suit when played first.
-    /// The next card played does.
-    None,
+    None, // Joker, at first
     Club,
     Diamond,
     Heart,
     Spade,
-    Star,
-    /// Cards with unique suit do set the lead suit, but may be followed
-    /// by any suit, including another unique.
-    Unique,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -87,12 +80,10 @@ impl Card {
                     CardSuit::Diamond => 200 + rank,
                     CardSuit::Heart => 400 + rank,
                     CardSuit::Spade => 600 + rank,
-                    CardSuit::Star => 800 + rank,
                     _ => panic!(),
                 }
             }
             CardKind::Joker => 1000,
-            CardKind::Bird => 1200,
         }
     }
 
@@ -115,14 +106,7 @@ impl Card {
     //         CardSuit::Diamond => format!("diamond_{}", self.rank),
     //         CardSuit::Heart => format!("heart_{}", self.rank),
     //         CardSuit::Spade => format!("spade_{}", self.rank),
-    //         CardSuit::Star => format!("star_{}", self.rank),
-    //         CardSuit::Green => format!("green_{}", self.rank),
-    //         CardSuit::Blue => format!("blue_{}", self.rank),
-    //         CardSuit::Red => format!("red_{}", self.rank),
-    //         CardSuit::Black => format!("black_{}", self.rank),
-    //         CardSuit::Orange => format!("orange_{}", self.rank),
     //         CardSuit::Joker => format!("joker"),
-    //         CardSuit::Bird => format!("bird"),
     //     }
     // }
 }
@@ -144,7 +128,6 @@ impl Eq for Card {}
 impl PartialEq for Card {
     fn eq(&self, other: &Self) -> bool {
         self.suit == other.suit && self.face_rank == other.face_rank
-        //self.kind == other.kind
     }
 }
 
@@ -156,9 +139,7 @@ impl core::fmt::Display for Card {
             CardSuit::Club => write!(f, "{rank}♧"),
             CardSuit::Diamond => write!(f, "{rank}♦️"),
             CardSuit::Heart => write!(f, "{rank}♥️"),
-            CardSuit::Star => write!(f, "{rank}✸"),
-            CardSuit::None => todo!(),
-            CardSuit::Unique => write!(f, "Jk"),
+            CardSuit::None => write!(f, "Jk"),
         }
     }
 }

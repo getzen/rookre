@@ -114,9 +114,9 @@ impl CardLocation {
             CardGroup::Deck => self.group_index,
             CardGroup::NestExchange => self.group_index,
             CardGroup::NestAside => self.group_index,
-            CardGroup::Hand => self.group_index + 100,
+            CardGroup::Hand => self.group_index + 20,
             CardGroup::TrickActive => self.group_index,
-            CardGroup::TrickAside => 200,
+            CardGroup::TrickAside => 40,
         }
     }
 

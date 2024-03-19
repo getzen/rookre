@@ -190,8 +190,7 @@ impl Game {
         let cards = match self.options.deck_kind {
             DeckKind::Standard52 => self.create_standard_52(),
             DeckKind::Standard53 => self.create_standard_53(),
-            DeckKind::Rook56 => self.create_rook_56(),
-            DeckKind::Rook57 => self.create_rook_57(),
+            _ => panic!()
         };
         self.assign_ids(cards);
     }
@@ -210,7 +209,6 @@ impl Game {
         &self,
         from_rank: usize,
         to_rank: usize,
-        incl_fifth_suit: bool,
     ) -> Vec<Card> {
         let mut cards = Vec::new();
         for rank in from_rank..=to_rank {
@@ -218,9 +216,6 @@ impl Game {
             cards.push(Card::new(CardKind::Suited, CardSuit::Diamond, rank));
             cards.push(Card::new(CardKind::Suited, CardSuit::Heart, rank));
             cards.push(Card::new(CardKind::Suited, CardSuit::Spade, rank));
-            if incl_fifth_suit {
-                cards.push(Card::new(CardKind::Suited, CardSuit::Star, rank));
-            }
         }
 
         // Remove certain ranks
@@ -255,25 +250,12 @@ impl Game {
     }
 
     fn create_standard_52(&self) -> Vec<Card> {
-        self.create_card_ranks(2, 14, false)
+        self.create_card_ranks(2, 14)
     }
 
     fn create_standard_53(&self) -> Vec<Card> {
-        let mut cards = self.create_card_ranks(2, 14, false);
-        let mut joker = Card::new(CardKind::Joker, CardSuit::Unique, 0);
-        joker.game_rank = self.options.bird_joker_rank;
-        joker.points = self.options.bird_joker_points;
-        cards.push(joker);
-        cards
-    }
-
-    fn create_rook_56(&self) -> Vec<Card> {
-        self.create_card_ranks(1, 14, false)
-    }
-
-    fn create_rook_57(&self) -> Vec<Card> {
-        let mut cards = self.create_card_ranks(1, 14, false);
-        let mut joker = Card::new(CardKind::Bird, CardSuit::Unique, 0);
+        let mut cards = self.create_card_ranks(2, 14);
+        let mut joker = Card::new(CardKind::Joker, CardSuit::None, 0);
         joker.game_rank = self.options.bird_joker_rank;
         joker.points = self.options.bird_joker_points;
         cards.push(joker);
@@ -586,7 +568,7 @@ impl Game {
     pub fn set_trump(&mut self, suit: CardSuit) {
         // Mark the cards matching trump.
         for card in self.cards.values_mut() {
-            if card.suit == suit || card.kind == CardKind::Joker || card.kind == CardKind::Bird {
+            if card.suit == suit || card.kind == CardKind::Joker {
                 card.suit = suit;
                 card.is_trump = true;
             }
