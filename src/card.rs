@@ -25,7 +25,7 @@ pub enum SelectState {
 }
 
 /// The rank showing on the card face.
-pub type FaceRank = usize;
+pub type FaceRank = u8;
 /// The rank according to the game rules. Use a maximum of one decimal place, eg 10.5.
 pub type GameRank = f32;
 pub type CardPoints = isize;

@@ -207,8 +207,8 @@ impl Game {
 
     fn create_card_ranks(
         &self,
-        from_rank: usize,
-        to_rank: usize,
+        from_rank: u8,
+        to_rank: u8,
     ) -> Vec<Card> {
         let mut cards = Vec::new();
         for rank in from_rank..=to_rank {
