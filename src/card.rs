@@ -28,8 +28,8 @@ pub enum SelectState {
 pub type FaceRank = u8;
 /// The rank according to the game rules. Use a maximum of one decimal place, eg 10.5.
 pub type GameRank = f32;
-pub type CardPoints = isize;
 pub type CardId = slotmap::DefaultKey;
+pub type Points = i16; // allow for negative score in case score system changes
 
 #[derive(Clone, Debug)]
 pub struct Card {
@@ -38,9 +38,9 @@ pub struct Card {
     pub suit: CardSuit,
     pub face_rank: FaceRank,
     pub game_rank: GameRank,
-    pub face_up: bool, // face_up here means exposed to all players
     pub is_trump: bool,
-    pub points: CardPoints,
+    pub points: Points,
+    pub face_up: bool, // face_up here means exposed to all players
     pub select_state: SelectState,
 }
 

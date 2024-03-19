@@ -5,7 +5,7 @@ use std::sync::mpsc::Sender;
 use slotmap::SlotMap;
 
 use crate::bot::BotKind;
-use crate::card::{Card, CardId, CardKind, CardSuit, SelectState};
+use crate::card::{Card, CardId, CardKind, Points, CardSuit, SelectState};
 use crate::game::GameAction::*;
 use crate::game_options::{
     BiddingKind, DeckKind, GameOptions, NestPointsOption, PartnerKind, PointsAwarded,
@@ -665,7 +665,7 @@ impl Game {
         self.tricks_played == self.options.hand_size
     }
 
-    pub fn nest_points(&self) -> isize {
+    pub fn nest_points(&self) -> Points {
         let mut points = 0;
         for id in &self.deck {
             let card = self.cards.get(*id).unwrap();
@@ -688,7 +688,7 @@ impl Game {
         }
     }
 
-    fn makers_and_defenders_points(&self) -> (isize, isize) {
+    fn makers_and_defenders_points(&self) -> (Points, Points) {
         let mut makers_pts = 0;
         let mut defenders_pts = 0;
         for p in &self.players {
@@ -703,14 +703,14 @@ impl Game {
         (makers_pts, defenders_pts)
     }
 
-    pub fn makers_and_defenders_score(&self) -> (isize, isize) {
+    pub fn makers_and_defenders_score(&self) -> (Points, Points) {
         let (makers_pts, defenders_pts) = self.makers_and_defenders_points();
         let points_needed = 70; ////////// read from GameOptions instead
 
         let makers_score;
         let defenders_score;
 
-        if makers_pts >= points_needed as isize {
+        if makers_pts >= points_needed {
             // Bid successful
             makers_score = match self.options.makers_points_awarded_for_win {
                 PointsAwarded::Fixed(p) => p,

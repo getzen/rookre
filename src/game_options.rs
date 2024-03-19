@@ -2,14 +2,12 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
 
-use crate::card::{CardPoints, CardSuit, FaceRank, GameRank};
+use crate::card::{Points, CardSuit, FaceRank, GameRank};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum DeckKind {
     Standard52,
     Standard53,
-    Rook56,
-    Rook57,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -49,15 +47,15 @@ pub enum TrumpPicking {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PointsAwarded {
     // assign separately to Makers and Defenders
-    Fixed(isize),
-    PointsTakenWithMultiplier(isize),
+    Fixed(Points),
+    PointsTakenWithMultiplier(Points),
     //PointsBid,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum NestPointsOption {
     CardPoints,
-    Fixed(isize),
+    Fixed(Points),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -66,10 +64,10 @@ pub struct GameOptions {
     pub remove_ranks: Vec<FaceRank>,
     pub remove_cards: Vec<(FaceRank, char)>,
     pub bird_joker_rank: GameRank,
-    pub bird_joker_points: isize,
+    pub bird_joker_points: Points,
     // TODO: Re-think this. It's not fine-grained enough, eg Red 1 = best card.
     pub face_rank_to_game_rank_changes: Vec<(FaceRank, GameRank)>,
-    pub face_rank_points: Vec<(FaceRank, CardPoints)>,
+    pub face_rank_points: Vec<(FaceRank, Points)>,
     pub player_count_default: usize,
     pub partner_kind: PartnerKind,
     pub hand_size: usize,

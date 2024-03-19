@@ -1,5 +1,5 @@
 use crate::bot::BotKind;
-use crate::card::{CardId, CardSuit};
+use crate::card::{CardId, Points, CardSuit};
 use crate::trick::Trick;
 
 pub type PlayerId = usize;
@@ -18,8 +18,8 @@ pub struct Player {
     pub hand: Vec<CardId>,
     pub bid: Option<CardSuit>,
     pub tricks: Vec<Trick>,
-    pub points_this_hand: isize,
-    pub score: isize,
+    pub points_this_hand: Points,
+    pub score: Points,
     pub bot_kind: Option<BotKind>,
 }
 
@@ -76,7 +76,7 @@ impl Player {
         }
     }
 
-    pub fn finalize_score(&mut self, score_this_hand: isize) -> isize {
+    pub fn finalize_score(&mut self, score_this_hand: Points) -> Points {
         self.score += score_this_hand;
         self.score
     }

@@ -11,7 +11,7 @@ use crate::{animators::{AngleAnimator, TranslationAnimator}, card::Card, game::P
 pub type CardRank = f32;
 // The rank according to the game rules. Use a maximum of one decimal place, eg 10.5.
 //pub type GameRank = f32;
-pub type CardPoints = u8;
+pub type Points = i16;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum CardKind {
@@ -47,7 +47,7 @@ pub struct CardNew {
     pub suit: CardSuit,
     pub rank: CardRank, // might vary from what is shown on face
     //pub game_rank: GameRank,
-    pub points: CardPoints,
+    pub points: Points,
     pub is_trump: bool,
     
     // In between

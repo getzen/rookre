@@ -1,4 +1,4 @@
-use crate::card::{Card, CardId, CardKind};
+use crate::card::{Card, CardId, CardKind, Points};
 use crate::player::PlayerId;
 
 #[derive(Clone, Debug)]
@@ -8,7 +8,7 @@ pub struct Trick {
     pub lead_card: Option<Card>,
     pub winning_card: Option<Card>,
     pub winner: Option<PlayerId>,
-    pub points: isize, // could be negative in a game like Hearts
+    pub points: Points, // could be negative in a game like Hearts
 }
 
 impl Trick {
