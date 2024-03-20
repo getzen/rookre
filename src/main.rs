@@ -6,7 +6,7 @@ mod bot;
 mod bot_monte;
 mod bot_random;
 mod card;
-mod card_location;
+mod card_update;
 mod card_view;
 mod controller;
 mod discard_panel;

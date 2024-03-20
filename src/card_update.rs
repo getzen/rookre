@@ -1,11 +1,10 @@
 use notan::math::{vec2, Vec2};
 
 use crate::{
-    player::PlayerId,
-    view_geom::{ViewGeom, CARD_SIZE, VIEW_CENTER},
+    card::{CardId, SelectState}, player::PlayerId, view_geom::{ViewGeom, CARD_SIZE, VIEW_CENTER}
 };
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum CardGroup {
     Deck,
     NestExchange,
@@ -15,34 +14,39 @@ pub enum CardGroup {
     TrickAside,
 }
 
-/// CardLocation contains everything needed for the view to position a card properly.
+/// CardUpdates are prepared by the Controller and sent to the View.
+/// It contains everything needed for the view to position and update a card properly.
 /// Not all fields are used with all CardGroups.
-#[derive(Clone, PartialEq)]
-pub struct CardLocation {
+#[derive(Clone, Copy, PartialEq)]
+pub struct CardUpdate {
+    pub id: CardId,
     pub group: CardGroup,
     pub group_index: usize,
     pub group_len: usize,
     pub player: PlayerId,
     pub player_len: usize,
     pub player_is_bot: bool,
-    pub mouse_over: bool,
+    pub face_up: bool,
+    pub select_state: SelectState,
 }
 
-impl Default for CardLocation {
+impl Default for CardUpdate {
     fn default() -> Self {
-        CardLocation {
+        CardUpdate {
+            id: slotmap::DefaultKey::default(),
             group: CardGroup::Deck,
             group_index: 0,
             group_len: 0,
             player: 0,
             player_len: 0,
             player_is_bot: false,
-            mouse_over: false,
+            face_up: false,
+            select_state: SelectState::Unselectable,
         }
     }
 }
 
-impl CardLocation {
+impl CardUpdate {
     pub fn translation(&self) -> Vec2 {
         match &self.group {
             CardGroup::Deck => VIEW_CENTER,
@@ -51,6 +55,7 @@ impl CardLocation {
                 let mut pt = VIEW_CENTER;
                 pt.x -= (self.group_len - 1) as f32 * x_spacing / 2.0;
                 pt.x += self.group_index as f32 * x_spacing;
+                println!("nest translation: {}", pt.x);
                 pt
             }
             CardGroup::NestAside => {
@@ -87,7 +92,7 @@ impl CardLocation {
         let mut x_offset = (self.group_len - 1) as f32 * -x_spacing / 2.0;
         x_offset += self.group_index as f32 * x_spacing;
 
-        let distance_from_center = if self.mouse_over { 270.0 } else { 300.0 };
+        let distance_from_center = 300.0; //if self.mouse_over { 270.0 } else { 300.0 };
 
         let radians = ViewGeom::player_radians_from_center(self.player, self.player_len);
         let mut pos = ViewGeom::position_from(VIEW_CENTER, radians, distance_from_center);
@@ -119,15 +124,4 @@ impl CardLocation {
             CardGroup::TrickAside => 40,
         }
     }
-
-    // pub fn face_down(&self) -> bool {
-    //     match &self.group {
-    //         CardGroup::Deck => true,
-    //         CardGroup::NestExchange => false,
-    //         CardGroup::NestAside => true,
-    //         CardGroup::Hand => self.player_is_bot,
-    //         CardGroup::TrickActive => false,
-    //         CardGroup::TrickAside => true,
-    //     }
-    // }
 }

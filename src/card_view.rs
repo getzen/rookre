@@ -12,7 +12,7 @@ use slotmap::DefaultKey;
 use crate::{
     animators::{AngleAnimator, TranslationAnimator},
     card::{Card, SelectState},
-    card_location::CardLocation,
+    card_update::CardUpdate,
     game::PlayerAction,
     texture_loader::{ViewFn, CARD_TEX_SCALE},
     transform::Transform,
@@ -31,7 +31,7 @@ pub struct CardView<T> {
     pub back_tex: Texture,
     pub color: Color,
 
-    pub location: CardLocation,
+    pub update: CardUpdate,
     pub select_state: SelectState,
     pub mouse_over: bool,
 
@@ -67,7 +67,7 @@ impl<T> CardView<T> {
             back_tex,
             color: Color::WHITE,
 
-            location: CardLocation::default(),
+            update: CardUpdate::default(),
             select_state: SelectState::Unselectable,
             mouse_over: false,
 
@@ -79,7 +79,7 @@ impl<T> CardView<T> {
         }
     }
 
-    pub fn animate_to(&mut self, location: CardLocation, trans_vel: f32, angle_vel: f32) {
+    pub fn animate_to(&mut self, location: CardUpdate, trans_vel: f32, angle_vel: f32) {
         // Create translation animator if needed.
         let end_pt = location.translation();
         if !self.transform.translation().abs_diff_eq(end_pt, 0.1) {
@@ -96,8 +96,7 @@ impl<T> CardView<T> {
         }
 
         self.z_order = location.z_order();
-        //self.face_down = location.face_down();
-        self.location = location;
+
     }
 }
 

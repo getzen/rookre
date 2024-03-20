@@ -11,7 +11,7 @@ pub enum CardSuit {
     Joker,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SelectState {
     Selectable,   // Expands a bit in size when mouse over.
     Unselectable, // Normal size and appearance, just unselectable.

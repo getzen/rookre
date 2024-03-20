@@ -1,4 +1,4 @@
-player_count_default: 4
+player_count: 4
 deck_kind: Standard53
 remove_ranks:
 - 2

@@ -10,7 +10,7 @@ use slotmap::SlotMap;
 use crate::{
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit, SelectState},
-    card_location::{CardGroup, CardLocation},
+    card_update::{CardGroup, CardUpdate},
     card_view::CardView,
     discard_panel::DiscardPanel,
     game::{Game, GameAction, GameMessage, PlayerAction},
@@ -155,66 +155,40 @@ impl View {
         self.queue_empty = false;
     }
 
-    fn update_card(&mut self, id: CardId, location: CardLocation, game: &Game) {
-        let card_view = self.card_views.iter_mut().find(|s| s.id == id).unwrap();
+    // NEW
+    pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>) {
+        if let Some(update) = updates.pop_front() {
+            self.update_card(update);
+        }
+        // loop {
+        //     if let Some(update) = updates.pop_front() {
+        //         if self.update_card(update) {
+        //             break;
+        //         }
+        //     } else {
+        //         break;
+        //     }
+        // }
+    }
 
-        // Location
-        card_view.animate_to(location, 500.0, 6.0);
+    /// Returns false if the card did not need updating.
+    fn update_card(&mut self, update: CardUpdate) -> bool {
+        let card_view = self.card_views.iter_mut().find(|s| s.id == update.id).unwrap();
+        if card_view.update == update {
+            return false;
+        }
+
+        // This include location, angle, and z_order.
+        card_view.animate_to(update, 500.0, 6.0);
         self.card_views_z_order_dirty = true;
 
-        // Face up/down and select state
-        if let Some(card) = game.cards.get(id) {
-            card_view.face_up = card.face_up;
-            card_view.select_state = card.select_state;
-        }
+        card_view.face_up = update.face_up;
+        card_view.select_state = update.select_state;
+        card_view.update = update;
+        true
     }
 
-    fn update_deck(&mut self, game: &Game) {
-        let mut location = CardLocation {
-            group: CardGroup::Deck,
-            ..Default::default()
-        };
-        for (idx, id) in game.deck.iter().enumerate() {
-            location.group_index = idx;
-            self.update_card(*id, location.clone(), game);
-        }
-    }
-
-    fn update_hand(&mut self, game: &Game, player_id: PlayerId) {
-        let hand = &game.players[player_id].hand;
-
-        let mut location = CardLocation {
-            group: CardGroup::Hand,
-            group_len: hand.len(),
-            player: player_id,
-            player_len: game.player_count,
-            player_is_bot: game.player_is_bot(player_id),
-            ..Default::default()
-        };
-
-        for (idx, id) in hand.iter().enumerate() {
-            location.group_index = idx;
-            self.update_card(*id, location.clone(), game);
-
-            // Turn human cards face up.
-            if !game.player_is_bot(player_id) {
-                let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
-                card_view.face_up = true;
-            }
-        }
-    }
-
-    fn update_nest(&mut self, game: &Game) {
-        let mut location = CardLocation {
-            group: CardGroup::NestExchange,
-            group_len: game.nest.len(),
-            ..Default::default()
-        };
-        for (idx, id) in game.nest.iter().enumerate() {
-            location.group_index = idx;
-            self.update_card(*id, location.clone(), game);
-        }
-    }
+    
 
     fn update_active_player(&mut self, game: &Game) {
         let p = game.active_player;
@@ -337,13 +311,13 @@ impl ViewTrait for View {
         for msg in &messages_ready {
             match &msg {
                 GameMessage::UpdateDeck(game) => {
-                    self.update_deck(&game);
+                    //self.update_deck(&game);
                 }
                 GameMessage::UpdateNest(game) => {
-                    self.update_nest(&game);
+                    //self.update_nest(&game);
                 }
                 GameMessage::UpdateHand(game, p) => {
-                    self.update_hand(&game, *p);
+                    //self.update_hand(&game, *p);
                 }
                 GameMessage::UpdateActivePlayer(game) => {
                     self.update_active_player(game);

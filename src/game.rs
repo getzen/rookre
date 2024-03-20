@@ -322,24 +322,28 @@ impl Game {
         for _ in 0..(count * self.player_count as u8) {
             if let Some(id) = self.deck.pop() {
                 self.players[deal_to].add_to_hand(id);
-
-                if self.send_messages {
-                    let msg = GameMessage::UpdateHand(self.clone(), deal_to);
-                    self.message_sender.send(msg).unwrap();
-                }
+                
+                
             }
             deal_to = (deal_to + 1) % self.player_count;
         }
 
-        // Sort human hands.
+        // Sort human hands and turn cards face up.
         for p in 0..self.player_count {
             if !self.player_is_bot(p) {
                 self.sort_hand(p);
-                if self.send_messages {
-                    let msg = GameMessage::UpdateHand(self.clone(), p);
-                    self.message_sender.send(msg).unwrap();
-                }
+
+                for id in &self.players[p].hand {
+                    if let Some(card) = self.cards.get_mut(*id) {
+                        card.face_up = true;
+                    }
+                }        
             }
+        }
+
+        if self.send_messages {
+            let msg = GameMessage::UpdateHand(self.clone(), 0);
+            self.message_sender.send(msg).unwrap();
         }
 
         // Remaining cards to nest

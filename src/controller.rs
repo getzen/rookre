@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 
@@ -6,6 +7,7 @@ use notan::math::Vec2;
 use notan::prelude::*;
 
 use crate::bot::BotMgr;
+use crate::card_update::{CardGroup, CardUpdate};
 use crate::game::{Game, GameAction, GameMessage, PlayerAction};
 use crate::view::View;
 use crate::view_trait::ViewTrait;
@@ -30,6 +32,9 @@ pub struct Controller {
 
     audio_message_receiver: Receiver<AudioMessage>,
     card_play: Option<AudioSource>,
+
+    // NEW
+    card_updates: VecDeque<CardUpdate>,
 }
 
 impl Controller {
@@ -60,6 +65,8 @@ impl Controller {
             view,
             audio_message_receiver,
             card_play: None,
+
+            card_updates: VecDeque::new(),
         }
     }
 
@@ -82,22 +89,34 @@ impl Controller {
     pub fn update(&mut self, app: &mut App) {
         let time_delta = app.timer.delta_f32();
 
+        self.view.update_cards(&mut self.card_updates);
+
         // Check for GameMessages. Pass the messages to the view,
         // possibly with delay added afterward.
         let received = self.game_message_receiver.try_recv();
         if let Ok(message) = received {
             match message {
                 GameMessage::UpdateDeck(..) => {
-                    self.view.queue_message(message);
-                    self.view.queue_message(GameMessage::Delay(1.0));
+                    //self.view.queue_message(message);
+                    //self.view.queue_message(GameMessage::Delay(1.0));
+
+                    // NEW
+                    self.update_deck();
+
                 }
                 GameMessage::UpdateNest(..) => {
-                    self.view.queue_message(message);
-                    self.view.queue_message(GameMessage::Delay(0.1));
+                    // self.view.queue_message(message);
+                    // self.view.queue_message(GameMessage::Delay(0.1));
+
+                    // NEW
+                    self.update_nest();
                 }
                 GameMessage::UpdateHand(..) => {
-                    self.view.queue_message(message);
-                    self.view.queue_message(GameMessage::Delay(0.02));
+                    // self.view.queue_message(message);
+                    // self.view.queue_message(GameMessage::Delay(0.02));
+
+                    // NEW
+                    self.update_hands();
                 }
                 GameMessage::UpdateActivePlayer(..) => self.view.queue_message(message),
                 GameMessage::UpdateDealer(..) => self.view.queue_message(message),
@@ -142,6 +161,64 @@ impl Controller {
 
         self.view.update(time_delta, app);
         self.update_sounds(app);
+    }
+
+    fn update_deck(&mut self) {
+        let mut update = CardUpdate {
+            group: CardGroup::Deck,
+            ..Default::default()
+        };
+        for (idx, id) in self.game.deck.iter().enumerate() {
+            update.id = *id;
+            update.group_index = idx;
+            if let Some(card) = self.game.cards.get(*id) {
+                update.face_up = card.face_up;
+                update.select_state = card.select_state;
+            }
+            self.card_updates.push_back(update.clone());
+        }
+    }
+
+    fn update_hands(&mut self) {
+        for player_id in 0..self.game.player_count {
+            let hand = &self.game.players[player_id].hand;
+
+            let mut update = CardUpdate {
+                group: CardGroup::Hand,
+                group_len: hand.len(),
+                player: player_id,
+                player_len: self.game.player_count,
+                player_is_bot: self.game.player_is_bot(player_id),
+                ..Default::default()
+            };
+    
+            for (idx, id) in hand.iter().enumerate() {
+                update.id = *id;
+                update.group_index = idx;
+                if let Some(card) = self.game.cards.get(*id) {
+                    update.face_up = card.face_up;
+                    update.select_state = card.select_state;
+                }
+                self.card_updates.push_back(update.clone());
+            }
+        }
+    }
+
+    fn update_nest(&mut self) {
+        let mut update = CardUpdate {
+            group: CardGroup::NestExchange,
+            group_len: self.game.nest.len(),
+            ..Default::default()
+        };
+        for (idx, id) in self.game.nest.iter().enumerate() {
+            update.id = *id;
+            update.group_index = idx;
+            if let Some(card) = self.game.cards.get(*id) {
+                update.face_up = card.face_up;
+                update.select_state = card.select_state;
+            }
+            self.card_updates.push_back(update.clone());
+        }
     }
 
     // Turn the bot loose on the world.
