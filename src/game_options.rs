@@ -61,7 +61,7 @@ pub enum NestPointsOption {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GameOptions {
-    pub player_count_default: PlayerId,
+    pub player_count: PlayerId,
     pub deck_kind: DeckKind,
     pub remove_ranks: Vec<FaceRank>,
     //pub remove_cards: Vec<(FaceRank, char)>,
@@ -92,7 +92,8 @@ pub struct GameOptions {
 impl GameOptions {
     pub fn new() -> Self {
         Self {
-            player_count_default: 4,
+            // Anything other than 4 will not work properly.
+            player_count: 4,
             deck_kind: DeckKind::Standard53,
             remove_ranks: vec![2, 3, 4],
             //remove_cards: vec![],
@@ -103,7 +104,7 @@ impl GameOptions {
             //partner_kind: PartnerKind::Across,
             hand_size: 9,
             nest_size: 5,
-            nest_face_up: 1,
+            nest_face_up: 2,
             bidding_kind: BiddingKind::Euchre,
             //bidding_progression: BiddingProgression::OneBidderLeft,
             //bid_increment: 0,

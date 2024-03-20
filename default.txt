@@ -15,7 +15,7 @@ face_rank_points:
   - 10
 hand_size: 9
 nest_size: 5
-nest_face_up: 1
+nest_face_up: 2
 bidding_kind: Euchre
 makers_points_awarded_for_win: !PointsTakenWithMultiplier 1
 makers_points_awarded_for_loss: !Fixed 0

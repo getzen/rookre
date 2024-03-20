@@ -34,12 +34,10 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(gfx: &mut Graphics) -> Self {
-        let player_count = 4;
-
         let (game_message_sender, game_message_receiver) = mpsc::channel();
         let (player_action_sender, player_action_receiver) = mpsc::channel();
 
-        let mut game = Game::new(player_count, game_message_sender);
+        let mut game = Game::new(game_message_sender);
         game.create_cards();
         game.do_next_action();
 
@@ -91,7 +89,7 @@ impl Controller {
             match message {
                 GameMessage::UpdateDeck(..) => {
                     self.view.queue_message(message);
-                    self.view.queue_message(GameMessage::Delay(2.0));
+                    self.view.queue_message(GameMessage::Delay(1.0));
                 }
                 GameMessage::UpdateNest(..) => {
                     self.view.queue_message(message);

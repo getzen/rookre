@@ -84,16 +84,17 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(player_count: PlayerId, action_sender: Sender<GameMessage>) -> Self {
+    pub fn new(action_sender: Sender<GameMessage>) -> Self {
         // Write over the defaults, if needed.
         let options = GameOptions::new();
         options.write_to_yaml("default.txt");
 
         // Read as normal.
         let options = GameOptions::read_from_yaml("default.txt");
+        let player_count = options.player_count;
 
         let mut players = Vec::new();
-        for p in 0..options.player_count_default {
+        for p in 0..player_count {
             let mut player = Player::new();
 
             match p {
@@ -173,14 +174,14 @@ impl Game {
         println!("partners assigned");
     }
 
-    fn assign_called_partner(&mut self, caller: PlayerId, card_id: CardId) {
-        for p in 0..self.player_count {
-            if self.players[p].hand.contains(&card_id) {
-                self.players[p].partner = Some(caller);
-                self.players[caller].partner = Some(p);
-            }
-        }
-    }
+    // fn assign_called_partner(&mut self, caller: PlayerId, card_id: CardId) {
+    //     for p in 0..self.player_count {
+    //         if self.players[p].hand.contains(&card_id) {
+    //             self.players[p].partner = Some(caller);
+    //             self.players[caller].partner = Some(p);
+    //         }
+    //     }
+    // }
 
     pub fn create_cards(&mut self) {
         let cards = match self.options.deck_kind {
@@ -194,7 +195,6 @@ impl Game {
     fn assign_ids(&mut self, cards: Vec<Card>) {
         for card in cards {
             let key = self.cards.insert(card);
-            //card.id = key;
             if let Some(card) = self.cards.get_mut(key) {
                 card.id = key;
             }
@@ -293,26 +293,26 @@ impl Game {
         self.assign_across_partners();
     }
 
-    fn print_hand(&self, p: PlayerId) {
-        let hand = &self.players[p].hand;
-        print!("P{p} hand: ");
-        for key in hand {
-            if let Some(card) = self.cards.get(*key) {
-                print!("{card} ");
-            }
-        }
-        println!("");
-    }
+    // fn print_hand(&self, p: PlayerId) {
+    //     let hand = &self.players[p].hand;
+    //     print!("P{p} hand: ");
+    //     for key in hand {
+    //         if let Some(card) = self.cards.get(*key) {
+    //             print!("{card} ");
+    //         }
+    //     }
+    //     println!("");
+    // }
 
-    fn print_nest(&self) {
-        print!("Nest: ");
-        for key in &self.nest {
-            if let Some(card) = self.cards.get(*key) {
-                print!("{card} ");
-            }
-        }
-        println!("");
-    }
+    // fn print_nest(&self) {
+    //     print!("Nest: ");
+    //     for key in &self.nest {
+    //         if let Some(card) = self.cards.get(*key) {
+    //             print!("{card} ");
+    //         }
+    //     }
+    //     println!("");
+    // }
 
     /// Deals the given number of cards to each player.
     pub fn deal_cards(&mut self, count: u8) {
@@ -344,21 +344,17 @@ impl Game {
 
         // Remaining cards to nest
         self.nest.append(&mut self.deck);
-        // Flip top card
-        if let Some(id) = self.nest.last() {
-            if let Some(card) = self.cards.get_mut(*id) {
+
+        // Flip nest cards
+        for i in 0..self.options.nest_face_up {
+            let idx = self.nest.len() - 1 - i as usize;
+            if let Some(card) = self.cards.get_mut(self.nest[idx]) {
                 card.face_up = true;
             }
         }
         if self.send_messages {
             let msg = GameMessage::UpdateNest(self.clone());
             self.message_sender.send(msg).unwrap();
-        }
-
-        for i in 0..self.options.nest_face_up {
-            if let Some(card) = self.cards.get_mut(self.nest[i as usize]) {
-                card.face_up = true;
-            }
         }
     }
 
