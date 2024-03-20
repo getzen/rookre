@@ -7,9 +7,7 @@ use slotmap::SlotMap;
 use crate::bot::BotKind;
 use crate::card::{Card, CardId, CardSuit, Points, SelectState};
 use crate::game::GameAction::*;
-use crate::game_options::{
-    BiddingKind, DeckKind, GameOptions, NestPointsOption, PartnerKind, PointsAwarded,
-};
+use crate::game_options::{DeckKind, GameOptions, NestPointsOption, PointsAwarded};
 use crate::player::{Player, PlayerId, PlayerKind};
 use crate::trick::Trick;
 
@@ -66,7 +64,7 @@ pub struct Game {
     pub deck: Vec<CardId>,
     pub nest: Vec<CardId>,
 
-    pub player_count: usize,
+    pub player_count: PlayerId,
     pub players: Vec<Player>,
     pub dealer: PlayerId,
     pub active_player: PlayerId,
@@ -77,7 +75,7 @@ pub struct Game {
 
     pub trick: Trick,
     pub last_trick_winner: PlayerId,
-    pub tricks_played: usize,
+    pub tricks_played: u8,
 
     pub game_over: bool,
 
@@ -86,7 +84,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(player_count: usize, action_sender: Sender<GameMessage>) -> Self {
+    pub fn new(player_count: PlayerId, action_sender: Sender<GameMessage>) -> Self {
         // Write over the defaults, if needed.
         let options = GameOptions::new();
         options.write_to_yaml("default.txt");
@@ -140,7 +138,7 @@ impl Game {
     }
 
     pub fn active_hand(&self) -> &Vec<CardId> {
-        &self.players[self.active_player].hand
+        &self.players[self.active_player as usize].hand
     }
 
     pub fn active_player_is_bot(&self) -> bool {
@@ -317,11 +315,11 @@ impl Game {
     }
 
     /// Deals the given number of cards to each player.
-    pub fn deal_cards(&mut self, count: usize) {
+    pub fn deal_cards(&mut self, count: u8) {
         // Start with the player to the dealer's left.
         let mut deal_to = (self.dealer + 1) % self.player_count;
 
-        for _ in 0..(count * self.player_count) {
+        for _ in 0..(count * self.player_count as u8) {
             if let Some(id) = self.deck.pop() {
                 self.players[deal_to].add_to_hand(id);
 
@@ -358,7 +356,7 @@ impl Game {
         }
 
         for i in 0..self.options.nest_face_up {
-            if let Some(card) = self.cards.get_mut(self.nest[i]) {
+            if let Some(card) = self.cards.get_mut(self.nest[i as usize]) {
                 card.face_up = true;
             }
         }
@@ -575,11 +573,10 @@ impl Game {
 
         for id in self.active_hand() {
             let card = self.cards.get(*id).unwrap();
-            if self.trick.is_eligible(
-                card,
-                card_count_matching_lead,
-                has_non_trump_card,
-            ) {
+            if self
+                .trick
+                .is_eligible(card, card_count_matching_lead, has_non_trump_card)
+            {
                 ids.push(*id);
             }
         }

@@ -2,6 +2,7 @@ use crate::bot::BotKind;
 use crate::card::{CardId, CardSuit, Points};
 use crate::trick::Trick;
 
+// Would prefer to use u8, but usize is better due to frequent use when vec indexing.
 pub type PlayerId = usize;
 
 #[derive(Clone)]

@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 
 use crate::card::{CardSuit, FaceRank, GameRank, Points};
+use crate::player::PlayerId;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum DeckKind {
@@ -60,7 +61,7 @@ pub enum NestPointsOption {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GameOptions {
-    pub player_count_default: usize,
+    pub player_count_default: PlayerId,
     pub deck_kind: DeckKind,
     pub remove_ranks: Vec<FaceRank>,
     //pub remove_cards: Vec<(FaceRank, char)>,
@@ -70,13 +71,13 @@ pub struct GameOptions {
     //pub face_rank_to_game_rank_changes: Vec<(FaceRank, GameRank)>,
     pub face_rank_points: Vec<(FaceRank, Points)>,
     //pub partner_kind: PartnerKind,
-    pub hand_size: usize,
+    pub hand_size: u8,
     /// This might be smaller than the number of cards left after dealing.
     /// If so, it becomes the effective exhange limit. Any remaining cards in
     /// the deck are added to the nest after the exchange.
-    pub nest_size: usize,
+    pub nest_size: u8,
     /// The number of nest cards presented face up.
-    pub nest_face_up: usize,
+    pub nest_face_up: u8,
     pub bidding_kind: BiddingKind,
     //pub bidding_progression: BiddingProgression,
     //pub bid_increment: usize,

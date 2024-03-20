@@ -12,7 +12,7 @@ pub struct Trick {
 }
 
 impl Trick {
-    pub fn new(player_count: usize) -> Self {
+    pub fn new(player_count: PlayerId) -> Self {
         let mut card_ids = Vec::new();
         for _ in 0..player_count {
             card_ids.push(None);
