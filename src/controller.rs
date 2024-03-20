@@ -41,7 +41,6 @@ impl Controller {
 
         let mut game = Game::new(player_count, game_message_sender);
         game.create_cards();
-        game.assign_across_partners();
         game.do_next_action();
 
         // Game clone speed test
