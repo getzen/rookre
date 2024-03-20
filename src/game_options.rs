@@ -60,16 +60,16 @@ pub enum NestPointsOption {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GameOptions {
+    pub player_count_default: usize,
     pub deck_kind: DeckKind,
     pub remove_ranks: Vec<FaceRank>,
-    pub remove_cards: Vec<(FaceRank, char)>,
+    //pub remove_cards: Vec<(FaceRank, char)>,
     pub bird_joker_rank: GameRank,
     pub bird_joker_points: Points,
     // TODO: Re-think this. It's not fine-grained enough, eg Red 1 = best card.
-    pub face_rank_to_game_rank_changes: Vec<(FaceRank, GameRank)>,
+    //pub face_rank_to_game_rank_changes: Vec<(FaceRank, GameRank)>,
     pub face_rank_points: Vec<(FaceRank, Points)>,
-    pub player_count_default: usize,
-    pub partner_kind: PartnerKind,
+    //pub partner_kind: PartnerKind,
     pub hand_size: usize,
     /// This might be smaller than the number of cards left after dealing.
     /// If so, it becomes the effective exhange limit. Any remaining cards in
@@ -78,10 +78,9 @@ pub struct GameOptions {
     /// The number of nest cards presented face up.
     pub nest_face_up: usize,
     pub bidding_kind: BiddingKind,
-    pub bidding_progression: BiddingProgression,
-    pub bid_increment: usize,
-    pub trump_picking: TrumpPicking,
-    pub trump_must_be_broken: bool,
+    //pub bidding_progression: BiddingProgression,
+    //pub bid_increment: usize,
+    //pub trump_picking: TrumpPicking,
     pub makers_points_awarded_for_win: PointsAwarded,
     pub makers_points_awarded_for_loss: PointsAwarded,
     pub defenders_points_awarded_for_win: PointsAwarded,
@@ -92,23 +91,22 @@ pub struct GameOptions {
 impl GameOptions {
     pub fn new() -> Self {
         Self {
+            player_count_default: 4,
             deck_kind: DeckKind::Standard53,
             remove_ranks: vec![2, 3, 4],
-            remove_cards: vec![],
-            bird_joker_rank: 15.0, // default = 16.0
-            bird_joker_points: 0,
-            face_rank_to_game_rank_changes: vec![(1, 14.0)], // eg (1, 15.0)
+            //remove_cards: vec![],
+            bird_joker_rank: 10.5, // default = 16.0
+            bird_joker_points: 20,
+            //face_rank_to_game_rank_changes: vec![(1, 14.0)], // eg (1, 15.0)
             face_rank_points: vec![(5, 5), (10, 10), (14, 10)],
-            player_count_default: 4,
-            partner_kind: PartnerKind::Across,
+            //partner_kind: PartnerKind::Across,
             hand_size: 9,
             nest_size: 5,
             nest_face_up: 1,
             bidding_kind: BiddingKind::Euchre,
-            bidding_progression: BiddingProgression::OneBidderLeft,
-            bid_increment: 0,
-            trump_picking: TrumpPicking::Euchre,
-            trump_must_be_broken: false,
+            //bidding_progression: BiddingProgression::OneBidderLeft,
+            //bid_increment: 0,
+            //trump_picking: TrumpPicking::Euchre,
             makers_points_awarded_for_win: PointsAwarded::PointsTakenWithMultiplier(1),
             makers_points_awarded_for_loss: PointsAwarded::Fixed(0),
             defenders_points_awarded_for_win: PointsAwarded::PointsTakenWithMultiplier(2),

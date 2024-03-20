@@ -40,13 +40,12 @@ impl Trick {
         &self,
         card: &Card,
         cards_matching_lead: usize,
-        trump_broken: bool,
         has_none_trump_card: bool,
     ) -> bool {
         // Assume card is eligible.
 
         if self.is_empty {
-            if card.is_trump && !trump_broken && has_none_trump_card {
+            if card.is_trump && has_none_trump_card {
                 return false;
             }
         } else {

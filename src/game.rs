@@ -78,7 +78,6 @@ pub struct Game {
     pub trick: Trick,
     pub last_trick_winner: PlayerId,
     pub tricks_played: usize,
-    pub trump_broken: bool,
 
     pub game_over: bool,
 
@@ -125,7 +124,6 @@ impl Game {
             trick: Trick::new(player_count),
             last_trick_winner: 0,
             tricks_played: 0,
-            trump_broken: false,
             game_over: false,
 
             send_messages: true,
@@ -219,11 +217,11 @@ impl Game {
             cards.retain(|card| card.face_rank != *rank);
         }
 
-        // Remove certain cards
-        for (rank, suit_char) in &self.options.remove_cards {
-            let remove_suit = Card::suit_for_char(suit_char);
-            cards.retain(|card| card.face_rank != *rank || card.suit != remove_suit);
-        }
+        // // Remove certain cards
+        // for (rank, suit_char) in &self.options.remove_cards {
+        //     let remove_suit = Card::suit_for_char(suit_char);
+        //     cards.retain(|card| card.face_rank != *rank || card.suit != remove_suit);
+        // }
 
         // Assign card points.
         for (rank, points) in &self.options.face_rank_points {
@@ -234,14 +232,14 @@ impl Game {
             }
         }
 
-        // Assign any changed game ranks.
-        for (face_rank, game_rank) in &self.options.face_rank_to_game_rank_changes {
-            for card in &mut cards {
-                if card.face_rank == *face_rank {
-                    card.game_rank = *game_rank;
-                }
-            }
-        }
+        // // Assign any changed game ranks.
+        // for (face_rank, game_rank) in &self.options.face_rank_to_game_rank_changes {
+        //     for card in &mut cards {
+        //         if card.face_rank == *face_rank {
+        //             card.game_rank = *game_rank;
+        //         }
+        //     }
+        // }
         cards
     }
 
@@ -289,12 +287,12 @@ impl Game {
 
         self.trick = Trick::new(self.player_count);
         self.tricks_played = 0;
-        self.trump_broken = !self.options.trump_must_be_broken;
 
-        match self.options.partner_kind {
-            PartnerKind::Across => self.assign_across_partners(),
-            _ => {}
-        }
+        // match self.options.partner_kind {
+        //     PartnerKind::Across => self.assign_across_partners(),
+        //     _ => {}
+        // }
+        self.assign_across_partners();
     }
 
     fn print_hand(&self, p: PlayerId) {
@@ -580,7 +578,6 @@ impl Game {
             if self.trick.is_eligible(
                 card,
                 card_count_matching_lead,
-                self.trump_broken,
                 has_non_trump_card,
             ) {
                 ids.push(*id);
@@ -629,9 +626,6 @@ impl Game {
         self.active_player_mut().remove_from_hand(id);
         let card = self.cards.get(*id).unwrap();
         self.trick.add_card(self.active_player, card);
-        if card.is_trump {
-            self.trump_broken = true;
-        }
         self.advance_active_player();
     }
 
