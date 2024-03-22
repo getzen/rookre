@@ -55,7 +55,6 @@ impl CardUpdate {
                 let mut pt = VIEW_CENTER;
                 pt.x -= (self.group_len - 1) as f32 * x_spacing / 2.0;
                 pt.x += self.group_index as f32 * x_spacing;
-                println!("nest translation: {}", pt.x);
                 pt
             }
             CardGroup::NestAside => {

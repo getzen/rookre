@@ -89,35 +89,48 @@ impl Controller {
     pub fn update(&mut self, app: &mut App) {
         let time_delta = app.timer.delta_f32();
 
-        self.view.update_cards(&mut self.card_updates);
+        if let Some(action) = &self.game.actions_taken.pop_front() {
+            match action {
+                GameAction::Setup => {},
+                GameAction::PrepareForNewHand => {
+                    self.update_deck();
+                },
+                GameAction::DealCards => {
+                    self.update_hands();
+                    self.update_nest();
+                },
+                GameAction::PresentNest => {
+                    self.update_hands();
+                    self.update_nest();
+                },
+                GameAction::PreBid => {},
+                GameAction::WaitForBid => {},
+                GameAction::MoveNestToHand => {
+                    self.update_hands();
+                    self.update_nest();
+                },
+                GameAction::PreDiscard => {},
+                GameAction::WaitForDiscards => {},
+                GameAction::PreChooseTrump => {},
+                GameAction::WaitForChooseTrump => {},
+                GameAction::PrepareForNewTrick => todo!(),
+                GameAction::PrePlayCard => todo!(),
+                GameAction::WaitForPlayCard => todo!(),
+                GameAction::AwardTrick(_) => todo!(),
+                GameAction::EndHand => todo!(),
+                GameAction::EndGame => todo!(),
+            }
+        }
+
+        if !self.card_updates.is_empty() {
+            self.view.update_cards(&mut self.card_updates);
+        }
 
         // Check for GameMessages. Pass the messages to the view,
         // possibly with delay added afterward.
         let received = self.game_message_receiver.try_recv();
         if let Ok(message) = received {
             match message {
-                GameMessage::UpdateDeck(..) => {
-                    //self.view.queue_message(message);
-                    //self.view.queue_message(GameMessage::Delay(1.0));
-
-                    // NEW
-                    self.update_deck();
-
-                }
-                GameMessage::UpdateNest(..) => {
-                    // self.view.queue_message(message);
-                    // self.view.queue_message(GameMessage::Delay(0.1));
-
-                    // NEW
-                    self.update_nest();
-                }
-                GameMessage::UpdateHand(..) => {
-                    // self.view.queue_message(message);
-                    // self.view.queue_message(GameMessage::Delay(0.02));
-
-                    // NEW
-                    self.update_hands();
-                }
                 GameMessage::UpdateActivePlayer(..) => self.view.queue_message(message),
                 GameMessage::UpdateDealer(..) => self.view.queue_message(message),
                 GameMessage::GetBid(..) => {

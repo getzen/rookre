@@ -107,7 +107,6 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
                     MouseButton::Left => {
                         if let Some(sender) = &self.sender {
                             if let Some(message) = &self.mouse_up_message {
-                                println!("sending!");
                                 sender.send(*message).expect("Message send error.");
                                 return true;
                             }

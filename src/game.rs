@@ -26,7 +26,6 @@ pub enum GameAction {
     Setup,
     PrepareForNewHand,
     DealCards,
-    DealCard,
     PresentNest, // one or more cards might be revealed
     PreBid,      // player ui or bot launch
     WaitForBid,
@@ -45,9 +44,6 @@ pub enum GameAction {
 
 #[derive(Clone)]
 pub enum GameMessage {
-    UpdateDeck(Game),
-    UpdateNest(Game),
-    UpdateHand(Game, PlayerId),
     UpdateActivePlayer(Game),
     UpdateDealer(Game),
     GetBid(Game),
@@ -59,6 +55,7 @@ pub enum GameMessage {
 pub struct Game {
     pub options: GameOptions,
     pub action_queue: VecDeque<GameAction>,
+    pub actions_taken: VecDeque<GameAction>,
 
     pub cards: SlotMap<CardId, Card>,
     pub deck: Vec<CardId>,
@@ -110,6 +107,7 @@ impl Game {
         Self {
             options,
             action_queue,
+            actions_taken: VecDeque::new(),
             cards: SlotMap::new(),
             deck: Vec::new(),
             nest: Vec::new(),
@@ -262,24 +260,12 @@ impl Game {
         // Put all the ids in the deck and shuffle.
         self.deck = self.cards.keys().collect();
         fastrand::shuffle(&mut self.deck);
-        if self.send_messages {
-            let msg = GameMessage::UpdateDeck(self.clone());
-            self.message_sender.send(msg).unwrap();
-        }
 
         self.nest.clear();
 
         self.dealer = (self.dealer + 1) % self.player_count;
-        if self.send_messages {
-            let msg = GameMessage::UpdateDealer(self.clone());
-            self.message_sender.send(msg).unwrap();
-        }
 
         self.active_player = (self.dealer + 1) % self.player_count;
-        if self.send_messages {
-            let msg = GameMessage::UpdateActivePlayer(self.clone());
-            self.message_sender.send(msg).unwrap();
-        }
 
         self.pass_count = 0;
 
@@ -341,11 +327,6 @@ impl Game {
             }
         }
 
-        if self.send_messages {
-            let msg = GameMessage::UpdateHand(self.clone(), 0);
-            self.message_sender.send(msg).unwrap();
-        }
-
         // Remaining cards to nest
         self.nest.append(&mut self.deck);
 
@@ -355,10 +336,6 @@ impl Game {
             if let Some(card) = self.cards.get_mut(self.nest[idx]) {
                 card.face_up = true;
             }
-        }
-        if self.send_messages {
-            let msg = GameMessage::UpdateNest(self.clone());
-            self.message_sender.send(msg).unwrap();
         }
     }
 
@@ -440,10 +417,10 @@ impl Game {
                 if self.pass_count < self.player_count as u8 {
                     // Do card exchange.
                     self.action_queue.push_back(MoveNestToHand);
-                    if self.send_messages {
-                        let msg = GameMessage::GetDiscard(self.clone());
-                        self.message_sender.send(msg).unwrap();
-                    }
+                    // if self.send_messages {
+                    //     let msg = GameMessage::GetDiscard(self.clone());
+                    //     self.message_sender.send(msg).unwrap();
+                    // }
                 } else {
                     // Skip card exchange.
                     self.action_queue.push_back(PrepareForNewTrick)
@@ -515,10 +492,6 @@ impl Game {
             self.players[p].hand.push(id);
         }
         self.sort_hand(p);
-        if self.send_messages {
-            let msg = GameMessage::UpdateHand(self.clone(), p);
-            self.message_sender.send(msg).unwrap();
-        }
     }
 
     pub fn eligible_discards(&self) -> Vec<CardId> {
@@ -540,12 +513,6 @@ impl Game {
         for id in ids {
             winner.remove_from_hand(&id);
             self.nest.push(id);
-        }
-        if self.send_messages {
-            let msg = GameMessage::UpdateHand(self.clone(), p);
-            self.message_sender.send(msg).unwrap();
-            let msg = GameMessage::UpdateNest(self.clone());
-            self.message_sender.send(msg).unwrap();
         }
     }
 
@@ -720,20 +687,12 @@ impl Game {
         (makers_score, defenders_score)
     }
 
-    // fn send_message(&self, message: GameMessage) {
-    //     if self.send_messages {
-    //         //println!("message: {:?}", message);
-    //         self.message_sender.send(message).unwrap();
-    //     }
-    // }
-
     pub fn do_next_action(&mut self) {
         if let Some(action) = self.action_queue.pop_front() {
             match action {
                 Setup => {
                     self.create_cards();
                     self.action_queue.push_back(PrepareForNewHand);
-                    self.do_next_action();
                 }
                 PrepareForNewHand => {
                     self.prepare_for_new_hand();
@@ -741,11 +700,9 @@ impl Game {
                 DealCards => {
                     self.deal_cards(self.options.hand_size);
                     self.action_queue.push_back(PresentNest);
-                    self.do_next_action();
                 }
                 PresentNest => {
                     self.action_queue.push_back(WaitForBid);
-                    self.do_next_action();
                 }
                 // PreBid => {
                 //     self.action_queue.push_back(WaitForBid);
@@ -761,7 +718,6 @@ impl Game {
                     println!("game: MoveNestToHand");
                     self.move_nest_card_to_hand();
                     self.action_queue.push_back(WaitForDiscards);
-                    self.do_next_action();
                 }
                 // PreDiscard => {
                 //     self.action_queue.push_back(WaitForDiscards);
@@ -784,22 +740,15 @@ impl Game {
                             card.select_state = SelectState::Selectable
                         }
                     }
-
-                    if !is_bot && self.send_messages {
-                        let msg = GameMessage::UpdateHand(self.clone(), self.active_player);
-                        self.message_sender.send(msg).unwrap();
-                    }
                 }
                 PreChooseTrump => {}
                 WaitForChooseTrump => {}
                 PrepareForNewTrick => {
                     self.prepare_for_new_trick();
                     self.action_queue.push_back(WaitForPlayCard);
-                    self.do_next_action();
                 }
                 // PrePlayCard => {
                 //     self.action_queue.push_back(WaitForPlayCard);
-                //     self.do_next_action();
                 // }
                 WaitForPlayCard => {
                     println!("game: WaitForPlayCard");
@@ -807,7 +756,6 @@ impl Game {
                 AwardTrick(p_id) => {
                     self.award_trick();
                     self.action_queue.push_back(PrepareForNewTrick);
-                    self.do_next_action();
                 }
                 EndHand => {
                     self.award_nest();
@@ -816,6 +764,12 @@ impl Game {
                 EndGame => todo!(),
                 _ => {}
             }
+            println!("Setting last action: {:?}", action);
+            self.actions_taken.push_back(action);
+
+        }
+        if !self.action_queue.is_empty() {
+            self.do_next_action();
         }
     }
 

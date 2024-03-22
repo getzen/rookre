@@ -157,18 +157,17 @@ impl View {
 
     // NEW
     pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>) {
-        if let Some(update) = updates.pop_front() {
-            self.update_card(update);
+        // Loop until a card needs updating or there are no updates left then break.
+        // This bypasses needless card updates.
+        loop {
+            if let Some(update) = updates.pop_front() {
+                if self.update_card(update) {
+                    break;
+                }
+            } else {
+                break;
+            }
         }
-        // loop {
-        //     if let Some(update) = updates.pop_front() {
-        //         if self.update_card(update) {
-        //             break;
-        //         }
-        //     } else {
-        //         break;
-        //     }
-        // }
     }
 
     /// Returns false if the card did not need updating.
