@@ -10,10 +10,10 @@ use slotmap::SlotMap;
 use crate::{
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit, SelectState},
-    card_update::{CardGroup, CardUpdate},
+    card_update::CardUpdate,
     card_view::CardView,
     discard_panel::DiscardPanel,
-    game::{Game, GameAction, GameMessage, PlayerAction},
+    game::{Game, PlayerAction},
     image::Image,
     image_button::ImageButton,
     player::PlayerId,
@@ -23,13 +23,11 @@ use crate::{
 
 // Colors
 pub const TABLE_COLOR: Color = Color::from_rgb(0.3, 0.3, 0.3);
-pub const DEEP_GREEN: Color = Color::new(0. / 255., 175. / 255., 0. / 255., 1.);
+//pub const DEEP_GREEN: Color = Color::new(0. / 255., 175. / 255., 0. / 255., 1.);
 pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 1.);
-pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.);
+//pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.);
 
 pub struct View {
-    game_message_queue: VecDeque<GameMessage>,
-    queue_empty: bool,
     card_views: Vec<CardView<PlayerAction>>,
     card_views_z_order_dirty: bool,
 
@@ -56,8 +54,6 @@ impl View {
         let discard_panel = View::create_discard_panel(gfx, sender.clone());
 
         Self {
-            game_message_queue: VecDeque::new(),
-            queue_empty: true,
             card_views,
             card_views_z_order_dirty: false,
 
@@ -149,12 +145,6 @@ impl View {
         DiscardPanel::new(gfx, sender)
     }
 
-    /// Add the action to the queue.
-    pub fn queue_message(&mut self, message: GameMessage) {
-        self.game_message_queue.push_back(message);
-        self.queue_empty = false;
-    }
-
     // NEW
     pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>) {
         // Loop until a card needs updating or there are no updates left then break.
@@ -172,7 +162,11 @@ impl View {
 
     /// Returns false if the card did not need updating.
     fn update_card(&mut self, update: CardUpdate) -> bool {
-        let card_view = self.card_views.iter_mut().find(|s| s.id == update.id).unwrap();
+        let card_view = self
+            .card_views
+            .iter_mut()
+            .find(|s| s.id == update.id)
+            .unwrap();
         if card_view.update == update {
             return false;
         }
@@ -186,8 +180,6 @@ impl View {
         card_view.update = update;
         true
     }
-
-    
 
     pub fn update_active_player(&mut self, p: PlayerId, count: PlayerId) {
         let pos = ViewGeom::active_player_marker_position(p, count);

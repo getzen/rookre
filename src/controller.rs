@@ -8,7 +8,7 @@ use notan::prelude::*;
 
 use crate::bot::BotMgr;
 use crate::card_update::{CardGroup, CardUpdate};
-use crate::game::{Game, GameAction, GameMessage, PlayerAction};
+use crate::game::{Game, GameAction, PlayerAction};
 use crate::view::View;
 use crate::view_trait::ViewTrait;
 
@@ -28,8 +28,6 @@ pub struct Controller {
     player_action_sender: Sender<PlayerAction>,
     player_action_receiver: Receiver<PlayerAction>,
 
-    game_message_receiver: Receiver<GameMessage>,
-
     audio_message_receiver: Receiver<AudioMessage>,
     card_play: Option<AudioSource>,
 
@@ -39,10 +37,9 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(gfx: &mut Graphics) -> Self {
-        let (game_message_sender, game_message_receiver) = mpsc::channel();
         let (player_action_sender, player_action_receiver) = mpsc::channel();
 
-        let mut game = Game::new(game_message_sender);
+        let mut game = Game::new();
         game.create_cards();
         game.do_next_action();
 
@@ -59,7 +56,6 @@ impl Controller {
 
         Self {
             game,
-            game_message_receiver,
             player_action_sender,
             player_action_receiver,
             view,
@@ -91,32 +87,34 @@ impl Controller {
 
         if let Some(action) = &self.game.actions_taken.pop_front() {
             match action {
-                GameAction::Setup => {},
+                GameAction::Setup => {}
                 GameAction::PrepareForNewHand => {
                     self.update_deck();
-                    self.view.update_dealer(self.game.dealer, self.game.player_count);
-                },
+                    self.view
+                        .update_dealer(self.game.dealer, self.game.player_count);
+                }
                 GameAction::DealCards => {
                     self.update_hands();
                     self.update_nest();
-                },
+                }
                 GameAction::PresentNest => {
                     self.update_hands();
                     self.update_nest();
-                },
+                }
                 //GameAction::PreBid => {},
                 GameAction::WaitForBid => {
-                    self.view.update_active_player(self.game.active_player, self.game.player_count);
+                    self.view
+                        .update_active_player(self.game.active_player, self.game.player_count);
                     if self.game.active_player_is_bot() {
                         self.spawn_make_bid_bot();
                     } else {
                         self.view.get_bid(&self.game);
                     }
-                },
+                }
                 GameAction::MoveNestToHand => {
                     self.update_hands();
                     self.update_nest();
-                },
+                }
                 //GameAction::PreDiscard => {},
                 GameAction::WaitForDiscards => {
                     if self.game.active_player_is_bot() {
@@ -124,9 +122,9 @@ impl Controller {
                     } else {
                         self.view.get_discard(&self.game);
                     }
-                },
-                GameAction::PreChooseTrump => {},
-                GameAction::WaitForChooseTrump => {},
+                }
+                GameAction::PreChooseTrump => {}
+                GameAction::WaitForChooseTrump => {}
                 GameAction::PrepareForNewTrick => todo!(),
                 GameAction::PrePlayCard => todo!(),
                 GameAction::WaitForPlayCard => todo!(),
@@ -138,29 +136,6 @@ impl Controller {
 
         if !self.card_updates.is_empty() {
             self.view.update_cards(&mut self.card_updates);
-        }
-
-        // Check for GameMessages. Pass the messages to the view,
-        // possibly with delay added afterward.
-        let received = self.game_message_receiver.try_recv();
-        if let Ok(message) = received {
-            match message {
-                //GameMessage::UpdateActivePlayer(..) => self.view.queue_message(message),
-                //GameMessage::UpdateDealer(..) => self.view.queue_message(message),
-                // GameMessage::GetBid(..) => {
-                //     if self.game.active_player_is_bot() {
-                //         self.spawn_make_bid_bot();
-                //         self.view.queue_message(GameMessage::Delay(1.0));
-                //     } else {
-                //         self.view.queue_message(message);
-                //     }
-                // }
-                // GameMessage::GetDiscard(..) => {
-                    
-                // }
-                // GameMessage::Delay(_) => todo!(),
-                _ => {},
-            }
         }
 
         // Check for PlayerAction messages and call related game functions.
@@ -214,7 +189,7 @@ impl Controller {
                 player_is_bot: self.game.player_is_bot(player_id),
                 ..Default::default()
             };
-    
+
             for (idx, id) in hand.iter().enumerate() {
                 update.id = *id;
                 update.group_index = idx;

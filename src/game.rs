@@ -1,7 +1,5 @@
 use std::collections::VecDeque;
 
-use std::sync::mpsc::Sender;
-
 use slotmap::SlotMap;
 
 use crate::bot::BotKind;
@@ -43,15 +41,6 @@ pub enum GameAction {
 }
 
 #[derive(Clone)]
-pub enum GameMessage {
-    //UpdateActivePlayer(Game),
-    //UpdateDealer(Game),
-    //GetBid(Game),
-    //GetDiscard(Game),
-    //Delay(f32),
-}
-
-#[derive(Clone)]
 pub struct Game {
     pub options: GameOptions,
     pub action_queue: VecDeque<GameAction>,
@@ -75,13 +64,10 @@ pub struct Game {
     pub tricks_played: u8,
 
     pub game_over: bool,
-
-    pub send_messages: bool,
-    message_sender: Sender<GameMessage>,
 }
 
 impl Game {
-    pub fn new(action_sender: Sender<GameMessage>) -> Self {
+    pub fn new() -> Self {
         // Write over the defaults, if needed.
         let options = GameOptions::new();
         options.write_to_yaml("default.txt");
@@ -122,9 +108,6 @@ impl Game {
             last_trick_winner: 0,
             tricks_played: 0,
             game_over: false,
-
-            send_messages: true,
-            message_sender: action_sender,
         }
     }
 
@@ -181,7 +164,6 @@ impl Game {
         let cards = match self.options.deck_kind {
             DeckKind::Standard52 => self.create_standard_52(),
             DeckKind::Standard53 => self.create_standard_53(),
-            _ => panic!(),
         };
         self.assign_ids(cards);
     }
@@ -304,8 +286,6 @@ impl Game {
         for _ in 0..(count * self.player_count as u8) {
             if let Some(id) = self.deck.pop() {
                 self.players[deal_to].add_to_hand(id);
-                
-                
             }
             deal_to = (deal_to + 1) % self.player_count;
         }
@@ -319,7 +299,7 @@ impl Game {
                     if let Some(card) = self.cards.get_mut(*id) {
                         card.face_up = true;
                     }
-                }        
+                }
             }
         }
 
@@ -749,7 +729,7 @@ impl Game {
                 WaitForPlayCard => {
                     println!("game: WaitForPlayCard");
                 }
-                AwardTrick(p_id) => {
+                AwardTrick(_) => {
                     self.award_trick();
                     self.action_queue.push_back(PrepareForNewTrick);
                 }
@@ -760,9 +740,8 @@ impl Game {
                 EndGame => todo!(),
                 _ => {}
             }
-            println!("Setting last action: {:?}", action);
+            //println!("Setting last action: {:?}", action);
             self.actions_taken.push_back(action);
-
         }
         if !self.action_queue.is_empty() {
             self.do_next_action();

@@ -1,7 +1,9 @@
 use notan::math::{vec2, Vec2};
 
 use crate::{
-    card::{CardId, SelectState}, player::PlayerId, view_geom::{ViewGeom, CARD_SIZE, VIEW_CENTER}
+    card::{CardId, SelectState},
+    player::PlayerId,
+    view_geom::{ViewGeom, CARD_SIZE, VIEW_CENTER},
 };
 
 #[derive(Clone, Copy, PartialEq)]

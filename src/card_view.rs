@@ -96,7 +96,6 @@ impl<T> CardView<T> {
         }
 
         self.z_order = location.z_order();
-
     }
 }
 
