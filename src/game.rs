@@ -27,10 +27,10 @@ pub enum GameAction {
     PrepareForNewHand,
     DealCards,
     PresentNest, // one or more cards might be revealed
-    PreBid,      // player ui or bot launch
+    //PreBid,      // player ui or bot launch
     WaitForBid,
     MoveNestToHand,
-    PreDiscard,
+    // PreDiscard,
     WaitForDiscards,
     PreChooseTrump, // player ui or bot launch
     WaitForChooseTrump,
@@ -44,11 +44,11 @@ pub enum GameAction {
 
 #[derive(Clone)]
 pub enum GameMessage {
-    UpdateActivePlayer(Game),
-    UpdateDealer(Game),
-    GetBid(Game),
-    GetDiscard(Game),
-    Delay(f32),
+    //UpdateActivePlayer(Game),
+    //UpdateDealer(Game),
+    //GetBid(Game),
+    //GetDiscard(Game),
+    //Delay(f32),
 }
 
 #[derive(Clone)]
@@ -154,10 +154,6 @@ impl Game {
             if self.active_player().active {
                 break;
             }
-        }
-        if self.send_messages {
-            let msg = GameMessage::UpdateActivePlayer(self.clone());
-            self.message_sender.send(msg).unwrap();
         }
     }
 
@@ -708,10 +704,10 @@ impl Game {
                 //     self.action_queue.push_back(WaitForBid);
                 // }
                 WaitForBid => {
-                    if self.send_messages {
-                        let msg = GameMessage::GetBid(self.clone());
-                        self.message_sender.send(msg).unwrap();
-                    }
+                    // if self.send_messages {
+                    //     let msg = GameMessage::GetBid(self.clone());
+                    //     self.message_sender.send(msg).unwrap();
+                    // }
                     println!("game: WaitForBid");
                 }
                 MoveNestToHand => {

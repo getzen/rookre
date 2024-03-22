@@ -189,9 +189,7 @@ impl View {
 
     
 
-    fn update_active_player(&mut self, game: &Game) {
-        let p = game.active_player;
-        let count = game.player_count;
+    pub fn update_active_player(&mut self, p: PlayerId, count: PlayerId) {
         let pos = ViewGeom::active_player_marker_position(p, count);
         let angle = ViewGeom::player_rotation(p, count);
         self.active_player_marker.transform.set_translation(pos);
@@ -199,9 +197,7 @@ impl View {
         self.active_player_marker.visible = true;
     }
 
-    fn update_dealer(&mut self, game: &Game) {
-        let p = game.dealer;
-        let count = game.player_count;
+    pub fn update_dealer(&mut self, p: PlayerId, count: PlayerId) {
         let pos = ViewGeom::dealer_marker_position(p, count);
         let angle = ViewGeom::player_rotation(p, count);
         self.dealer_marker.transform.set_translation(pos);
@@ -209,7 +205,7 @@ impl View {
         self.dealer_marker.visible = true;
     }
 
-    fn get_bid(&mut self, game: &Game) {
+    pub fn get_bid(&mut self, game: &Game) {
         if game.active_player_is_bot() {
             println!("bot bidding: {}", game.active_player);
         } else {
@@ -220,7 +216,7 @@ impl View {
         }
     }
 
-    fn get_discard(&mut self, game: &Game) {
+    pub fn get_discard(&mut self, game: &Game) {
         if game.active_player_is_bot() {
             println!("bot choosing discard: {}", game.active_player);
         } else {
@@ -283,62 +279,6 @@ impl ViewTrait for View {
     }
 
     fn update(&mut self, time_delta: f32, app: &mut App) {
-        // Move the ready-to-go actions from the queue and add to a temporary Vec.
-        let mut messages_ready = Vec::new();
-
-        loop {
-            if let Some(msg) = self.game_message_queue.pop_front() {
-                match msg {
-                    GameMessage::Delay(mut time) => {
-                        time -= time_delta;
-                        if time > 0.0 {
-                            self.game_message_queue.push_front(GameMessage::Delay(time));
-                            //println!("{time}");
-                        }
-                        break;
-                    }
-                    _ => {
-                        messages_ready.push(msg);
-                    }
-                }
-            } else {
-                break;
-            }
-        }
-
-        // Fire the messages.
-        for msg in &messages_ready {
-            match &msg {
-                GameMessage::UpdateDeck(game) => {
-                    //self.update_deck(&game);
-                }
-                GameMessage::UpdateNest(game) => {
-                    //self.update_nest(&game);
-                }
-                GameMessage::UpdateHand(game, p) => {
-                    //self.update_hand(&game, *p);
-                }
-                GameMessage::UpdateActivePlayer(game) => {
-                    self.update_active_player(game);
-                }
-                GameMessage::UpdateDealer(game) => {
-                    self.update_dealer(&game);
-                }
-                GameMessage::GetBid(game) => {
-                    self.get_bid(&game);
-                }
-                GameMessage::GetDiscard(game) => {
-                    self.get_discard(&game);
-                }
-                GameMessage::Delay(_) => {}
-            };
-        }
-
-        if !self.queue_empty && self.game_message_queue.is_empty() {
-            println!("-- view: queue empty --");
-            self.queue_empty = true;
-        }
-
         // Update the cards.
         for card_view in &mut self.card_views {
             card_view.update(time_delta, app);

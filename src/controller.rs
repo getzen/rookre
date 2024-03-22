@@ -94,6 +94,7 @@ impl Controller {
                 GameAction::Setup => {},
                 GameAction::PrepareForNewHand => {
                     self.update_deck();
+                    self.view.update_dealer(self.game.dealer, self.game.player_count);
                 },
                 GameAction::DealCards => {
                     self.update_hands();
@@ -103,14 +104,27 @@ impl Controller {
                     self.update_hands();
                     self.update_nest();
                 },
-                GameAction::PreBid => {},
-                GameAction::WaitForBid => {},
+                //GameAction::PreBid => {},
+                GameAction::WaitForBid => {
+                    self.view.update_active_player(self.game.active_player, self.game.player_count);
+                    if self.game.active_player_is_bot() {
+                        self.spawn_make_bid_bot();
+                    } else {
+                        self.view.get_bid(&self.game);
+                    }
+                },
                 GameAction::MoveNestToHand => {
                     self.update_hands();
                     self.update_nest();
                 },
-                GameAction::PreDiscard => {},
-                GameAction::WaitForDiscards => {},
+                //GameAction::PreDiscard => {},
+                GameAction::WaitForDiscards => {
+                    if self.game.active_player_is_bot() {
+                        //self.spawn_make_bid_bot();
+                    } else {
+                        self.view.get_discard(&self.game);
+                    }
+                },
                 GameAction::PreChooseTrump => {},
                 GameAction::WaitForChooseTrump => {},
                 GameAction::PrepareForNewTrick => todo!(),
@@ -131,25 +145,21 @@ impl Controller {
         let received = self.game_message_receiver.try_recv();
         if let Ok(message) = received {
             match message {
-                GameMessage::UpdateActivePlayer(..) => self.view.queue_message(message),
-                GameMessage::UpdateDealer(..) => self.view.queue_message(message),
-                GameMessage::GetBid(..) => {
-                    if self.game.active_player_is_bot() {
-                        self.spawn_make_bid_bot();
-                        self.view.queue_message(GameMessage::Delay(1.0));
-                    } else {
-                        self.view.queue_message(message);
-                    }
-                }
-                GameMessage::GetDiscard(..) => {
-                    if self.game.active_player_is_bot() {
-                        //self.spawn_make_bid_bot();
-                        self.view.queue_message(GameMessage::Delay(1.0));
-                    } else {
-                        self.view.queue_message(message);
-                    }
-                }
-                GameMessage::Delay(_) => todo!(),
+                //GameMessage::UpdateActivePlayer(..) => self.view.queue_message(message),
+                //GameMessage::UpdateDealer(..) => self.view.queue_message(message),
+                // GameMessage::GetBid(..) => {
+                //     if self.game.active_player_is_bot() {
+                //         self.spawn_make_bid_bot();
+                //         self.view.queue_message(GameMessage::Delay(1.0));
+                //     } else {
+                //         self.view.queue_message(message);
+                //     }
+                // }
+                // GameMessage::GetDiscard(..) => {
+                    
+                // }
+                // GameMessage::Delay(_) => todo!(),
+                _ => {},
             }
         }
 
