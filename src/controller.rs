@@ -40,7 +40,6 @@ impl Controller {
         let (player_action_sender, player_action_receiver) = mpsc::channel();
 
         let mut game = Game::new();
-        game.create_cards();
         game.do_next_action();
 
         // Game clone speed test

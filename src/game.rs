@@ -19,7 +19,7 @@ pub enum PlayerAction {
     PlayCard(PlayerId, CardId),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum GameAction {
     Setup,
     PrepareForNewHand,
@@ -43,7 +43,7 @@ pub enum GameAction {
 #[derive(Clone)]
 pub struct Game {
     pub options: GameOptions,
-    pub action_queue: VecDeque<GameAction>,
+    pub next_action: Option<GameAction>,
     pub actions_taken: VecDeque<GameAction>,
 
     pub cards: SlotMap<CardId, Card>,
@@ -92,7 +92,7 @@ impl Game {
 
         Self {
             options,
-            action_queue,
+            next_action: Some(Setup),
             actions_taken: VecDeque::new(),
             cards: SlotMap::new(),
             deck: Vec::new(),
@@ -392,21 +392,21 @@ impl Game {
                 self.high_bid = bid;
                 if self.pass_count < self.player_count as u8 {
                     // Do card exchange.
-                    self.action_queue.push_back(MoveNestToHand);
+                    self.next_action = Some(MoveNestToHand);
                     // if self.send_messages {
                     //     let msg = GameMessage::GetDiscard(self.clone());
                     //     self.message_sender.send(msg).unwrap();
                     // }
                 } else {
                     // Skip card exchange.
-                    self.action_queue.push_back(PrepareForNewTrick)
+                    self.next_action = Some(PrepareForNewTrick);
                 }
             }
             None => {
                 self.pass_count += 1;
                 println!("pass count: {}", self.pass_count);
                 self.advance_active_player();
-                self.action_queue.push_back(WaitForBid);
+                self.next_action = Some(WaitForBid);
             }
         }
     }
@@ -664,21 +664,21 @@ impl Game {
     }
 
     pub fn do_next_action(&mut self) {
-        if let Some(action) = self.action_queue.pop_front() {
+        if let Some(action) = self.next_action.take() { // self.next_action is now None
             match action {
                 Setup => {
                     self.create_cards();
-                    self.action_queue.push_back(PrepareForNewHand);
+                    self.next_action = Some(PrepareForNewHand);
                 }
                 PrepareForNewHand => {
                     self.prepare_for_new_hand();
                 }
                 DealCards => {
                     self.deal_cards(self.options.hand_size);
-                    self.action_queue.push_back(PresentNest);
+                    self.next_action = Some(PresentNest);
                 }
                 PresentNest => {
-                    self.action_queue.push_back(WaitForBid);
+                    self.next_action = Some(WaitForBid);
                 }
                 // PreBid => {
                 //     self.action_queue.push_back(WaitForBid);
@@ -693,7 +693,7 @@ impl Game {
                 MoveNestToHand => {
                     println!("game: MoveNestToHand");
                     self.move_nest_card_to_hand();
-                    self.action_queue.push_back(WaitForDiscards);
+                    self.next_action = Some(WaitForDiscards);
                 }
                 // PreDiscard => {
                 //     self.action_queue.push_back(WaitForDiscards);
@@ -717,11 +717,11 @@ impl Game {
                         }
                     }
                 }
-                PreChooseTrump => {}
-                WaitForChooseTrump => {}
+                PreChooseTrump => {},
+                WaitForChooseTrump => {},
                 PrepareForNewTrick => {
                     self.prepare_for_new_trick();
-                    self.action_queue.push_back(WaitForPlayCard);
+                    self.next_action = Some(WaitForPlayCard);
                 }
                 // PrePlayCard => {
                 //     self.action_queue.push_back(WaitForPlayCard);
@@ -731,7 +731,7 @@ impl Game {
                 }
                 AwardTrick(_) => {
                     self.award_trick();
-                    self.action_queue.push_back(PrepareForNewTrick);
+                    self.next_action = Some(PrepareForNewTrick);
                 }
                 EndHand => {
                     self.award_nest();
@@ -740,10 +740,9 @@ impl Game {
                 EndGame => todo!(),
                 _ => {}
             }
-            //println!("Setting last action: {:?}", action);
             self.actions_taken.push_back(action);
         }
-        if !self.action_queue.is_empty() {
+        if self.next_action.is_some() {
             self.do_next_action();
         }
     }
@@ -751,7 +750,7 @@ impl Game {
     pub fn perform_player_action(&mut self, player_action: &PlayerAction) {
         match player_action {
             PlayerAction::DealCards => {
-                self.action_queue.push_back(DealCards);
+                self.next_action = Some(DealCards);
             }
             PlayerAction::MakeBid(bid) => self.make_bid(*bid),
             PlayerAction::MoveCardToNest(id) => {
@@ -763,16 +762,16 @@ impl Game {
                 self.undiscard_from_nest(id);
             }
             PlayerAction::EndNestExchange => {
-                self.action_queue.push_back(PreChooseTrump);
+                self.next_action = Some(PreChooseTrump);
             }
 
             PlayerAction::PlayCard(_, c_id) => {
                 self.play_card_id(c_id);
                 if self.trick_completed() {
                     let winner = self.trick.winner.unwrap();
-                    self.action_queue.push_back(AwardTrick(winner));
+                    self.next_action = Some(AwardTrick(winner));
                 } else {
-                    self.action_queue.push_back(PrePlayCard);
+                    self.next_action = Some(PrePlayCard);
                 }
             }
         }
