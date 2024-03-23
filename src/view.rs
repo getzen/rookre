@@ -145,7 +145,6 @@ impl View {
         DiscardPanel::new(gfx, sender)
     }
 
-    // NEW
     pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>) {
         // Loop until a card needs updating or there are no updates left then break.
         // This bypasses needless card updates.
@@ -167,6 +166,7 @@ impl View {
             .iter_mut()
             .find(|s| s.id == update.id)
             .unwrap();
+
         if card_view.update == update {
             return false;
         }
@@ -225,6 +225,10 @@ impl View {
                 }
             }
         }
+    }
+
+    pub fn end_discard(&mut self) {
+        self.discard_panel.visible = false;
     }
 }
 

@@ -27,11 +27,11 @@ pub enum GameAction {
     PresentNest, // one or more cards might be revealed
     //PreBid,      // player ui or bot launch
     WaitForBid,
+    WaitForChooseTrump,
     MoveNestToHand,
     // PreDiscard,
     WaitForDiscards,
-    PreChooseTrump, // player ui or bot launch
-    WaitForChooseTrump,
+    EndNestExchange, // player ui or bot launch
     PrepareForNewTrick,
     PrePlayCard, // player ui or bot launch
     WaitForPlayCard,
@@ -43,6 +43,7 @@ pub enum GameAction {
 #[derive(Clone)]
 pub struct Game {
     pub options: GameOptions,
+
     pub next_action: Option<GameAction>,
     pub actions_taken: VecDeque<GameAction>,
 
@@ -483,12 +484,11 @@ impl Game {
         ids
     }
 
-    pub fn discard_to_nest(&mut self, ids: Vec<CardId>) {
-        let p = self.bid_winner.unwrap();
-        let winner = &mut self.players[p];
-        for id in ids {
-            winner.remove_from_hand(&id);
-            self.nest.push(id);
+    pub fn discard_to_nest(&mut self, discards: &[CardId]) {
+        self.mark_select_state(discards, SelectState::Unselectable);
+        for id in discards {
+            self.active_player_mut().remove_from_hand(id);
+            self.nest.push(*id);
         }
     }
 
@@ -663,6 +663,19 @@ impl Game {
         (makers_score, defenders_score)
     }
 
+    //  if is_bot {
+    //     card.select_state = SelectState::Unselectable;
+    // } else {
+    //     card.select_state = SelectState::Dimmed;
+    // }
+    fn mark_select_state(&mut self, card_ids: &[CardId], state: SelectState) {
+        for id in card_ids {
+            if let Some(card) = self.cards.get_mut(*id) {
+                card.select_state = state;
+            }
+        }
+    }
+
     pub fn do_next_action(&mut self) {
         if let Some(action) = self.next_action.take() { // self.next_action is now None
             match action {
@@ -680,45 +693,30 @@ impl Game {
                 PresentNest => {
                     self.next_action = Some(WaitForBid);
                 }
-                // PreBid => {
-                //     self.action_queue.push_back(WaitForBid);
-                // }
                 WaitForBid => {
-                    // if self.send_messages {
-                    //     let msg = GameMessage::GetBid(self.clone());
-                    //     self.message_sender.send(msg).unwrap();
-                    // }
                     println!("game: WaitForBid");
                 }
+                WaitForChooseTrump => {},
                 MoveNestToHand => {
                     println!("game: MoveNestToHand");
                     self.move_nest_card_to_hand();
                     self.next_action = Some(WaitForDiscards);
                 }
-                // PreDiscard => {
-                //     self.action_queue.push_back(WaitForDiscards);
-                // }
                 WaitForDiscards => {
                     println!("game::WaitForDiscards");
-                    let is_bot = self.active_player_is_bot();
-                    let all_ids = self.active_player().hand.clone();
-                    for id in all_ids {
-                        if let Some(card) = self.cards.get_mut(id) {
-                            if is_bot {
-                                card.select_state = SelectState::Unselectable;
-                            } else {
-                                card.select_state = SelectState::Dimmed;
-                            }
-                        }
-                    }
+                    let is_bot = self.active_player_is_bot();                    
                     for id in self.eligible_discards() {
                         if let Some(card) = self.cards.get_mut(id) {
                             card.select_state = SelectState::Selectable
                         }
                     }
                 }
-                PreChooseTrump => {},
-                WaitForChooseTrump => {},
+                EndNestExchange => {
+                    let ids = self.active_hand().clone();
+                    self.mark_select_state(&ids, SelectState::Unselectable);
+                    self.next_action = Some(PrepareForNewTrick)
+                },
+                
                 PrepareForNewTrick => {
                     self.prepare_for_new_trick();
                     self.next_action = Some(WaitForPlayCard);
@@ -727,6 +725,7 @@ impl Game {
                 //     self.action_queue.push_back(WaitForPlayCard);
                 // }
                 WaitForPlayCard => {
+                    
                     println!("game: WaitForPlayCard");
                 }
                 AwardTrick(_) => {
@@ -755,14 +754,15 @@ impl Game {
             PlayerAction::MakeBid(bid) => self.make_bid(*bid),
             PlayerAction::MoveCardToNest(id) => {
                 println!("MoveCardToNest");
-                self.discard_to_nest(vec![*id]);
+                self.discard_to_nest(&vec![*id]);
+                self.next_action = Some(EndNestExchange);
             }
             PlayerAction::TakeCardFromNest(id) => {
                 println!("TakeCardFroNest");
                 self.undiscard_from_nest(id);
             }
             PlayerAction::EndNestExchange => {
-                self.next_action = Some(PreChooseTrump);
+                self.next_action = Some(EndNestExchange);
             }
 
             PlayerAction::PlayCard(_, c_id) => {

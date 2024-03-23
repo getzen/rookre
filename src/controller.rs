@@ -31,7 +31,6 @@ pub struct Controller {
     audio_message_receiver: Receiver<AudioMessage>,
     card_play: Option<AudioSource>,
 
-    // NEW
     card_updates: VecDeque<CardUpdate>,
 }
 
@@ -94,11 +93,11 @@ impl Controller {
                 }
                 GameAction::DealCards => {
                     self.update_hands();
-                    self.update_nest();
+                    self.update_nest(&action);
                 }
                 GameAction::PresentNest => {
                     self.update_hands();
-                    self.update_nest();
+                    self.update_nest(&action);
                 }
                 //GameAction::PreBid => {},
                 GameAction::WaitForBid => {
@@ -110,11 +109,12 @@ impl Controller {
                         self.view.get_bid(&self.game);
                     }
                 }
+                GameAction::WaitForChooseTrump => {}
+
                 GameAction::MoveNestToHand => {
                     self.update_hands();
-                    self.update_nest();
+                    self.update_nest(&action);
                 }
-                //GameAction::PreDiscard => {},
                 GameAction::WaitForDiscards => {
                     if self.game.active_player_is_bot() {
                         //self.spawn_make_bid_bot();
@@ -122,11 +122,18 @@ impl Controller {
                         self.view.get_discard(&self.game);
                     }
                 }
-                GameAction::PreChooseTrump => {}
-                GameAction::WaitForChooseTrump => {}
-                GameAction::PrepareForNewTrick => todo!(),
+                GameAction::EndNestExchange => {
+                    self.view.end_discard();
+                    self.update_hands();
+                    self.update_nest(&action);
+                }
+                GameAction::PrepareForNewTrick => {
+                    self.update_hands();
+                },
                 GameAction::PrePlayCard => todo!(),
-                GameAction::WaitForPlayCard => todo!(),
+                GameAction::WaitForPlayCard => {
+                    self.update_hands();
+                },
                 GameAction::AwardTrick(_) => todo!(),
                 GameAction::EndHand => todo!(),
                 GameAction::EndGame => todo!(),
@@ -148,7 +155,9 @@ impl Controller {
                     self.view.bid_selector.visible = false;
                 }
                 PlayerAction::PlayCard(_, _) => todo!(),
-                PlayerAction::MoveCardToNest(_) => {}
+                PlayerAction::MoveCardToNest(_) => {
+                    // self.game.discard_to_nest(vec![*id]);
+                }
                 PlayerAction::TakeCardFromNest(_) => todo!(),
                 PlayerAction::EndNestExchange => todo!(),
             }
@@ -201,9 +210,20 @@ impl Controller {
         }
     }
 
-    fn update_nest(&mut self) {
+    fn update_nest(&mut self, game_action: &GameAction) {
+        let group = match game_action {
+            GameAction::Setup => CardGroup::NestExchange,
+            GameAction::PrepareForNewHand => CardGroup::NestExchange,
+            GameAction::DealCards => CardGroup::NestExchange,
+            GameAction::PresentNest => CardGroup::NestExchange,
+            GameAction::WaitForBid => CardGroup::NestExchange,
+            GameAction::WaitForChooseTrump => CardGroup::NestExchange,
+            GameAction::MoveNestToHand => CardGroup::NestExchange,
+            GameAction::WaitForDiscards => CardGroup::NestExchange,
+            _ => CardGroup::NestAside,
+        };
         let mut update = CardUpdate {
-            group: CardGroup::NestExchange,
+            group: group,
             group_len: self.game.nest.len(),
             ..Default::default()
         };
