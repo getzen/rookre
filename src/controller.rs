@@ -122,6 +122,11 @@ impl Controller {
                         self.view.get_discard(&self.game);
                     }
                 }
+                GameAction::HandleDiscard => {
+                    self.update_hands();
+                    self.update_nest(&action);
+                    self.add_card_update_delay(2.0);
+                }
                 GameAction::EndNestExchange => {
                     self.view.end_discard();
                     self.update_hands();
@@ -129,11 +134,11 @@ impl Controller {
                 }
                 GameAction::PrepareForNewTrick => {
                     self.update_hands();
-                },
+                }
                 GameAction::PrePlayCard => todo!(),
                 GameAction::WaitForPlayCard => {
                     self.update_hands();
-                },
+                }
                 GameAction::AwardTrick(_) => todo!(),
                 GameAction::EndHand => todo!(),
                 GameAction::EndGame => todo!(),
@@ -141,7 +146,7 @@ impl Controller {
         }
 
         if !self.card_updates.is_empty() {
-            self.view.update_cards(&mut self.card_updates);
+            self.view.update_cards(&mut self.card_updates, time_delta);
         }
 
         // Check for PlayerAction messages and call related game functions.
@@ -155,9 +160,7 @@ impl Controller {
                     self.view.bid_selector.visible = false;
                 }
                 PlayerAction::PlayCard(_, _) => todo!(),
-                PlayerAction::MoveCardToNest(_) => {
-                    // self.game.discard_to_nest(vec![*id]);
-                }
+                PlayerAction::MoveCardToNest(_) => {}
                 PlayerAction::TakeCardFromNest(_) => todo!(),
                 PlayerAction::EndNestExchange => todo!(),
             }
@@ -212,14 +215,15 @@ impl Controller {
 
     fn update_nest(&mut self, game_action: &GameAction) {
         let group = match game_action {
-            GameAction::Setup => CardGroup::NestExchange,
-            GameAction::PrepareForNewHand => CardGroup::NestExchange,
-            GameAction::DealCards => CardGroup::NestExchange,
-            GameAction::PresentNest => CardGroup::NestExchange,
-            GameAction::WaitForBid => CardGroup::NestExchange,
-            GameAction::WaitForChooseTrump => CardGroup::NestExchange,
-            GameAction::MoveNestToHand => CardGroup::NestExchange,
-            GameAction::WaitForDiscards => CardGroup::NestExchange,
+            GameAction::Setup
+            | GameAction::PrepareForNewHand
+            | GameAction::DealCards
+            | GameAction::PresentNest
+            | GameAction::WaitForBid
+            | GameAction::WaitForChooseTrump
+            | GameAction::MoveNestToHand
+            | GameAction::WaitForDiscards
+            | GameAction::HandleDiscard => CardGroup::NestExchange,
             _ => CardGroup::NestAside,
         };
         let mut update = CardUpdate {
@@ -236,6 +240,12 @@ impl Controller {
             }
             self.card_updates.push_back(update.clone());
         }
+    }
+
+    fn add_card_update_delay(&mut self, delay: f32) {
+        let mut update = CardUpdate::default();
+        update.delay = delay;
+        self.card_updates.push_back(update);
     }
 
     // Turn the bot loose on the world.

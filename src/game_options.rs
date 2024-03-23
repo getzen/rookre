@@ -104,7 +104,7 @@ impl GameOptions {
             //partner_kind: PartnerKind::Across,
             hand_size: 9,
             nest_size: 5,
-            nest_face_up: 2,
+            nest_face_up: 1,
             bidding_kind: BiddingKind::Euchre,
             //bidding_progression: BiddingProgression::OneBidderLeft,
             //bid_increment: 0,

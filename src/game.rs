@@ -31,6 +31,7 @@ pub enum GameAction {
     MoveNestToHand,
     // PreDiscard,
     WaitForDiscards,
+    HandleDiscard,
     EndNestExchange, // player ui or bot launch
     PrepareForNewTrick,
     PrePlayCard, // player ui or bot launch
@@ -677,7 +678,8 @@ impl Game {
     }
 
     pub fn do_next_action(&mut self) {
-        if let Some(action) = self.next_action.take() { // self.next_action is now None
+        if let Some(action) = self.next_action.take() {
+            // self.next_action is now None
             match action {
                 Setup => {
                     self.create_cards();
@@ -696,7 +698,7 @@ impl Game {
                 WaitForBid => {
                     println!("game: WaitForBid");
                 }
-                WaitForChooseTrump => {},
+                WaitForChooseTrump => {}
                 MoveNestToHand => {
                     println!("game: MoveNestToHand");
                     self.move_nest_card_to_hand();
@@ -704,19 +706,22 @@ impl Game {
                 }
                 WaitForDiscards => {
                     println!("game::WaitForDiscards");
-                    let is_bot = self.active_player_is_bot();                    
+                    let is_bot = self.active_player_is_bot();
                     for id in self.eligible_discards() {
                         if let Some(card) = self.cards.get_mut(id) {
                             card.select_state = SelectState::Selectable
                         }
                     }
                 }
+                HandleDiscard => {
+                    self.next_action = Some(EndNestExchange);
+                }
                 EndNestExchange => {
                     let ids = self.active_hand().clone();
                     self.mark_select_state(&ids, SelectState::Unselectable);
                     self.next_action = Some(PrepareForNewTrick)
-                },
-                
+                }
+
                 PrepareForNewTrick => {
                     self.prepare_for_new_trick();
                     self.next_action = Some(WaitForPlayCard);
@@ -725,7 +730,6 @@ impl Game {
                 //     self.action_queue.push_back(WaitForPlayCard);
                 // }
                 WaitForPlayCard => {
-                    
                     println!("game: WaitForPlayCard");
                 }
                 AwardTrick(_) => {
@@ -755,7 +759,7 @@ impl Game {
             PlayerAction::MoveCardToNest(id) => {
                 println!("MoveCardToNest");
                 self.discard_to_nest(&vec![*id]);
-                self.next_action = Some(EndNestExchange);
+                self.next_action = Some(HandleDiscard);
             }
             PlayerAction::TakeCardFromNest(id) => {
                 println!("TakeCardFroNest");

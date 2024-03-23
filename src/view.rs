@@ -145,11 +145,18 @@ impl View {
         DiscardPanel::new(gfx, sender)
     }
 
-    pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>) {
+    pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>, time_delta: f32) {
         // Loop until a card needs updating or there are no updates left then break.
         // This bypasses needless card updates.
         loop {
-            if let Some(update) = updates.pop_front() {
+            if let Some(mut update) = updates.pop_front() {
+                if update.delay > 0.0 {
+                    update.delay -= time_delta;
+                    if update.delay > 0.0 {
+                        updates.push_front(update);
+                    }
+                    break;
+                }
                 if self.update_card(update) {
                     break;
                 }

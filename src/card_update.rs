@@ -30,6 +30,10 @@ pub struct CardUpdate {
     pub player_is_bot: bool,
     pub face_up: bool,
     pub select_state: SelectState,
+    /// If delay is > 0.0, then all the other fields are ignored and the update just
+    /// serves to delay subsequent updates. The delay is reduced each frame
+    /// until <= 0.0, then discarded.
+    pub delay: f32,
 }
 
 impl Default for CardUpdate {
@@ -44,6 +48,7 @@ impl Default for CardUpdate {
             player_is_bot: false,
             face_up: false,
             select_state: SelectState::Unselectable,
+            delay: 0.0,
         }
     }
 }
