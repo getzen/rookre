@@ -43,16 +43,16 @@ impl ViewFn {
                     .from_image(include_bytes!("assets/cards/clb10.png")),
                 11 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/clb11.png")),
+                    .from_image(include_bytes!("assets/cards/clbJ.png")),
                 12 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/clb12.png")),
+                    .from_image(include_bytes!("assets/cards/clbQ.png")),
                 13 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/clb13.png")),
+                    .from_image(include_bytes!("assets/cards/clbK.png")),
                 14 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/clb14.png")),
+                    .from_image(include_bytes!("assets/cards/clbA.png")),
                 _ => panic!("Can't load tex for rank {}", card.face_rank),
             },
             CardSuit::Diamond => match card.face_rank {
@@ -88,16 +88,16 @@ impl ViewFn {
                     .from_image(include_bytes!("assets/cards/dia10.png")),
                 11 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/dia11.png")),
+                    .from_image(include_bytes!("assets/cards/diaJ.png")),
                 12 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/dia12.png")),
+                    .from_image(include_bytes!("assets/cards/diaQ.png")),
                 13 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/dia13.png")),
+                    .from_image(include_bytes!("assets/cards/diaK.png")),
                 14 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/dia14.png")),
+                    .from_image(include_bytes!("assets/cards/diaA.png")),
                 _ => panic!("Can't load tex for rank {}", card.face_rank),
             },
             CardSuit::Heart => match card.face_rank {
@@ -133,16 +133,16 @@ impl ViewFn {
                     .from_image(include_bytes!("assets/cards/hrt10.png")),
                 11 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/hrt11.png")),
+                    .from_image(include_bytes!("assets/cards/hrtJ.png")),
                 12 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/hrt12.png")),
+                    .from_image(include_bytes!("assets/cards/hrtQ.png")),
                 13 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/hrt13.png")),
+                    .from_image(include_bytes!("assets/cards/hrtK.png")),
                 14 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/hrt14.png")),
+                    .from_image(include_bytes!("assets/cards/hrtA.png")),
                 _ => panic!("Can't load tex for rank {}", card.face_rank),
             },
             CardSuit::Spade => match card.face_rank {
@@ -178,16 +178,16 @@ impl ViewFn {
                     .from_image(include_bytes!("assets/cards/spd10.png")),
                 11 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/spd11.png")),
+                    .from_image(include_bytes!("assets/cards/spdJ.png")),
                 12 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/spd12.png")),
+                    .from_image(include_bytes!("assets/cards/spdQ.png")),
                 13 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/spd13.png")),
+                    .from_image(include_bytes!("assets/cards/spdK.png")),
                 14 => gfx
                     .create_texture()
-                    .from_image(include_bytes!("assets/cards/spd14.png")),
+                    .from_image(include_bytes!("assets/cards/spdA.png")),
                 _ => panic!("Can't load tex for rank {}", card.face_rank),
             },
             CardSuit::Joker => gfx

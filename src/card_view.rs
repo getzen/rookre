@@ -2,7 +2,7 @@ use std::sync::mpsc::Sender;
 
 use notan::{
     app::Graphics,
-    draw::{Draw, DrawImages, DrawTransform},
+    draw::*,
     math::{Affine2, Vec2},
     prelude::{Color, Texture},
     Event,
@@ -200,5 +200,18 @@ impl<T: Copy> ViewTrait for CardView<T> {
             .transform(self.transform.mat3_with_parent(parent_affine))
             .size(size_x, size_y)
             .color(color);
+
+        let font = crate::FONT.lock().unwrap().expect("Font is None");
+        let text = "10 pts".to_string();
+
+        if self.face_up {
+            draw.text(&font, &text)
+                .position(6.0, 104.0)
+                .transform(self.transform.mat3_with_parent(parent_affine))
+                .size(10.0 * 2.0)
+                .h_align_left()
+                .v_align_middle()
+                .color(Color::BLACK);
+        }
     }
 }
