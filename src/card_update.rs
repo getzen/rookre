@@ -30,10 +30,10 @@ pub struct CardUpdate {
     pub player_is_bot: bool,
     pub face_up: bool,
     pub select_state: SelectState,
-    /// If delay is > 0.0, then all the other fields are ignored and the update just
-    /// serves to delay subsequent updates. The delay is reduced each frame
-    /// until <= 0.0, then discarded.
-    pub delay: f32,
+    // If delay is > 0.0, then all the other fields are ignored and the update just
+    // serves to delay subsequent updates. The delay is reduced each frame
+    // until <= 0.0, then discarded.
+    // pub delay: f32,
 }
 
 impl Default for CardUpdate {
@@ -48,7 +48,7 @@ impl Default for CardUpdate {
             player_is_bot: false,
             face_up: false,
             select_state: SelectState::Unselectable,
-            delay: 0.0,
+            //delay: 0.0,
         }
     }
 }
@@ -58,7 +58,21 @@ impl CardUpdate {
         match &self.group {
             CardGroup::Deck => VIEW_CENTER,
             CardGroup::NestExchange => {
-                let x_spacing = CARD_SIZE.x / 2.0;
+                // The idea here is to make the last card in the group be placed
+                // an "extra" space to the right so that it stands alone.
+                // let len = self.group_len + 1; // Increase the group_len by one to accomodate.
+                // let mut index = self.group_index;
+                // if index == self.group_len - 1 { // If the index is the last, increase it by 1.
+                //     index += 1;
+                // }
+                // let x_spacing = CARD_SIZE.x / 2.0;
+                // let mut pt = VIEW_CENTER;
+                // pt.x -= (len - 1) as f32 * x_spacing / 2.0;
+                // pt.x += index as f32 * x_spacing;
+                // pt
+
+                // This is the standard spread algorithm.
+                let x_spacing = CARD_SIZE.x / 1.0;
                 let mut pt = VIEW_CENTER;
                 pt.x -= (self.group_len - 1) as f32 * x_spacing / 2.0;
                 pt.x += self.group_index as f32 * x_spacing;

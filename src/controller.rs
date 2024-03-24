@@ -85,6 +85,7 @@ impl Controller {
     pub fn update(&mut self, app: &mut App) {
         let time_delta = app.timer.delta_f32();
 
+        // Skip processing of game.actions if delay is > 0.0.
         self.game_action_delay -= time_delta;
         self.game_action_delay = self.game_action_delay.max(0.0);
         if self.game_action_delay == 0.0 {
@@ -131,11 +132,10 @@ impl Controller {
                     GameAction::PauseAfterDiscard => {
                         self.update_hands();
                         self.update_nest(&action);
-                        //self.add_card_update_delay(1.5);
-                        self.game_action_delay = 2.0;
-                    }
-                    GameAction::EndNestExchange => {
                         self.view.end_discard();
+                        self.game_action_delay = 1.5;
+                    }
+                    GameAction::EndNestExchange => { 
                         self.update_nest(&action);
                     }
                     GameAction::PrepareForNewTrick => {
@@ -249,11 +249,11 @@ impl Controller {
         }
     }
 
-    fn add_card_update_delay(&mut self, delay: f32) {
-        let mut update = CardUpdate::default();
-        update.delay = delay;
-        self.card_updates.push_back(update);
-    }
+    // fn add_card_update_delay(&mut self, delay: f32) {
+    //     let mut update = CardUpdate::default();
+    //     update.delay = delay;
+    //     self.card_updates.push_back(update);
+    // }
 
     // Turn the bot loose on the world.
     fn spawn_make_bid_bot(&self) {

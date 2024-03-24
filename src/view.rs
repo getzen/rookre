@@ -154,13 +154,13 @@ impl View {
         // This bypasses needless card updates.
         loop {
             if let Some(mut update) = updates.pop_front() {
-                if update.delay > 0.0 {
-                    update.delay -= time_delta;
-                    if update.delay > 0.0 {
-                        updates.push_front(update);
-                    }
-                    break;
-                }
+                // if update.delay > 0.0 {
+                //     update.delay -= time_delta;
+                //     if update.delay > 0.0 {
+                //         updates.push_front(update);
+                //     }
+                //     break;
+                // }
                 if self.update_card(update) {
                     break;
                 }
