@@ -32,6 +32,7 @@ pub struct Controller {
     card_play: Option<AudioSource>,
 
     card_updates: VecDeque<CardUpdate>,
+    game_action_delay: f32,
 }
 
 impl Controller {
@@ -61,6 +62,7 @@ impl Controller {
             card_play: None,
 
             card_updates: VecDeque::new(),
+            game_action_delay: 0.0,
         }
     }
 
@@ -83,65 +85,70 @@ impl Controller {
     pub fn update(&mut self, app: &mut App) {
         let time_delta = app.timer.delta_f32();
 
-        if let Some(action) = &self.game.actions_taken.pop_front() {
-            match action {
-                GameAction::Setup => {}
-                GameAction::PrepareForNewHand => {
-                    self.update_deck();
-                    self.view
-                        .update_dealer(self.game.dealer, self.game.player_count);
-                }
-                GameAction::DealCards => {
-                    self.update_hands();
-                    self.update_nest(&action);
-                }
-                GameAction::PresentNest => {
-                    self.update_hands();
-                    self.update_nest(&action);
-                }
-                //GameAction::PreBid => {},
-                GameAction::WaitForBid => {
-                    self.view
-                        .update_active_player(self.game.active_player, self.game.player_count);
-                    if self.game.active_player_is_bot() {
-                        self.spawn_make_bid_bot();
-                    } else {
-                        self.view.get_bid(&self.game);
-                    }
-                }
-                GameAction::WaitForChooseTrump => {}
+        self.game_action_delay -= time_delta;
+        self.game_action_delay = self.game_action_delay.max(0.0);
+        if self.game_action_delay == 0.0 {
 
-                GameAction::MoveNestToHand => {
-                    self.update_hands();
-                    self.update_nest(&action);
-                }
-                GameAction::WaitForDiscards => {
-                    if self.game.active_player_is_bot() {
-                        //self.spawn_make_bid_bot();
-                    } else {
-                        self.view.get_discard(&self.game);
+            if let Some(action) = &self.game.actions_taken.pop_front() {
+                match action {
+                    GameAction::Setup => {}
+                    GameAction::PrepareForNewHand => {
+                        self.update_deck();
+                        self.view
+                            .update_dealer(self.game.dealer, self.game.player_count);
                     }
+                    GameAction::DealCards => {
+                        self.update_hands();
+                        self.update_nest(&action);
+                    }
+                    GameAction::PresentNest => {
+                        self.update_hands();
+                        self.update_nest(&action);
+                    }
+                    //GameAction::PreBid => {},
+                    GameAction::WaitForBid => {
+                        self.view
+                            .update_active_player(self.game.active_player, self.game.player_count);
+                        if self.game.active_player_is_bot() {
+                            self.spawn_make_bid_bot();
+                        } else {
+                            self.view.get_bid(&self.game);
+                        }
+                    }
+                    GameAction::WaitForChooseTrump => {}
+
+                    GameAction::MoveNestToHand => {
+                        self.update_hands();
+                        self.update_nest(&action);
+                    }
+                    GameAction::WaitForDiscards => {
+                        if self.game.active_player_is_bot() {
+                            //self.spawn_make_bid_bot();
+                        } else {
+                            self.view.get_discard(&self.game);
+                        }
+                    }
+                    GameAction::PauseAfterDiscard => {
+                        self.update_hands();
+                        self.update_nest(&action);
+                        //self.add_card_update_delay(1.5);
+                        self.game_action_delay = 2.0;
+                    }
+                    GameAction::EndNestExchange => {
+                        self.view.end_discard();
+                        self.update_nest(&action);
+                    }
+                    GameAction::PrepareForNewTrick => {
+                        self.update_hands();
+                    }
+                    GameAction::PrePlayCard => todo!(),
+                    GameAction::WaitForPlayCard => {
+                        self.update_hands();
+                    }
+                    GameAction::AwardTrick(_) => todo!(),
+                    GameAction::EndHand => todo!(),
+                    GameAction::EndGame => todo!(),
                 }
-                GameAction::HandleDiscard => {
-                    self.update_hands();
-                    self.update_nest(&action);
-                    self.add_card_update_delay(2.0);
-                }
-                GameAction::EndNestExchange => {
-                    self.view.end_discard();
-                    self.update_hands();
-                    self.update_nest(&action);
-                }
-                GameAction::PrepareForNewTrick => {
-                    self.update_hands();
-                }
-                GameAction::PrePlayCard => todo!(),
-                GameAction::WaitForPlayCard => {
-                    self.update_hands();
-                }
-                GameAction::AwardTrick(_) => todo!(),
-                GameAction::EndHand => todo!(),
-                GameAction::EndGame => todo!(),
             }
         }
 
@@ -223,12 +230,12 @@ impl Controller {
             | GameAction::WaitForChooseTrump
             | GameAction::MoveNestToHand
             | GameAction::WaitForDiscards
-            | GameAction::HandleDiscard => CardGroup::NestExchange,
+            | GameAction::PauseAfterDiscard => CardGroup::NestExchange,
             _ => CardGroup::NestAside,
         };
         let mut update = CardUpdate {
             group: group,
-            group_len: self.game.nest.len(),
+            group_len: self.game.options.nest_size as usize,
             ..Default::default()
         };
         for (idx, id) in self.game.nest.iter().enumerate() {

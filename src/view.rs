@@ -8,17 +8,7 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    bid_selector::BidSelector,
-    card::{Card, CardId, CardSuit, SelectState},
-    card_update::CardUpdate,
-    card_view::CardView,
-    discard_panel::DiscardPanel,
-    game::{Game, PlayerAction},
-    image::Image,
-    image_button::ImageButton,
-    player::PlayerId,
-    view_geom::{ViewGeom, BUTTON_POS},
-    view_trait::ViewTrait,
+    bid_selector::BidSelector, card::{Card, CardId, CardSuit, SelectState}, card_update::{self, CardGroup, CardUpdate}, card_view::CardView, discard_panel::DiscardPanel, game::{Game, PlayerAction}, image::Image, image_button::ImageButton, player::PlayerId, texture_loader::CARD_TEX_SCALE, view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE}, view_trait::ViewTrait
 };
 
 // Colors
@@ -31,11 +21,12 @@ pub struct View {
     card_views: Vec<CardView<PlayerAction>>,
     card_views_z_order_dirty: bool,
 
-    pub active_player_marker: Image,
-    pub dealer_marker: Image,
+    active_player_marker: Image,
+    dealer_marker: Image,
     pub deal_button: ImageButton<PlayerAction>,
     pub bid_selector: BidSelector,
-    pub discard_panel: DiscardPanel,
+    discard_panel: DiscardPanel,
+    card_outline: Image,
 
     fps_update: f32,
 }
@@ -52,6 +43,7 @@ impl View {
         let deal_button = View::create_deal_button(gfx, sender.clone());
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
         let discard_panel = View::create_discard_panel(gfx, sender.clone());
+        let card_outline = View::create_card_outline(gfx);
 
         Self {
             card_views,
@@ -62,7 +54,7 @@ impl View {
             deal_button,
             bid_selector,
             discard_panel,
-
+            card_outline,
             fps_update: 0.0,
         }
     }
@@ -143,6 +135,18 @@ impl View {
 
     fn create_discard_panel(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> DiscardPanel {
         DiscardPanel::new(gfx, sender)
+    }
+
+    fn create_card_outline(gfx: &mut Graphics) -> Image {
+        let tex = gfx
+            .create_texture()
+            .from_image(include_bytes!("assets/cards/outline.png"))
+            .build()
+            .unwrap();
+        let mut image = Image::new(tex, Vec2::ZERO);
+        image.transform.set_size(CARD_SIZE);
+        image.visible = false;
+        image
     }
 
     pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>, time_delta: f32) {
@@ -232,10 +236,21 @@ impl View {
                 }
             }
         }
+
+        // Position and show card outline.
+        let update = CardUpdate {
+            group: CardGroup::NestExchange,
+            group_len: game.options.nest_size as usize,
+            group_index: game.options.nest_size as usize - 1,
+            ..Default::default()
+        };
+        self.card_outline.transform.set_translation(update.translation());
+        self.card_outline.visible = true;
     }
 
     pub fn end_discard(&mut self) {
         self.discard_panel.visible = false;
+        self.card_outline.visible = false;
     }
 }
 
@@ -299,6 +314,8 @@ impl ViewTrait for View {
     fn draw(&mut self, draw: &mut notan::draw::Draw, parent_affine: &Affine2) {
         //let now = std::time::Instant::now();
 
+       
+
         for card_view in &mut self.card_views {
             card_view.draw(draw, parent_affine);
         }
@@ -306,6 +323,7 @@ impl ViewTrait for View {
         // Images
         self.active_player_marker.draw(draw, parent_affine);
         self.dealer_marker.draw(draw, parent_affine);
+        self.card_outline.draw(draw, parent_affine);
 
         // Buttons and panels
         self.deal_button.draw(draw, parent_affine);

@@ -31,7 +31,7 @@ pub enum GameAction {
     MoveNestToHand,
     // PreDiscard,
     WaitForDiscards,
-    HandleDiscard,
+    PauseAfterDiscard,
     EndNestExchange, // player ui or bot launch
     PrepareForNewTrick,
     PrePlayCard, // player ui or bot launch
@@ -490,6 +490,9 @@ impl Game {
         for id in discards {
             self.active_player_mut().remove_from_hand(id);
             self.nest.push(*id);
+            if let Some(card) = self.cards.get_mut(*id) {
+                card.face_up = false;
+            }
         }
     }
 
@@ -706,14 +709,13 @@ impl Game {
                 }
                 WaitForDiscards => {
                     println!("game::WaitForDiscards");
-                    let is_bot = self.active_player_is_bot();
                     for id in self.eligible_discards() {
                         if let Some(card) = self.cards.get_mut(id) {
                             card.select_state = SelectState::Selectable
                         }
                     }
                 }
-                HandleDiscard => {
+                PauseAfterDiscard => {
                     self.next_action = Some(EndNestExchange);
                 }
                 EndNestExchange => {
@@ -759,7 +761,7 @@ impl Game {
             PlayerAction::MoveCardToNest(id) => {
                 println!("MoveCardToNest");
                 self.discard_to_nest(&vec![*id]);
-                self.next_action = Some(HandleDiscard);
+                self.next_action = Some(PauseAfterDiscard);
             }
             PlayerAction::TakeCardFromNest(id) => {
                 println!("TakeCardFroNest");

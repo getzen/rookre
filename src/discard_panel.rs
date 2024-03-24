@@ -20,7 +20,7 @@ pub struct DiscardPanel {
     pub z_order: usize,
     pub texture: Texture,
 
-    pub done_button: ImageButton<PlayerAction>,
+    //pub done_button: ImageButton<PlayerAction>,
 }
 
 impl DiscardPanel {
@@ -38,14 +38,14 @@ impl DiscardPanel {
             true,
         );
 
-        let done_button = DiscardPanel::create_done_button(gfx, sender.clone());
+        //let done_button = DiscardPanel::create_done_button(gfx, sender.clone());
 
         Self {
             visible: false,
             transform: trans,
             z_order: 0,
             texture,
-            done_button,
+            //done_button,
         }
     }
 
@@ -102,12 +102,12 @@ impl ViewTrait for DiscardPanel {
 
         let affine = *parent_affine * self.transform.affine2();
 
-        if self
-            .done_button
-            .handle_mouse_event(event, screen_pt, &affine, send_msg)
-        {
-            contains = true;
-        }
+        // if self
+        //     .done_button
+        //     .handle_mouse_event(event, screen_pt, &affine, send_msg)
+        // {
+        //     contains = true;
+        // }
 
         contains
     }
@@ -124,6 +124,6 @@ impl ViewTrait for DiscardPanel {
 
         let affine = *parent_affine * self.transform.affine2();
 
-        self.done_button.draw(draw, &affine);
+        //self.done_button.draw(draw, &affine);
     }
 }
