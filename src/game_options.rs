@@ -6,12 +6,6 @@ use crate::card::{CardSuit, FaceRank, GameRank, Points};
 use crate::player::PlayerId;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum DeckKind {
-    Standard52,
-    Standard53,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PartnerKind {
     None,
     Across,
@@ -60,17 +54,7 @@ pub enum NestPointsOption {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct GameOptions {
-    pub player_count: PlayerId,
-    pub deck_kind: DeckKind,
-    pub remove_ranks: Vec<FaceRank>,
-    //pub remove_cards: Vec<(FaceRank, char)>,
-    pub bird_joker_rank: GameRank,
-    pub bird_joker_points: Points,
-    // TODO: Re-think this. It's not fine-grained enough, eg Red 1 = best card.
-    //pub face_rank_to_game_rank_changes: Vec<(FaceRank, GameRank)>,
-    pub face_rank_points: Vec<(FaceRank, Points)>,
-    //pub partner_kind: PartnerKind,
+pub struct GameOptions {   
     pub hand_size: u8,
     /// This might be smaller than the number of cards left after dealing.
     /// If so, it becomes the effective exhange limit. Any remaining cards in
@@ -92,16 +76,6 @@ pub struct GameOptions {
 impl GameOptions {
     pub fn new() -> Self {
         Self {
-            // Anything other than 4 will not work properly.
-            player_count: 4,
-            deck_kind: DeckKind::Standard53,
-            remove_ranks: vec![2, 3, 4],
-            //remove_cards: vec![],
-            bird_joker_rank: 10.5, // default = 16.0
-            bird_joker_points: 20,
-            //face_rank_to_game_rank_changes: vec![(1, 14.0)], // eg (1, 15.0)
-            face_rank_points: vec![(5, 5), (10, 10), (14, 10)],
-            //partner_kind: PartnerKind::Across,
             hand_size: 9,
             nest_size: 5,
             nest_face_up: 1,

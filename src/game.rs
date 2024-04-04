@@ -5,7 +5,7 @@ use slotmap::SlotMap;
 use crate::bot::BotKind;
 use crate::card::{Card, CardId, CardSuit, Points, SelectState};
 use crate::game::GameAction::*;
-use crate::game_options::{DeckKind, GameOptions, NestPointsOption, PointsAwarded};
+use crate::game_options::{GameOptions, NestPointsOption, PointsAwarded};
 use crate::player::{Player, PlayerId, PlayerKind};
 use crate::trick::Trick;
 
@@ -76,7 +76,7 @@ impl Game {
 
         // Read as normal.
         let options = GameOptions::read_from_yaml("default.txt");
-        let player_count = options.player_count;
+        let player_count = 4;
 
         let mut players = Vec::new();
         for p in 0..player_count {
@@ -163,14 +163,31 @@ impl Game {
     // }
 
     pub fn create_cards(&mut self) {
-        let cards = match self.options.deck_kind {
-            DeckKind::Standard52 => self.create_standard_52(),
-            DeckKind::Standard53 => self.create_standard_53(),
-        };
-        self.assign_ids(cards);
-    }
+        let mut cards = self.create_card_ranks(5, 14);
 
-    fn assign_ids(&mut self, cards: Vec<Card>) {
+        // Remove 6s.
+        cards.retain(|card| card.face_rank != 6);
+
+        // Assign card points.
+        let rank_points = vec![(5, 5), (10, 10), (14, 15)];
+        for (rank, points) in rank_points {
+            for card in &mut cards {
+                if card.face_rank == rank {
+                    card.points = points;
+                }
+            }
+        }
+        
+        // Add Jokers. In this game the rank and value of the two Jokers depend on
+        // which one is played first, so we'll set the values for the first-played
+        // and then change the second Joker after the first is played.
+        for _ in 0..2 {
+            let mut joker = Card::new(CardSuit::Joker, 15);
+            joker.points = 0;
+            cards.push(joker);
+        }
+
+        // Assign IDs.
         for card in cards {
             let key = self.cards.insert(card);
             if let Some(card) = self.cards.get_mut(key) {
@@ -187,48 +204,6 @@ impl Game {
             cards.push(Card::new(CardSuit::Heart, rank));
             cards.push(Card::new(CardSuit::Spade, rank));
         }
-
-        // Remove certain ranks
-        for rank in &self.options.remove_ranks {
-            cards.retain(|card| card.face_rank != *rank);
-        }
-
-        // // Remove certain cards
-        // for (rank, suit_char) in &self.options.remove_cards {
-        //     let remove_suit = Card::suit_for_char(suit_char);
-        //     cards.retain(|card| card.face_rank != *rank || card.suit != remove_suit);
-        // }
-
-        // Assign card points.
-        for (rank, points) in &self.options.face_rank_points {
-            for card in &mut cards {
-                if card.face_rank == *rank {
-                    card.points = *points;
-                }
-            }
-        }
-
-        // // Assign any changed game ranks.
-        // for (face_rank, game_rank) in &self.options.face_rank_to_game_rank_changes {
-        //     for card in &mut cards {
-        //         if card.face_rank == *face_rank {
-        //             card.game_rank = *game_rank;
-        //         }
-        //     }
-        // }
-        cards
-    }
-
-    fn create_standard_52(&self) -> Vec<Card> {
-        self.create_card_ranks(2, 14)
-    }
-
-    fn create_standard_53(&self) -> Vec<Card> {
-        let mut cards = self.create_card_ranks(2, 14);
-        let mut joker = Card::new(CardSuit::Joker, 0);
-        joker.game_rank = self.options.bird_joker_rank;
-        joker.points = self.options.bird_joker_points;
-        cards.push(joker);
         cards
     }
 
@@ -252,33 +227,8 @@ impl Game {
         self.trick = Trick::new(self.player_count);
         self.tricks_played = 0;
 
-        // match self.options.partner_kind {
-        //     PartnerKind::Across => self.assign_across_partners(),
-        //     _ => {}
-        // }
         self.assign_across_partners();
     }
-
-    // fn print_hand(&self, p: PlayerId) {
-    //     let hand = &self.players[p].hand;
-    //     print!("P{p} hand: ");
-    //     for key in hand {
-    //         if let Some(card) = self.cards.get(*key) {
-    //             print!("{card} ");
-    //         }
-    //     }
-    //     println!("");
-    // }
-
-    // fn print_nest(&self) {
-    //     print!("Nest: ");
-    //     for key in &self.nest {
-    //         if let Some(card) = self.cards.get(*key) {
-    //             print!("{card} ");
-    //         }
-    //     }
-    //     println!("");
-    // }
 
     /// Deals the given number of cards to each player.
     pub fn deal_cards(&mut self, count: u8) {
