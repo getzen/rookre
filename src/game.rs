@@ -558,15 +558,11 @@ impl Game {
     }
 
     fn award_nest(&mut self) {
-        let nest_pts = self.nest_points();
+        let pts =  self.nest_points() + self.options.nest_points_bonus;
         for (id, player) in self.players.iter_mut().enumerate() {
             if id == self.last_trick_winner {
-                let pts = match self.options.nest_points_awarded {
-                    NestPointsOption::CardPoints => nest_pts,
-                    NestPointsOption::Fixed(p) => p,
-                };
-                println!("Nest points awarded : {pts}");
                 player.points_this_hand += pts;
+                println!("Nest points awarded : {pts}");
             }
         }
     }

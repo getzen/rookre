@@ -62,7 +62,6 @@ pub struct GameOptions {
     pub nest_size: u8,
     /// The number of nest cards presented face up.
     pub nest_face_up: u8,
-    pub bidding_kind: BiddingKind,
     //pub bidding_progression: BiddingProgression,
     //pub bid_increment: usize,
     //pub trump_picking: TrumpPicking,
@@ -70,24 +69,20 @@ pub struct GameOptions {
     pub makers_points_awarded_for_loss: PointsAwarded,
     pub defenders_points_awarded_for_win: PointsAwarded,
     pub defenders_points_awarded_for_loss: PointsAwarded,
-    pub nest_points_awarded: NestPointsOption,
+    pub nest_points_bonus: i16,
 }
 
 impl GameOptions {
     pub fn new() -> Self {
         Self {
             hand_size: 9,
-            nest_size: 5,
-            nest_face_up: 1,
-            bidding_kind: BiddingKind::Euchre,
-            //bidding_progression: BiddingProgression::OneBidderLeft,
-            //bid_increment: 0,
-            //trump_picking: TrumpPicking::Euchre,
+            nest_size: 2,
+            nest_face_up: 0,
             makers_points_awarded_for_win: PointsAwarded::PointsTakenWithMultiplier(1),
             makers_points_awarded_for_loss: PointsAwarded::Fixed(0),
-            defenders_points_awarded_for_win: PointsAwarded::PointsTakenWithMultiplier(2),
-            defenders_points_awarded_for_loss: PointsAwarded::Fixed(0),
-            nest_points_awarded: NestPointsOption::CardPoints,
+            defenders_points_awarded_for_win: PointsAwarded::PointsTakenWithMultiplier(1),
+            defenders_points_awarded_for_loss: PointsAwarded::PointsTakenWithMultiplier(1),
+            nest_points_bonus: 10,
         }
     }
 
