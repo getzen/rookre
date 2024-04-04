@@ -416,8 +416,11 @@ impl Game {
 
     pub fn move_nest_card_to_hand(&mut self) {
         let p = self.bid_winner.unwrap();
-        if let Some(id) = self.nest.pop() {
-            self.players[p].hand.push(id);
+        for _ in 0..self.options.nest_size {
+            if let Some(id) = self.nest.pop() {
+                self.cards.get_mut(id).unwrap().face_up = true;
+                self.players[p].hand.push(id);
+            }
         }
         self.sort_hand(p);
     }
