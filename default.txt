@@ -1,24 +1,8 @@
-player_count: 4
-deck_kind: Standard53
-remove_ranks:
-- 2
-- 3
-- 4
-bird_joker_rank: 10.5
-bird_joker_points: 20
-face_rank_points:
-- - 5
-  - 5
-- - 10
-  - 10
-- - 14
-  - 10
 hand_size: 9
-nest_size: 5
-nest_face_up: 1
-bidding_kind: Euchre
+nest_size: 2
+nest_face_up: 0
 makers_points_awarded_for_win: !PointsTakenWithMultiplier 1
 makers_points_awarded_for_loss: !Fixed 0
-defenders_points_awarded_for_win: !PointsTakenWithMultiplier 2
-defenders_points_awarded_for_loss: !Fixed 0
-nest_points_awarded: CardPoints
+defenders_points_awarded_for_win: !PointsTakenWithMultiplier 1
+defenders_points_awarded_for_loss: !PointsTakenWithMultiplier 1
+nest_points_bonus: 10

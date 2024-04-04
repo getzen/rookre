@@ -5,7 +5,7 @@ use slotmap::SlotMap;
 use crate::bot::BotKind;
 use crate::card::{Card, CardId, CardSuit, Points, SelectState};
 use crate::game::GameAction::*;
-use crate::game_options::{GameOptions, NestPointsOption, PointsAwarded};
+use crate::game_options::{GameOptions, PointsAwarded};
 use crate::player::{Player, PlayerId, PlayerKind};
 use crate::trick::Trick;
 

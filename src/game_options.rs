@@ -12,45 +12,12 @@ pub enum PartnerKind {
     Called,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum BiddingKind {
-    None,
-    Points,
-    Tricks,
-    TricksAndSuit,
-    Euchre,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum BiddingProgression {
-    OneTimeAround,
-    OneBidderLeft,
-    Simultaneous,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum TrumpPicking {
-    None,
-    Fixed(CardSuit),
-    Random,
-    TurnOverCard,
-    WithBid,
-    AfterBid,
-    Euchre,
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PointsAwarded {
     // assign separately to Makers and Defenders
     Fixed(Points),
     PointsTakenWithMultiplier(Points),
-    //PointsBid,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum NestPointsOption {
-    CardPoints,
-    Fixed(Points),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -62,9 +29,6 @@ pub struct GameOptions {
     pub nest_size: u8,
     /// The number of nest cards presented face up.
     pub nest_face_up: u8,
-    //pub bidding_progression: BiddingProgression,
-    //pub bid_increment: usize,
-    //pub trump_picking: TrumpPicking,
     pub makers_points_awarded_for_win: PointsAwarded,
     pub makers_points_awarded_for_loss: PointsAwarded,
     pub defenders_points_awarded_for_win: PointsAwarded,
