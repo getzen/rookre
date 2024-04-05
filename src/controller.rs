@@ -93,17 +93,17 @@ impl Controller {
         if self.game_action_delay == 0.0 {
 
             if let Some(action) = &self.game.actions_taken.pop_front() {
-                match action.0 {
+                match action {
                     GameAction::Setup => {}
                     GameAction::PrepareForNewHand => {
                         self.update_deck();
                         self.view
                             .update_dealer(self.game.dealer, self.game.player_count);
                     }
-                    GameAction::DealCard => {
+                    GameAction::DealCard(p, cards) => {
                         println!("Controller: DealCard");
-                        self.update_hand(&action.1.unwrap());
-                        self.game_action_delay = 1.0;
+                        self.update_hand(*p, &cards);
+                        self.game_action_delay = 0.5;
                     }
                     GameAction::DealCards => {
                         self.update_hands();
@@ -202,15 +202,13 @@ impl Controller {
         }
     }
 
-    fn update_hand(&mut self, game: &Game) {
-        let p = game.active_player;
-        let hand = game.players[p].hand;
+    fn update_hand(&mut self, p: PlayerId, hand: &[CardId]) {
         let mut update = CardUpdate {
             group: CardGroup::Hand,
             group_len: hand.len(),
             player: p,
-            player_len: game.player_count,
-            player_is_bot: game.player_is_bot(p),
+            player_len: self.game.player_count,
+            player_is_bot: self.game.player_is_bot(p),
             ..Default::default()
         };
 
