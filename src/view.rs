@@ -212,8 +212,6 @@ impl View {
         if game.active_player_is_bot() {
             println!("bot bidding: {}", game.active_player);
         } else {
-            let suits = game.available_trump_suits();
-            self.bid_selector.set_enabled_suits(suits);
             self.bid_selector.visible = true;
             println!("bid_selector visible");
         }

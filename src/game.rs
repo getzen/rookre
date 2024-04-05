@@ -316,33 +316,6 @@ impl Game {
         }
     }
 
-    pub fn available_trump_suits(&self) -> Vec<CardSuit> {
-        let top_nest_id = self.nest.last().unwrap();
-        let card = self.cards.get(*top_nest_id).unwrap();
-
-        if self.pass_count < self.player_count as u8 {
-            // Still round one of bidding.
-            return vec![card.suit];
-        } else {
-            // Second round of bidding.
-            let all_suits = vec![
-                CardSuit::Club,
-                CardSuit::Diamond,
-                CardSuit::Heart,
-                CardSuit::Spade,
-            ];
-            let mut suits = Vec::new();
-            for suit in all_suits {
-                if suit == card.suit {
-                    continue;
-                } else {
-                    suits.push(suit);
-                }
-            }
-            return suits;
-        }
-    }
-
     pub fn make_bid(&mut self, bid: Option<CardSuit>) {
         self.active_player_mut().bid = bid;
         match bid {

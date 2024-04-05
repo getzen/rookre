@@ -107,24 +107,6 @@ impl BidSelector {
         }
         buttons
     }
-
-    pub fn set_enabled_suits(&mut self, suits: Vec<CardSuit>) {
-        println!("setting enabled suits");
-        let all_suits = vec![
-            CardSuit::Club,
-            CardSuit::Diamond,
-            CardSuit::Heart,
-            CardSuit::Spade,
-        ];
-        for (idx, button) in self.suit_buttons.iter_mut().enumerate() {
-            let button_suit = all_suits[idx];
-            if suits.contains(&button_suit) {
-                button.state = ButtonState::Enabled;
-            } else {
-                button.state = ButtonState::Disabled;
-            }
-        }
-    }
 }
 
 impl ViewTrait for BidSelector {

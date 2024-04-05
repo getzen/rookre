@@ -31,6 +31,8 @@ pub struct CardView<T> {
     pub back_tex: Texture,
     pub color: Color,
 
+    pt_text: String,
+
     pub update: CardUpdate,
     pub select_state: SelectState,
     pub mouse_over: bool,
@@ -56,7 +58,7 @@ impl<T> CardView<T> {
             .build()
             .unwrap();
 
-        Self {
+        let mut view = Self {
             id: card.id,
             visible: true,
             z_order: 0,
@@ -67,6 +69,8 @@ impl<T> CardView<T> {
             back_tex,
             color: Color::WHITE,
 
+            pt_text: String::new(),
+
             update: CardUpdate::default(),
             select_state: SelectState::Unselectable,
             mouse_over: false,
@@ -76,7 +80,16 @@ impl<T> CardView<T> {
 
             sender,
             mouse_up_message: None,
-        }
+        };
+        view.update_pt_text(card);
+        view
+    }
+
+    pub fn update_pt_text(&mut self, card: &Card) {
+        self.pt_text = match card.points {
+            0 => String::new(),
+            _ => format!("{} pts", card.points),
+        };
     }
 
     pub fn animate_to(&mut self, location: CardUpdate, trans_vel: f32, angle_vel: f32) {
@@ -202,10 +215,9 @@ impl<T: Copy> ViewTrait for CardView<T> {
             .color(color);
 
         let font = crate::FONT.lock().unwrap().expect("Font is None");
-        let text = "10 pts".to_string();
 
-        if self.face_up {
-            draw.text(&font, &text)
+        if self.face_up && !self.pt_text.is_empty() {
+            draw.text(&font, &self.pt_text)
                 .position(6.0, 104.0)
                 .transform(self.transform.mat3_with_parent(parent_affine))
                 .size(10.0 * 2.0)

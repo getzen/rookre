@@ -101,9 +101,8 @@ impl Controller {
                             .update_dealer(self.game.dealer, self.game.player_count);
                     }
                     GameAction::DealCard(p, cards) => {
-                        println!("Controller: DealCard");
                         self.update_hand(*p, &cards);
-                        self.game_action_delay = 0.2;
+                        self.game_action_delay = 0.1;
                     }
                     GameAction::DealCards => {
                         self.update_hands();
