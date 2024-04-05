@@ -7,8 +7,10 @@ use notan::math::Vec2;
 use notan::prelude::*;
 
 use crate::bot::BotMgr;
+use crate::card::CardId;
 use crate::card_update::{CardGroup, CardUpdate};
 use crate::game::{Game, GameAction, PlayerAction};
+use crate::player::PlayerId;
 use crate::view::View;
 use crate::view_trait::ViewTrait;
 
@@ -91,12 +93,17 @@ impl Controller {
         if self.game_action_delay == 0.0 {
 
             if let Some(action) = &self.game.actions_taken.pop_front() {
-                match action {
+                match action.0 {
                     GameAction::Setup => {}
                     GameAction::PrepareForNewHand => {
                         self.update_deck();
                         self.view
                             .update_dealer(self.game.dealer, self.game.player_count);
+                    }
+                    GameAction::DealCard => {
+                        println!("Controller: DealCard");
+                        self.update_hand(&action.1.unwrap());
+                        self.game_action_delay = 1.0;
                     }
                     GameAction::DealCards => {
                         self.update_hands();
@@ -185,6 +192,29 @@ impl Controller {
             ..Default::default()
         };
         for (idx, id) in self.game.deck.iter().enumerate() {
+            update.id = *id;
+            update.group_index = idx;
+            if let Some(card) = self.game.cards.get(*id) {
+                update.face_up = card.face_up;
+                update.select_state = card.select_state;
+            }
+            self.card_updates.push_back(update.clone());
+        }
+    }
+
+    fn update_hand(&mut self, game: &Game) {
+        let p = game.active_player;
+        let hand = game.players[p].hand;
+        let mut update = CardUpdate {
+            group: CardGroup::Hand,
+            group_len: hand.len(),
+            player: p,
+            player_len: game.player_count,
+            player_is_bot: game.player_is_bot(p),
+            ..Default::default()
+        };
+
+        for (idx, id) in hand.iter().enumerate() {
             update.id = *id;
             update.group_index = idx;
             if let Some(card) = self.game.cards.get(*id) {

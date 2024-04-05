@@ -23,6 +23,7 @@ pub enum PlayerAction {
 pub enum GameAction {
     Setup,
     PrepareForNewHand,
+    DealCard,
     DealCards,
     PresentNest, // one or more cards might be revealed
     //PreBid,      // player ui or bot launch
@@ -41,12 +42,14 @@ pub enum GameAction {
     EndGame,
 }
 
+const DEAL_PATTERN: [u8; 5] = [20, 4, 4, 4, 4];
+
 #[derive(Clone)]
 pub struct Game {
     pub options: GameOptions,
 
     pub next_action: Option<GameAction>,
-    pub actions_taken: VecDeque<GameAction>,
+    pub actions_taken: VecDeque<(GameAction, Option<Game>)>,
 
     pub cards: SlotMap<CardId, Card>,
     pub deck: Vec<CardId>,
@@ -56,6 +59,9 @@ pub struct Game {
     pub players: Vec<Player>,
     pub dealer: PlayerId,
     pub active_player: PlayerId,
+
+    pub deal_pattern_idx: usize,
+    pub deal_count: u8,
 
     pub pass_count: u8,
     pub high_bid: Option<CardSuit>,
@@ -102,6 +108,10 @@ impl Game {
             player_count,
             players,
             dealer: 2,
+
+            deal_pattern_idx: 0,
+            deal_count: 0,
+
             active_player: 0,
             pass_count: 0,
             high_bid: None,
@@ -230,6 +240,23 @@ impl Game {
         self.assign_across_partners();
     }
 
+    /// Deals a single card to active_player. Flips it face up and sorts
+    /// the hand if the player is human.
+    pub fn deal_card(&mut self) {
+        let p = self.active_player;
+        if let Some(id) = self.deck.pop() {
+            self.players[p].add_to_hand(id);
+            if !self.active_player_is_bot() {
+                if let Some(card) = self.cards.get_mut(id) {
+                    card.face_up = true;
+                }
+                self.sort_hand(p);
+            }
+           
+        }
+        //self.advance_active_player();
+    }
+
     /// Deals the given number of cards to each player.
     pub fn deal_cards(&mut self, count: u8) {
         // Start with the player to the dealer's left.
@@ -317,24 +344,6 @@ impl Game {
         }
     }
 
-    // /// Calculate the minimum and maximum bids based on the card points available.
-    // pub fn bid_min_max_increment(&self) -> (usize, usize, usize) {
-    //     let mut max = 0;
-    //     for card in self.cards.values() {
-    //         max += card.points as usize;
-    //     }
-
-    //     let min = match &self.high_bid {
-    //         Some(high_bid) => match high_bid {
-    //             Bid::Pass => max / 2,
-    //             Bid::Points(points) => points + self.options.bid_increment,
-    //             _ => panic!(),
-    //         },
-    //         None => max / 2,
-    //     };
-    //     (min, max, self.options.bid_increment)
-    // }
-
     pub fn make_bid(&mut self, bid: Option<CardSuit>) {
         self.active_player_mut().bid = bid;
         match bid {
@@ -362,29 +371,6 @@ impl Game {
             }
         }
     }
-
-    // fn active_bidders_remaining(&self) -> usize {
-    //     let mut active_count = 0;
-    //     match self.options.bidding_kind {
-    //         BiddingKind::Euchre => {
-    //             for p in &self.players {
-    //                 match p.bid {
-    //                     Some(bid) => match bid {
-    //                         Bid::Pass => active_count += 1,
-    //                         Bid::Suit(_) => {
-    //                             return 0;
-    //                         }
-    //                     },
-    //                     None => active_count += 1,
-    //                 }
-    //             }
-    //         }
-    //         _ => {
-    //             panic!("BiddingKind not implemented.")
-    //         }
-    //     }
-    //     active_count
-    // }
 
     pub fn assign_makers_and_defenders(&mut self) {
         let maker = self.bid_winner.unwrap();
@@ -632,6 +618,9 @@ impl Game {
     pub fn do_next_action(&mut self) {
         if let Some(action) = self.next_action.take() {
             // self.next_action is now None
+
+            let mut opt_game_clone = None;
+
             match action {
                 Setup => {
                     self.create_cards();
@@ -639,6 +628,24 @@ impl Game {
                 }
                 PrepareForNewHand => {
                     self.prepare_for_new_hand();
+                }
+                DealCard => {
+                    println!("DealCard");
+                    if self.deal_count < DEAL_PATTERN[self.deal_pattern_idx] {
+                        self.deal_card();
+                        opt_game_clone = Some(self.clone());
+                        self.advance_active_player();
+                        self.deal_count += 1;
+                        self.next_action = Some(DealCard);
+                    } else {
+                        self.deal_pattern_idx += 1;
+                        self.deal_count = 0;
+                        if self.deal_pattern_idx < DEAL_PATTERN.len() {
+                            self.next_action = Some(DealCard);
+                        } else {
+                            self.next_action = Some(PresentNest);
+                        }
+                    }
                 }
                 DealCards => {
                     self.deal_cards(self.options.hand_size);
@@ -677,9 +684,9 @@ impl Game {
                     self.prepare_for_new_trick();
                     self.next_action = Some(WaitForPlayCard);
                 }
-                // PrePlayCard => {
-                //     self.action_queue.push_back(WaitForPlayCard);
-                // }
+                PrePlayCard => {
+                    //self.action_queue.push_back(WaitForPlayCard);
+                }
                 WaitForPlayCard => {
                     println!("game: WaitForPlayCard");
                 }
@@ -692,9 +699,8 @@ impl Game {
                     println!("========= End of Hand ========")
                 }
                 EndGame => todo!(),
-                _ => {}
             }
-            self.actions_taken.push_back(action);
+            self.actions_taken.push_back((action, opt_game_clone));
         }
         if self.next_action.is_some() {
             self.do_next_action();
@@ -704,7 +710,8 @@ impl Game {
     pub fn perform_player_action(&mut self, player_action: &PlayerAction) {
         match player_action {
             PlayerAction::DealCards => {
-                self.next_action = Some(DealCards);
+                // self.next_action = Some(DealCards);
+                self.next_action = Some(DealCard);
             }
             PlayerAction::MakeBid(bid) => self.make_bid(*bid),
             PlayerAction::MoveCardToNest(id) => {
