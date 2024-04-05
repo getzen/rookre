@@ -103,7 +103,7 @@ impl Controller {
                     GameAction::DealCard(p, cards) => {
                         println!("Controller: DealCard");
                         self.update_hand(*p, &cards);
-                        self.game_action_delay = 0.5;
+                        self.game_action_delay = 0.2;
                     }
                     GameAction::DealCards => {
                         self.update_hands();
@@ -252,7 +252,7 @@ impl Controller {
         let group = match game_action {
             GameAction::Setup
             | GameAction::PrepareForNewHand
-            | GameAction::DealCards
+            | GameAction::DealCard(..)
             | GameAction::PresentNest
             | GameAction::WaitForBid
             | GameAction::WaitForChooseTrump

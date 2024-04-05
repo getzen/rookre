@@ -256,42 +256,42 @@ impl Game {
         }
     }
 
-    /// Deals the given number of cards to each player.
-    pub fn deal_cards(&mut self, count: u8) {
-        // Start with the player to the dealer's left.
-        let mut deal_to = (self.dealer + 1) % self.player_count;
+    // // Deals the given number of cards to each player.
+    // pub fn deal_cards(&mut self, count: u8) {
+    //     // Start with the player to the dealer's left.
+    //     let mut deal_to = (self.dealer + 1) % self.player_count;
 
-        for _ in 0..(count * self.player_count as u8) {
-            if let Some(id) = self.deck.pop() {
-                self.players[deal_to].add_to_hand(id);
-            }
-            deal_to = (deal_to + 1) % self.player_count;
-        }
+    //     for _ in 0..(count * self.player_count as u8) {
+    //         if let Some(id) = self.deck.pop() {
+    //             self.players[deal_to].add_to_hand(id);
+    //         }
+    //         deal_to = (deal_to + 1) % self.player_count;
+    //     }
 
-        // Sort human hands and turn cards face up.
-        for p in 0..self.player_count {
-            if !self.player_is_bot(p) {
-                self.sort_hand(p);
+    //     // Sort human hands and turn cards face up.
+    //     for p in 0..self.player_count {
+    //         if !self.player_is_bot(p) {
+    //             self.sort_hand(p);
 
-                for id in &self.players[p].hand {
-                    if let Some(card) = self.cards.get_mut(*id) {
-                        card.face_up = true;
-                    }
-                }
-            }
-        }
+    //             for id in &self.players[p].hand {
+    //                 if let Some(card) = self.cards.get_mut(*id) {
+    //                     card.face_up = true;
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        // Remaining cards to nest
-        self.nest.append(&mut self.deck);
+    //     // Remaining cards to nest
+    //     self.nest.append(&mut self.deck);
 
-        // Flip nest cards
-        for i in 0..self.options.nest_face_up {
-            let idx = self.nest.len() - 1 - i as usize;
-            if let Some(card) = self.cards.get_mut(self.nest[idx]) {
-                card.face_up = true;
-            }
-        }
-    }
+    //     // Flip nest cards
+    //     for i in 0..self.options.nest_face_up {
+    //         let idx = self.nest.len() - 1 - i as usize;
+    //         if let Some(card) = self.cards.get_mut(self.nest[idx]) {
+    //             card.face_up = true;
+    //         }
+    //     }
+    // }
 
     pub fn sort_hand(&mut self, p: PlayerId) {
         // Get the cards for the hand.
@@ -648,11 +648,21 @@ impl Game {
                     }
                 }
                 DealCards => {
-                    self.deal_cards(self.options.hand_size);
-                    self.next_action = Some(PresentNest);
+                    // self.deal_cards(self.options.hand_size);
+                    // self.next_action = Some(PresentNest);
                 }
                 PresentNest => {
                     println!("game: PresentNest");
+                    // Remaining cards to nest
+                    self.nest.append(&mut self.deck);
+
+                    // Flip nest cards
+                    for i in 0..self.options.nest_face_up {
+                        let idx = self.nest.len() - 1 - i as usize;
+                        if let Some(card) = self.cards.get_mut(self.nest[idx]) {
+                            card.face_up = true;
+                        }
+                    }
                     self.next_action = Some(WaitForBid);
                 }
                 WaitForBid => {
