@@ -64,8 +64,9 @@ pub struct Game {
     pub deal_count: u8,
 
     pub pass_count: u8,
-    pub high_bid: Option<CardSuit>,
-    pub bid_winner: Option<PlayerId>,
+    
+    pub maker: Option<PlayerId>,
+    pub maker_bid: Option<CardSuit>,
 
     pub trick: Trick,
     pub last_trick_winner: PlayerId,
@@ -114,8 +115,8 @@ impl Game {
 
             active_player: 0,
             pass_count: 0,
-            high_bid: None,
-            bid_winner: None,
+            maker_bid: None,
+            maker: None,
             trick: Trick::new(player_count),
             last_trick_winner: 0,
             tricks_played: 0,
@@ -320,9 +321,9 @@ impl Game {
         self.active_player_mut().bid = bid;
         match bid {
             Some(suit) => {
-                self.bid_winner = Some(self.active_player);
+                self.maker = Some(self.active_player);
                 self.set_trump(suit);
-                self.high_bid = bid;
+                self.maker_bid = bid;
                 if self.pass_count < self.player_count as u8 {
                     // Do card exchange.
                     self.next_action = Some(MoveNestToHand);
@@ -345,7 +346,7 @@ impl Game {
     }
 
     pub fn assign_makers_and_defenders(&mut self) {
-        let maker = self.bid_winner.unwrap();
+        let maker = self.maker.unwrap();
         let maker_partner = self.players[maker].partner;
 
         for (id, player) in self.players.iter_mut().enumerate() {
@@ -373,7 +374,7 @@ impl Game {
     }
 
     pub fn move_nest_card_to_hand(&mut self) {
-        let p = self.bid_winner.unwrap();
+        let p = self.maker.unwrap();
         for _ in 0..self.options.nest_size {
             if let Some(id) = self.nest.pop() {
                 self.cards.get_mut(id).unwrap().face_up = true;
@@ -408,7 +409,7 @@ impl Game {
     }
 
     pub fn undiscard_from_nest(&mut self, id: &CardId) {
-        let player_id = self.bid_winner.unwrap();
+        let player_id = self.maker.unwrap();
         self.nest.retain(|i| i != id);
         let winner = &mut self.players[player_id];
         winner.add_to_hand(*id);
