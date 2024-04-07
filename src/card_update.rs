@@ -56,7 +56,11 @@ impl Default for CardUpdate {
 impl CardUpdate {
     pub fn translation(&self) -> Vec2 {
         match &self.group {
-            CardGroup::Deck => VIEW_CENTER,
+            CardGroup::Deck => {
+                let mut pt = VIEW_CENTER;
+                pt.y -= CARD_SIZE.y;
+                pt
+            }
             CardGroup::NestExchange => {
                 // The idea here is to make the last card in the group be placed
                 // an "extra" space to the right so that it stands alone.

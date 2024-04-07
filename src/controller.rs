@@ -100,7 +100,7 @@ impl Controller {
                         self.view
                             .update_dealer(self.game.dealer, self.game.player_count);
                     }
-                    GameAction::PresentNest => {
+                    GameAction::DealToNest => {
                         self.update_nest(&action);
                     }
                     GameAction::DealCard(p, cards) => {
@@ -118,8 +118,6 @@ impl Controller {
                             self.view.get_bid(&self.game);
                         }
                     }
-                    GameAction::WaitForChooseTrump => {}
-
                     GameAction::MoveNestToHand => {
                         self.update_hands();
                         self.update_nest(&action);
@@ -248,9 +246,8 @@ impl Controller {
             GameAction::Setup
             | GameAction::PrepareForNewHand
             | GameAction::DealCard(..)
-            | GameAction::PresentNest
+            | GameAction::DealToNest
             | GameAction::WaitForBid
-            | GameAction::WaitForChooseTrump
             | GameAction::MoveNestToHand
             | GameAction::WaitForDiscards
             | GameAction::PauseAfterDiscard => CardGroup::NestExchange,
