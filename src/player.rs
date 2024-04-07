@@ -17,7 +17,7 @@ pub struct Player {
     pub partner: Option<PlayerId>,
     pub active: bool, // alive in hand?
     pub hand: Vec<CardId>,
-    pub bid: Option<CardSuit>,
+    //pub bid: Option<CardSuit>,
     pub tricks: Vec<Trick>,
     pub points_this_hand: Points,
     pub score: Points,
@@ -31,7 +31,7 @@ impl Player {
             partner: None,
             active: true,
             hand: Vec::new(),
-            bid: None,
+            //bid: None,
             tricks: Vec::new(),
             points_this_hand: 0,
             score: 0,
@@ -43,7 +43,7 @@ impl Player {
         self.kind = None;
         self.active = true;
         self.hand.clear();
-        self.bid = None;
+        //self.bid = None;
         self.tricks.clear();
         self.points_this_hand = 0;
     }

@@ -66,7 +66,7 @@ pub struct Game {
     pub pass_count: u8,
     
     pub maker: Option<PlayerId>,
-    pub maker_bid: Option<CardSuit>,
+    pub trump_suit: Option<CardSuit>,
 
     pub trick: Trick,
     pub last_trick_winner: PlayerId,
@@ -115,7 +115,7 @@ impl Game {
 
             active_player: 0,
             pass_count: 0,
-            maker_bid: None,
+            trump_suit: None,
             maker: None,
             trick: Trick::new(player_count),
             last_trick_winner: 0,
@@ -257,43 +257,6 @@ impl Game {
         }
     }
 
-    // // Deals the given number of cards to each player.
-    // pub fn deal_cards(&mut self, count: u8) {
-    //     // Start with the player to the dealer's left.
-    //     let mut deal_to = (self.dealer + 1) % self.player_count;
-
-    //     for _ in 0..(count * self.player_count as u8) {
-    //         if let Some(id) = self.deck.pop() {
-    //             self.players[deal_to].add_to_hand(id);
-    //         }
-    //         deal_to = (deal_to + 1) % self.player_count;
-    //     }
-
-    //     // Sort human hands and turn cards face up.
-    //     for p in 0..self.player_count {
-    //         if !self.player_is_bot(p) {
-    //             self.sort_hand(p);
-
-    //             for id in &self.players[p].hand {
-    //                 if let Some(card) = self.cards.get_mut(*id) {
-    //                     card.face_up = true;
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // Remaining cards to nest
-    //     self.nest.append(&mut self.deck);
-
-    //     // Flip nest cards
-    //     for i in 0..self.options.nest_face_up {
-    //         let idx = self.nest.len() - 1 - i as usize;
-    //         if let Some(card) = self.cards.get_mut(self.nest[idx]) {
-    //             card.face_up = true;
-    //         }
-    //     }
-    // }
-
     pub fn sort_hand(&mut self, p: PlayerId) {
         // Get the cards for the hand.
         let mut sorted_cards = Vec::new();
@@ -309,28 +272,22 @@ impl Game {
         }
     }
 
-    pub fn set_select_state(&mut self, state: SelectState, ids: &[CardId]) {
-        for id in ids {
-            if let Some(card) = self.cards.get_mut(*id) {
-                card.select_state = state;
-            }
-        }
-    }
+    // pub fn set_select_state(&mut self, state: SelectState, ids: &[CardId]) {
+    //     for id in ids {
+    //         if let Some(card) = self.cards.get_mut(*id) {
+    //             card.select_state = state;
+    //         }
+    //     }
+    // }
 
     pub fn make_bid(&mut self, bid: Option<CardSuit>) {
-        self.active_player_mut().bid = bid;
         match bid {
             Some(suit) => {
                 self.maker = Some(self.active_player);
                 self.set_trump(suit);
-                self.maker_bid = bid;
                 if self.pass_count < self.player_count as u8 {
                     // Do card exchange.
                     self.next_action = Some(MoveNestToHand);
-                    // if self.send_messages {
-                    //     let msg = GameMessage::GetDiscard(self.clone());
-                    //     self.message_sender.send(msg).unwrap();
-                    // }
                 } else {
                     // Skip card exchange.
                     self.next_action = Some(PrepareForNewTrick);
@@ -340,7 +297,12 @@ impl Game {
                 self.pass_count += 1;
                 println!("pass count: {}", self.pass_count);
                 self.advance_active_player();
-                self.next_action = Some(WaitForBid);
+                if self.pass_count == self.player_count as u8 {
+                    self.pass_count = 0;
+                    self.next_action = Some(DealCard(self.active_player, Vec::new()));
+                } else {
+                    self.next_action = Some(WaitForBid);
+                }
             }
         }
     }
@@ -418,6 +380,7 @@ impl Game {
 
     /// Mark the cards matching trump.
     pub fn set_trump(&mut self, suit: CardSuit) {
+        self.trump_suit = Some(suit);
         for card in self.cards.values_mut() {
             if card.suit == suit || card.suit == CardSuit::Joker {
                 card.is_trump = true;
@@ -601,8 +564,6 @@ impl Game {
                     self.prepare_for_new_hand();
                 }
                 DealCard(p, _) => {
-                    //println!("DealCard: idx: {} count: {}", self.deal_pattern_idx, self.deal_count);
-
                     self.deal_card();
                     // Update the action with the new hand (after the card was dealt), since this
                     // will be sent to the Controller.
@@ -613,12 +574,14 @@ impl Game {
                     if self.deal_count == DEAL_PATTERN[self.deal_pattern_idx] {
                         self.deal_count = 0;
                         self.deal_pattern_idx += 1;
-                    }
-                    if self.deal_pattern_idx < DEAL_PATTERN.len() {
-                        let p = self.active_player;
-                        self.next_action = Some(DealCard(p, Vec::new()));
+                        self.next_action = Some(WaitForBid);
                     } else {
-                        self.next_action = Some(PresentNest);
+                        if self.deal_pattern_idx < DEAL_PATTERN.len() {
+                            let p = self.active_player;
+                            self.next_action = Some(DealCard(p, Vec::new()));
+                        } else {
+                            self.next_action = Some(PresentNest);
+                        }
                     }
                 }
                 DealCards => {
@@ -637,7 +600,10 @@ impl Game {
                             card.face_up = true;
                         }
                     }
-                    self.next_action = Some(WaitForBid);
+                    self.next_action = match &self.maker {
+                        Some(_) => Some(MoveNestToHand),
+                        None => Some(WaitForBid),
+                    };
                 }
                 WaitForBid => {
                     println!("game: WaitForBid");

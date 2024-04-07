@@ -118,6 +118,7 @@ impl Controller {
                             .update_active_player(self.game.active_player, self.game.player_count);
                         if self.game.active_player_is_bot() {
                             self.spawn_make_bid_bot();
+                            self.game_action_delay = 0.5;
                         } else {
                             self.view.get_bid(&self.game);
                         }
