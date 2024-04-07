@@ -24,7 +24,6 @@ pub enum GameAction {
     Setup,
     PrepareForNewHand,
     DealCard(PlayerId, Vec<CardId>),
-    DealCards,
     PresentNest, // one or more cards might be revealed
     //PreBid,      // player ui or bot launch
     WaitForBid,
@@ -42,7 +41,7 @@ pub enum GameAction {
     EndGame,
 }
 
-const DEAL_PATTERN: [u8; 5] = [20, 4, 4, 4, 4];
+const DEAL_PAUSES: [u8; 5] = [20, 24, 28, 32, 36];
 
 #[derive(Clone)]
 pub struct Game {
@@ -60,8 +59,9 @@ pub struct Game {
     pub dealer: PlayerId,
     pub active_player: PlayerId,
 
-    pub deal_pattern_idx: usize,
+    pub deal_pause_idx: usize,
     pub deal_count: u8,
+    pub dealing_completed: bool,
 
     pub pass_count: u8,
     
@@ -110,8 +110,9 @@ impl Game {
             players,
             dealer: 2,
 
-            deal_pattern_idx: 0,
+            deal_pause_idx: 0,
             deal_count: 0,
+            dealing_completed: false,
 
             active_player: 0,
             pass_count: 0,
@@ -285,18 +286,22 @@ impl Game {
             Some(suit) => {
                 self.maker = Some(self.active_player);
                 self.set_trump(suit);
-                if self.pass_count < self.player_count as u8 {
-                    // Do card exchange.
-                    self.next_action = Some(MoveNestToHand);
-                } else {
-                    // Skip card exchange.
-                    self.next_action = Some(PrepareForNewTrick);
-                }
             }
             None => {
                 self.pass_count += 1;
                 println!("pass count: {}", self.pass_count);
                 self.advance_active_player();
+            }
+        }
+        match &self.maker {
+            Some(_) => {
+                if self.dealing_completed {
+                    self.next_action = Some(MoveNestToHand);
+                } else {
+                    self.next_action = Some(DealCard(self.active_player, Vec::new()));
+                }
+            }
+            None => {
                 if self.pass_count == self.player_count as u8 {
                     self.pass_count = 0;
                     self.next_action = Some(DealCard(self.active_player, Vec::new()));
@@ -304,7 +309,7 @@ impl Game {
                     self.next_action = Some(WaitForBid);
                 }
             }
-        }
+        };
     }
 
     pub fn assign_makers_and_defenders(&mut self) {
@@ -563,36 +568,14 @@ impl Game {
                 PrepareForNewHand => {
                     self.prepare_for_new_hand();
                 }
-                DealCard(p, _) => {
-                    self.deal_card();
-                    // Update the action with the new hand (after the card was dealt), since this
-                    // will be sent to the Controller.
-                    action = DealCard(p, self.active_hand().clone());
-                    self.advance_active_player();
-                    self.deal_count += 1;
-
-                    if self.deal_count == DEAL_PATTERN[self.deal_pattern_idx] {
-                        self.deal_count = 0;
-                        self.deal_pattern_idx += 1;
-                        self.next_action = Some(WaitForBid);
-                    } else {
-                        if self.deal_pattern_idx < DEAL_PATTERN.len() {
-                            let p = self.active_player;
-                            self.next_action = Some(DealCard(p, Vec::new()));
-                        } else {
-                            self.next_action = Some(PresentNest);
-                        }
-                    }
-                }
-                DealCards => {
-                    // self.deal_cards(self.options.hand_size);
-                    // self.next_action = Some(PresentNest);
-                }
                 PresentNest => {
                     println!("game: PresentNest");
                     // Remaining cards to nest
-                    self.nest.append(&mut self.deck);
-
+                    for _ in 0..self.options.nest_size {
+                        if let Some(id) = self.deck.pop(){
+                            self.nest.push(id);
+                        }
+                    }
                     // Flip nest cards
                     for i in 0..self.options.nest_face_up {
                         let idx = self.nest.len() - 1 - i as usize;
@@ -600,10 +583,35 @@ impl Game {
                             card.face_up = true;
                         }
                     }
-                    self.next_action = match &self.maker {
-                        Some(_) => Some(MoveNestToHand),
-                        None => Some(WaitForBid),
-                    };
+                    self.next_action = Some(DealCard(self.active_player, Vec::new()));
+                }
+                DealCard(p, _) => {
+                    self.deal_card();
+                    self.deal_count += 1;
+
+                    // Update the action with the new hand (after the card was dealt), since this
+                    // will be sent to the Controller.
+                    action = DealCard(p, self.active_hand().clone());
+                    self.advance_active_player();                    
+
+                    // Have we reached a deal pause?
+                    if self.deal_count == DEAL_PAUSES[self.deal_pause_idx] {
+                        self.deal_pause_idx += 1;
+                        if self.deal_pause_idx == DEAL_PAUSES.len() {
+                            self.dealing_completed = true;
+                            if self.maker.is_some() {
+                                self.next_action = Some(MoveNestToHand);
+                            }
+                        } else {
+                            if self.maker.is_none() {
+                                self.next_action = Some(WaitForBid);
+                            } else {
+                                self.next_action = Some(DealCard(self.active_player, Vec::new()));
+                            }
+                        }
+                    } else {
+                        self.next_action = Some(DealCard(self.active_player, Vec::new()));
+                    }
                 }
                 WaitForBid => {
                     println!("game: WaitForBid");
@@ -661,8 +669,7 @@ impl Game {
     pub fn perform_player_action(&mut self, player_action: &PlayerAction) {
         match player_action {
             PlayerAction::DealCards => {
-                let p = self.active_player;
-                self.next_action = Some(DealCard(p, Vec::new()));
+                self.next_action = Some(PresentNest);
             }
             PlayerAction::MakeBid(bid) => self.make_bid(*bid),
             PlayerAction::MoveCardToNest(id) => {

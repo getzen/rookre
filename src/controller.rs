@@ -100,17 +100,12 @@ impl Controller {
                         self.view
                             .update_dealer(self.game.dealer, self.game.player_count);
                     }
+                    GameAction::PresentNest => {
+                        self.update_nest(&action);
+                    }
                     GameAction::DealCard(p, cards) => {
                         self.update_hand(*p, &cards);
-                        self.game_action_delay = 0.1;
-                    }
-                    GameAction::DealCards => {
-                        self.update_hands();
-                        self.update_nest(&action);
-                    }
-                    GameAction::PresentNest => {
-                        self.update_hands();
-                        self.update_nest(&action);
+                        self.game_action_delay = 0.2;
                     }
                     //GameAction::PreBid => {},
                     GameAction::WaitForBid => {
