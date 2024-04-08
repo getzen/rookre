@@ -1,7 +1,5 @@
 mod animators;
-//mod bid;
 mod bid_selector;
-// mod bid_view;
 mod bot;
 mod bot_monte;
 mod bot_random;

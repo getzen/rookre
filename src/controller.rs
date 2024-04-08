@@ -273,12 +273,6 @@ impl Controller {
         }
     }
 
-    // fn add_card_update_delay(&mut self, delay: f32) {
-    //     let mut update = CardUpdate::default();
-    //     update.delay = delay;
-    //     self.card_updates.push_back(update);
-    // }
-
     // Turn the bot loose on the world.
     fn spawn_make_bid_bot(&self) {
         if !self.game.active_player_is_bot() {
