@@ -18,8 +18,8 @@ use crate::{
     image_button::ImageButton,
     player::PlayerId,
     texture_loader::CARD_TEX_SCALE,
-    view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE},
-    view_trait::ViewTrait,
+    view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER},
+    view_trait::ViewTrait, TEXTURES,
 };
 
 // Colors
@@ -38,6 +38,7 @@ pub struct View {
     pub bid_selector: BidSelector,
     discard_panel: DiscardPanel,
     card_outlines: Vec<Image>,
+    trump_marker: Image,
 
     fps_update: f32,
 }
@@ -56,6 +57,7 @@ impl View {
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
         let discard_panel = View::create_discard_panel(gfx, sender.clone());
         let card_outlines = View::create_card_outlines(gfx, game);
+        let trump_marker = View::create_trump_marker(gfx);
 
         Self {
             card_views,
@@ -67,6 +69,7 @@ impl View {
             bid_selector,
             discard_panel,
             card_outlines,
+            trump_marker,
             fps_update: 0.0,
         }
     }
@@ -172,6 +175,17 @@ impl View {
         outlines
     }
 
+    fn create_trump_marker(gfx: &mut Graphics) -> Image {
+        let tex = gfx
+            .create_texture()
+            .from_image(include_bytes!("assets/club.png"))
+            .build()
+            .unwrap();
+        let mut marker = Image::new(tex, VIEW_CENTER);
+        marker.visible = false;
+        marker
+    }
+
     pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>, time_delta: f32) {
         // Loop until a card needs updating or there are no updates left then break.
         // This bypasses needless card updates.
@@ -237,6 +251,22 @@ impl View {
         } else {
             self.bid_selector.visible = true;
             println!("bid_selector visible");
+        }
+    }
+
+    pub fn set_trump(&mut self, suit: Option<CardSuit>) {
+        if let Some(suit) = suit {
+            let tex_string = match suit {
+                CardSuit::Club => "club".to_string(),
+                CardSuit::Diamond => "diamond".to_string(),
+                CardSuit::Heart => "heart".to_string(),
+                CardSuit::Spade => "spade".to_string(),
+                CardSuit::Joker => panic!(),
+            };
+            if let Some(tex) = TEXTURES.lock().unwrap().get(&tex_string) {
+                self.trump_marker.texture = tex.clone();
+            }
+            self.trump_marker.visible = true;
         }
     }
 
@@ -338,6 +368,7 @@ impl ViewTrait for View {
         // Images
         self.active_player_marker.draw(draw, parent_affine);
         self.dealer_marker.draw(draw, parent_affine);
+        self.trump_marker.draw(draw, parent_affine);
         for outline in &mut self.card_outlines {
             outline.draw(draw, parent_affine);
         }

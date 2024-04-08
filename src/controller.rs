@@ -166,7 +166,8 @@ impl Controller {
                 PlayerAction::DealCards => {
                     self.view.deal_button.visible = false;
                 }
-                PlayerAction::MakeBid(..) => {
+                PlayerAction::MakeBid(opt_suit) => {
+                    self.view.set_trump(opt_suit);
                     self.view.bid_selector.visible = false;
                 }
                 PlayerAction::PlayCard(_, _) => todo!(),

@@ -30,11 +30,17 @@ use notan::{
     draw::{CreateFont, Font},
     prelude::*,
 };
+use once_cell::sync::Lazy;
 
 // Globals
-use std::sync::Mutex;
+use std::{collections::HashMap, sync::Mutex};
 static PIXEL_RATIO: Mutex<f32> = Mutex::new(0.0);
 static FONT: Mutex<Option<notan::draw::Font>> = Mutex::new(None);
+
+// Use once_cell to init textures HashMap.
+static TEXTURES: Lazy<Mutex<HashMap<String, Texture>>> = Lazy::new(|| {
+    Mutex::new(HashMap::new())
+});
 
 #[notan_main]
 fn main() -> Result<(), String> {
@@ -61,6 +67,17 @@ fn main() -> Result<(), String> {
         .build()
 }
 
+fn load_textures(gfx: &mut Graphics) {
+    let tex = gfx.create_texture().from_image(include_bytes!("assets/club.png")).build().unwrap();
+    TEXTURES.lock().unwrap().insert("club".to_string(), tex);
+    let tex = gfx.create_texture().from_image(include_bytes!("assets/diamond.png")).build().unwrap();
+    TEXTURES.lock().unwrap().insert("diamond".to_string(), tex);
+    let tex = gfx.create_texture().from_image(include_bytes!("assets/heart.png")).build().unwrap();
+    TEXTURES.lock().unwrap().insert("heart".to_string(), tex);
+    let tex = gfx.create_texture().from_image(include_bytes!("assets/spade.png")).build().unwrap();
+    TEXTURES.lock().unwrap().insert("spade".to_string(), tex);
+}
+
 fn setup(gfx: &mut Graphics) -> Controller {
     // This isn't really dots per inch. It's actually physical pixels per logical pixel.
     *PIXEL_RATIO.lock().unwrap() = gfx.dpi() as f32;
@@ -69,6 +86,8 @@ fn setup(gfx: &mut Graphics) -> Controller {
         .create_font(include_bytes!("assets/Futura.ttc"))
         .unwrap();
     *FONT.lock().unwrap() = Some(font as Font);
+
+    load_textures(gfx);
 
     Controller::new(gfx)
 }
