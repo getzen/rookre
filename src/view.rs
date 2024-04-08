@@ -47,6 +47,7 @@ impl View {
         gfx: &mut Graphics,
         cards: &SlotMap<CardId, Card>,
         sender: Sender<PlayerAction>,
+        game: &Game,
     ) -> Self {
         let card_views = View::create_card_views(cards, gfx, sender.clone());
         let active_player_marker = View::create_active_player_marker(gfx);
@@ -54,7 +55,7 @@ impl View {
         let deal_button = View::create_deal_button(gfx, sender.clone());
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
         let discard_panel = View::create_discard_panel(gfx, sender.clone());
-        let card_outlines = View::create_card_outlines(gfx);
+        let card_outlines = View::create_card_outlines(gfx, game);
 
         Self {
             card_views,
@@ -148,16 +149,27 @@ impl View {
         DiscardPanel::new(gfx, sender)
     }
 
-    fn create_card_outlines(gfx: &mut Graphics) -> Vec<Image> {
-        let tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/cards/outline.png"))
-            .build()
-            .unwrap();
-        let mut image = Image::new(tex, Vec2::ZERO);
-        image.transform.set_size(CARD_SIZE);
-        image.visible = false;
-        vec![image.clone(), image]
+    fn create_card_outlines(gfx: &mut Graphics, game: &Game) -> Vec<Image> {
+        let mut outlines = Vec::new();
+        for idx in 0..2 {
+            let tex = gfx
+                .create_texture()
+                .from_image(include_bytes!("assets/cards/outline.png"))
+                .build()
+                .unwrap();
+            let mut image = Image::new(tex, Vec2::ZERO);
+            image.transform.set_size(CARD_SIZE);
+            let update = CardUpdate {
+                group: CardGroup::NestExchange,
+                group_len: game.options.nest_size as usize,
+                group_index: idx,
+                ..Default::default()
+            };
+            image.transform.set_translation(update.translation());
+            image.visible = false;
+            outlines.push(image);
+        }
+        outlines
     }
 
     pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>, time_delta: f32) {
@@ -246,15 +258,7 @@ impl View {
             }
         }
 
-        // Position and show card outlines.
-        for (idx, outline) in self.card_outlines.iter_mut().enumerate() {
-            let update = CardUpdate {
-                group: CardGroup::NestExchange,
-                group_len: game.options.nest_size as usize,
-                group_index: idx,
-                ..Default::default()
-            };
-            outline.transform.set_translation(update.translation());
+        for outline in &mut self.card_outlines {
             outline.visible = true;
         }
     }

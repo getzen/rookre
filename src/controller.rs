@@ -50,7 +50,7 @@ impl Controller {
         // let elapsed = now.elapsed().as_micros();
         // println!("game clone: {elapsed} micros");
 
-        let view = View::new(gfx, &game.cards, player_action_sender.clone());
+        let view = View::new(gfx, &game.cards, player_action_sender.clone(), &game);
 
         let (audio_message_sender, audio_message_receiver) = mpsc::channel();
         *AUDIO_SENDER.lock().unwrap() = Some(audio_message_sender);

@@ -19,7 +19,6 @@ mod player;
 // mod suit_button;
 mod transform;
 mod trick;
-// mod trump_chooser_view;
 // mod trump_view;
 mod texture_loader;
 mod view;
