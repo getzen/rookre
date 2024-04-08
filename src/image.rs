@@ -8,6 +8,7 @@ use notan::{
 
 use crate::{texture_loader::TEX_SCALE, transform::Transform, view_trait::ViewTrait};
 
+#[derive(Clone)]
 pub struct Image {
     pub visible: bool,
     pub z_order: usize,

@@ -28,6 +28,7 @@ pub enum GameAction {
     WaitForBid, // player ui or bot launch
     MoveNestToHand,
     WaitForDiscards, // player ui or bot launch
+    MoveCardToDiscard(CardId),
     PauseAfterDiscard,
     EndNestExchange,
     PrepareForNewTrick,
@@ -61,7 +62,7 @@ pub struct Game {
     pub dealing_completed: bool,
 
     pub pass_count: u8,
-    
+
     pub maker: Option<PlayerId>,
     pub trump_suit: Option<CardSuit>,
 
@@ -186,7 +187,7 @@ impl Game {
                 }
             }
         }
-        
+
         // Add Jokers. In this game the rank and value of the two Jokers depend on
         // which one is played first, so we'll set the values for the first-played
         // and then change the second Joker after the first is played.
@@ -251,7 +252,6 @@ impl Game {
                 }
                 self.sort_hand(p);
             }
-           
         }
     }
 
@@ -468,7 +468,7 @@ impl Game {
     }
 
     fn award_nest(&mut self) {
-        let pts =  self.nest_points() + self.options.nest_points_bonus;
+        let pts = self.nest_points() + self.options.nest_points_bonus;
         for (id, player) in self.players.iter_mut().enumerate() {
             if id == self.last_trick_winner {
                 player.points_this_hand += pts;
@@ -523,7 +523,6 @@ impl Game {
         (makers_score, defenders_score)
     }
 
-    
     fn mark_select_state(&mut self, card_ids: &[CardId], state: SelectState) {
         for id in card_ids {
             if let Some(card) = self.cards.get_mut(*id) {
@@ -547,10 +546,11 @@ impl Game {
                         self.next_action = Some(MoveNestToHand);
                     }
                 } else if self.maker.is_none() {
-                        self.next_action = Some(WaitForBid);
+                    self.next_action = Some(WaitForBid);
                 }
             }
-        } else { // bidding
+        } else {
+            // bidding
             match &self.maker {
                 Some(_) => {
                     if self.dealing_completed {
@@ -584,7 +584,7 @@ impl Game {
                     println!("game: DealToNest");
                     // Remaining cards to nest
                     for _ in 0..self.options.nest_size {
-                        if let Some(id) = self.deck.pop(){
+                        if let Some(id) = self.deck.pop() {
                             self.nest.push(id);
                         }
                     }
@@ -604,7 +604,7 @@ impl Game {
                     // Update the action with the new hand (after the card was dealt), since this
                     // will be sent to the Controller.
                     action = DealCard(self.active_player, self.active_hand().clone());
-                    self.advance_active_player();                    
+                    self.advance_active_player();
                     self.set_deal_or_bid_action(true);
                 }
                 WaitForBid => {
@@ -621,6 +621,12 @@ impl Game {
                         if let Some(card) = self.cards.get_mut(id) {
                             card.select_state = SelectState::Selectable
                         }
+                    }
+                }
+                MoveCardToDiscard(id) => {
+                    self.discard_to_nest(&vec![id]);
+                    if self.nest.len() == self.options.nest_size as usize {
+                        self.next_action = Some(PauseAfterDiscard);
                     }
                 }
                 PauseAfterDiscard => {
@@ -670,8 +676,7 @@ impl Game {
             }
             PlayerAction::MoveCardToNest(id) => {
                 println!("MoveCardToNest");
-                self.discard_to_nest(&vec![*id]);
-                self.next_action = Some(PauseAfterDiscard);
+                self.next_action = Some(MoveCardToDiscard(*id));
             }
             PlayerAction::TakeCardFromNest(id) => {
                 println!("TakeCardFroNest");

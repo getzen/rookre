@@ -19,7 +19,6 @@ pub struct DiscardPanel {
     pub transform: Transform,
     pub z_order: usize,
     pub texture: Texture,
-
     //pub done_button: ImageButton<PlayerAction>,
 }
 

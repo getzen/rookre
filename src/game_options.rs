@@ -12,7 +12,6 @@ pub enum PartnerKind {
     Called,
 }
 
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PointsAwarded {
     // assign separately to Makers and Defenders
@@ -21,7 +20,7 @@ pub enum PointsAwarded {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct GameOptions {   
+pub struct GameOptions {
     pub hand_size: u8,
     /// This might be smaller than the number of cards left after dealing.
     /// If so, it becomes the effective exhange limit. Any remaining cards in

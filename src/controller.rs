@@ -91,7 +91,6 @@ impl Controller {
         self.game_action_delay -= time_delta;
         self.game_action_delay = self.game_action_delay.max(0.0);
         if self.game_action_delay == 0.0 {
-
             if let Some(action) = &self.game.actions_taken.pop_front() {
                 match action {
                     GameAction::Setup => {}
@@ -129,13 +128,17 @@ impl Controller {
                             self.view.get_discard(&self.game);
                         }
                     }
+                    GameAction::MoveCardToDiscard(..) => {
+                        self.update_hands();
+                        self.update_nest(&action);
+                    }
                     GameAction::PauseAfterDiscard => {
                         self.update_hands();
                         self.update_nest(&action);
                         self.view.end_discard();
                         self.game_action_delay = 1.5;
                     }
-                    GameAction::EndNestExchange => { 
+                    GameAction::EndNestExchange => {
                         self.update_nest(&action);
                     }
                     GameAction::PrepareForNewTrick => {
@@ -250,6 +253,7 @@ impl Controller {
             | GameAction::WaitForBid
             | GameAction::MoveNestToHand
             | GameAction::WaitForDiscards
+            | GameAction::MoveCardToDiscard(..)
             | GameAction::PauseAfterDiscard => CardGroup::NestExchange,
             _ => CardGroup::NestAside,
         };
