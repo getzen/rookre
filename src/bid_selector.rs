@@ -8,7 +8,6 @@ use notan::prelude::*;
 
 use crate::card::CardSuit;
 use crate::game::PlayerAction;
-use crate::image_button::ButtonState;
 use crate::image_button::ImageButton;
 use crate::texture_loader::ViewFn;
 use crate::transform::Transform;

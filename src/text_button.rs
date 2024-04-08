@@ -34,7 +34,6 @@ impl ButtonState {
 pub struct TextButton<T> {
     pub visible: bool,
     pub transform: Transform,
-    //size: Vec2,
     pub state: ButtonState,
     pub stroke_color: Color,
     pub stroke_width: f32,

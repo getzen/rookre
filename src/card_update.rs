@@ -62,21 +62,7 @@ impl CardUpdate {
                 pt
             }
             CardGroup::NestExchange => {
-                // The idea here is to make the last card in the group be placed
-                // an "extra" space to the right so that it stands alone.
-                // let len = self.group_len + 1; // Increase the group_len by one to accomodate.
-                // let mut index = self.group_index;
-                // if index == self.group_len - 1 { // If the index is the last, increase it by 1.
-                //     index += 1;
-                // }
-                // let x_spacing = CARD_SIZE.x / 2.0;
-                // let mut pt = VIEW_CENTER;
-                // pt.x -= (len - 1) as f32 * x_spacing / 2.0;
-                // pt.x += index as f32 * x_spacing;
-                // pt
-
-                // This is the standard spread algorithm.
-                let x_spacing = CARD_SIZE.x / 1.0;
+                let x_spacing = CARD_SIZE.x / 0.8;
                 let mut pt = VIEW_CENTER;
                 pt.x -= (self.group_len - 1) as f32 * x_spacing / 2.0;
                 pt.x += self.group_index as f32 * x_spacing;

@@ -53,15 +53,15 @@ impl Card {
         }
     }
 
-    pub fn suit_for_char(c: &char) -> CardSuit {
-        match c {
-            'c' => CardSuit::Club,
-            'd' => CardSuit::Diamond,
-            'h' => CardSuit::Heart,
-            's' => CardSuit::Spade,
-            _ => panic!(),
-        }
-    }
+    // pub fn suit_for_char(c: &char) -> CardSuit {
+    //     match c {
+    //         'c' => CardSuit::Club,
+    //         'd' => CardSuit::Diamond,
+    //         'h' => CardSuit::Heart,
+    //         's' => CardSuit::Spade,
+    //         _ => panic!(),
+    //     }
+    // }
 
     /// Used by PartialOrd to determine sort order.
     pub fn sort_order(&self) -> usize {

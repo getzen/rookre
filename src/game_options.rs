@@ -2,8 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
 
-use crate::card::{CardSuit, FaceRank, GameRank, Points};
-use crate::player::PlayerId;
+use crate::card::Points;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PartnerKind {

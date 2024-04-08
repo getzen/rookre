@@ -13,7 +13,6 @@ use crate::{
     animators::{AngleAnimator, TranslationAnimator},
     card::{Card, SelectState},
     card_update::CardUpdate,
-    game::PlayerAction,
     texture_loader::{ViewFn, CARD_TEX_SCALE},
     transform::Transform,
     view_geom::{CARD_SIZE, CARD_SIZE_HOVER},
