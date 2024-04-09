@@ -91,16 +91,16 @@ impl BidSelector {
         for (idx, suit) in suits.iter().enumerate() {
             let tex_enabled = ViewFn::load_suit_texture(gfx, suit);
             let tex_mouse_over = Some(ViewFn::load_suit_mouse_over_texture(gfx, suit));
-            let tex_disabled = Some(ViewFn::load_suit_disabled_texture(gfx, suit));
             let pos = vec2(32. + 50. * idx as f32, 53.);
             let mut button = ImageButton::new(
                 pos,
                 tex_enabled,
                 tex_mouse_over,
-                tex_disabled,
+                None,
                 String::new(),
                 Some(sender.clone()),
             );
+            button.transform.set_size(vec2(44.0, 44.0));
             button.mouse_up_message = Some(PlayerAction::MakeBid(Some(*suit)));
             buttons.push(button);
         }

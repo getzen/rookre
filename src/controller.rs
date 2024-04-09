@@ -104,7 +104,7 @@ impl Controller {
                     }
                     GameAction::DealCard(p, cards) => {
                         self.update_hand(*p, &cards);
-                        self.game_action_delay = 0.2;
+                        self.game_action_delay = 0.1;
                     }
                     //GameAction::PreBid => {},
                     GameAction::WaitForBid => {

@@ -19,7 +19,8 @@ use crate::{
     player::PlayerId,
     texture_loader::CARD_TEX_SCALE,
     view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER},
-    view_trait::ViewTrait, TEXTURES,
+    view_trait::ViewTrait,
+    TEXTURES,
 };
 
 // Colors
@@ -182,6 +183,7 @@ impl View {
             .build()
             .unwrap();
         let mut marker = Image::new(tex, VIEW_CENTER);
+        marker.transform.set_size(vec2(80.0, 80.0));
         marker.visible = false;
         marker
     }
@@ -361,16 +363,16 @@ impl ViewTrait for View {
     fn draw(&mut self, draw: &mut notan::draw::Draw, parent_affine: &Affine2) {
         //let now = std::time::Instant::now();
 
-        for card_view in &mut self.card_views {
-            card_view.draw(draw, parent_affine);
-        }
-
         // Images
         self.active_player_marker.draw(draw, parent_affine);
         self.dealer_marker.draw(draw, parent_affine);
         self.trump_marker.draw(draw, parent_affine);
         for outline in &mut self.card_outlines {
             outline.draw(draw, parent_affine);
+        }
+
+        for card_view in &mut self.card_views {
+            card_view.draw(draw, parent_affine);
         }
 
         // Buttons and panels
