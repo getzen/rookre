@@ -56,7 +56,7 @@ impl View {
         let dealer_marker = View::create_dealer_marker(gfx);
         let deal_button = View::create_deal_button(gfx, sender.clone());
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
-        let discard_panel = View::create_discard_panel(gfx, sender.clone());
+        let discard_panel = DiscardPanel::new(gfx);
         let card_outlines = View::create_card_outlines(gfx, game);
         let trump_marker = View::create_trump_marker(gfx);
 
@@ -147,10 +147,6 @@ impl View {
             CardSuit::Spade,
         ];
         BidSelector::new(suits, gfx, sender)
-    }
-
-    fn create_discard_panel(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> DiscardPanel {
-        DiscardPanel::new(gfx, sender)
     }
 
     fn create_card_outlines(gfx: &mut Graphics, game: &Game) -> Vec<Image> {

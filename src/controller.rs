@@ -93,7 +93,9 @@ impl Controller {
         if self.game_action_delay == 0.0 {
             if let Some(action) = &self.game.actions_taken.pop_front() {
                 match action {
-                    GameAction::Setup => {}
+                    GameAction::Setup => {
+                        self.game_action_delay = 0.5;
+                    }
                     GameAction::PrepareForNewHand => {
                         self.update_deck();
                         self.view
@@ -135,10 +137,10 @@ impl Controller {
                     GameAction::PauseAfterDiscard => {
                         self.update_hands();
                         self.update_nest(&action);
-                        self.view.end_discard();
                         self.game_action_delay = 1.5;
                     }
                     GameAction::EndNestExchange => {
+                        self.view.end_discard();
                         self.update_nest(&action);
                     }
                     GameAction::PrepareForNewTrick => {

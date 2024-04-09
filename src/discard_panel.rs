@@ -19,11 +19,10 @@ pub struct DiscardPanel {
     pub transform: Transform,
     pub z_order: usize,
     pub texture: Texture,
-    //pub done_button: ImageButton<PlayerAction>,
 }
 
 impl DiscardPanel {
-    pub fn new(gfx: &mut Graphics, sender: Sender<PlayerAction>) -> Self {
+    pub fn new(gfx: &mut Graphics) -> Self {
         let texture = gfx
             .create_texture()
             .from_image(include_bytes!("assets/discard.png"))
@@ -37,51 +36,12 @@ impl DiscardPanel {
             true,
         );
 
-        //let done_button = DiscardPanel::create_done_button(gfx, sender.clone());
-
         Self {
             visible: false,
             transform: trans,
             z_order: 0,
             texture,
-            //done_button,
         }
-    }
-
-    fn create_done_button(
-        gfx: &mut Graphics,
-        sender: Sender<PlayerAction>,
-    ) -> ImageButton<PlayerAction> {
-        let enabled = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/done_enabled.png"))
-            .build()
-            .unwrap();
-
-        let mouse_over = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/done_mouse_over.png"))
-            .build()
-            .unwrap();
-
-        let disabled = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/done_disabled.png"))
-            .build()
-            .unwrap();
-
-        let pos = vec2(184., 30.);
-        let mut button = ImageButton::new(
-            pos,
-            enabled,
-            Some(mouse_over),
-            Some(disabled),
-            String::new(),
-            Some(sender),
-        );
-        button.mouse_up_message = Some(PlayerAction::EndNestExchange);
-        button.state = ButtonState::Disabled;
-        button
     }
 }
 
