@@ -68,7 +68,7 @@ fn main() -> Result<(), String> {
         .build()
 }
 
-fn setup(gfx: &mut Graphics) -> Controller {
+fn setup(assets: &mut Assets, gfx: &mut Graphics) -> Controller {
     *PIXEL_RATIO.lock().unwrap() = gfx.dpi() as f32;
 
     let font = gfx
@@ -76,7 +76,7 @@ fn setup(gfx: &mut Graphics) -> Controller {
         .unwrap();
     *FONT.lock().unwrap() = Some(font as Font);
 
-    load_textures(gfx);
+    load_textures(assets, gfx);
 
     Controller::new(gfx)
 }
@@ -93,7 +93,25 @@ fn draw(gfx: &mut Graphics, controller: &mut Controller) {
     controller.draw(gfx);
 }
 
-fn load_textures(gfx: &mut Graphics) {
+fn asset_path(path: &str) -> String {
+    let base = if cfg!(target_arch = "wasm32") { // browsers
+        "./assets"
+    } else {
+        "./src/assets" // development: debug & release
+    };
+    format!("{base}/{path}")
+}
+
+fn load_textures(assets: &mut Assets, gfx: &mut Graphics) {
+    // TESTING START --------------------
+    let path = std::env::current_dir().expect("whoops");
+    println!("The current directory is {}", path.display());
+
+    let path = asset_path("1x1.png");
+    let tex: Asset<Texture> = assets.load_asset(&path).unwrap();    
+    println!("tex.is_loaded: {}", tex.is_loaded());
+    // TESTING END ---------------------
+
     let tex = gfx
         .create_texture()
         .from_image(include_bytes!("assets/club.png"))
