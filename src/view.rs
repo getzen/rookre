@@ -38,8 +38,9 @@ pub struct View {
     pub deal_button: ImageButton<PlayerAction>,
     pub bid_selector: BidSelector,
     discard_panel: DiscardPanel,
-    card_outlines: Vec<Image>,
+    discard_outlines: Vec<Image>,
     trump_marker: Image,
+    play_outline: Image,
 
     fps_update: f32,
 }
@@ -57,8 +58,9 @@ impl View {
         let deal_button = View::create_deal_button(gfx, sender.clone());
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
         let discard_panel = DiscardPanel::new(gfx);
-        let card_outlines = View::create_card_outlines(gfx, game);
+        let discard_outlines = View::create_discard_outlines(gfx, game);
         let trump_marker = View::create_trump_marker(gfx);
+        let play_outline = View::create_play_outline(gfx);
 
         Self {
             card_views,
@@ -69,8 +71,9 @@ impl View {
             deal_button,
             bid_selector,
             discard_panel,
-            card_outlines,
+            discard_outlines,
             trump_marker,
+            play_outline,
             fps_update: 0.0,
         }
     }
@@ -149,7 +152,7 @@ impl View {
         BidSelector::new(suits, gfx, sender)
     }
 
-    fn create_card_outlines(gfx: &mut Graphics, game: &Game) -> Vec<Image> {
+    fn create_discard_outlines(gfx: &mut Graphics, game: &Game) -> Vec<Image> {
         let mut outlines = Vec::new();
         for idx in 0..2 {
             let tex = gfx
@@ -172,6 +175,18 @@ impl View {
         outlines
     }
 
+    fn create_play_outline(gfx: &mut Graphics) -> Image {
+        let tex = gfx
+            .create_texture()
+            .from_image(include_bytes!("assets/cards/outline.png"))
+            .build()
+            .unwrap();
+        let mut image = Image::new(tex, Vec2::ZERO);
+        image.transform.set_size(CARD_SIZE);
+        image.visible = true;
+        image
+    }
+
     fn create_trump_marker(gfx: &mut Graphics) -> Image {
         let tex = gfx
             .create_texture()
@@ -179,7 +194,7 @@ impl View {
             .build()
             .unwrap();
         let mut marker = Image::new(tex, VIEW_CENTER);
-        marker.transform.set_size(vec2(80.0, 80.0));
+        marker.transform.set_size(vec2(70.0, 70.0));
         marker.visible = false;
         marker
     }
@@ -286,16 +301,43 @@ impl View {
             }
         }
 
-        for outline in &mut self.card_outlines {
+        for outline in &mut self.discard_outlines {
             outline.visible = true;
         }
     }
 
     pub fn end_discard(&mut self) {
         self.discard_panel.visible = false;
-        for outline in &mut self.card_outlines {
+        for outline in &mut self.discard_outlines {
             outline.visible = false;
         }
+    }
+
+    pub fn get_card_play(&mut self, p: PlayerId, game: &Game) {
+        let update = CardUpdate {
+            group: CardGroup::TrickActive,
+            player_len: game.player_count,
+            player: p,
+            ..Default::default()
+        };
+        self.play_outline.transform.set_translation(update.translation());
+        self.play_outline.visible = true;
+
+        // Set message for eligible cards.
+        let p = game.active_player;
+        for id in game.active_hand() {
+            if let Some(card) = game.cards.get(*id) {
+                let card_view = self.card_views.iter_mut().find(|s| s.id == *id).unwrap();
+                card_view.mouse_up_message = match card.select_state {
+                    SelectState::Selectable => Some(PlayerAction::PlayCard(p, *id)),
+                    _ => None,
+                }
+            }
+        }
+    }
+
+    pub fn end_card_play(&mut self) {
+        self.play_outline.visible = false;
     }
 }
 
@@ -363,9 +405,10 @@ impl ViewTrait for View {
         self.active_player_marker.draw(draw, parent_affine);
         self.dealer_marker.draw(draw, parent_affine);
         self.trump_marker.draw(draw, parent_affine);
-        for outline in &mut self.card_outlines {
+        for outline in &mut self.discard_outlines {
             outline.draw(draw, parent_affine);
         }
+        self.play_outline.draw(draw, parent_affine);
 
         for card_view in &mut self.card_views {
             card_view.draw(draw, parent_affine);

@@ -47,7 +47,7 @@ static TEXTURES: Lazy<Mutex<HashMap<String, Texture>>> = Lazy::new(|| Mutex::new
 fn main() -> Result<(), String> {
     // Check the documentation for more options
     let window_config = WindowConfig::default()
-        .set_title("Rookre")
+        .set_title("Hundred Fifty")
         .set_position(10, 10)
         .set_size(800, 800)
         .set_vsync(true) // enable vsync
@@ -109,7 +109,7 @@ fn load_textures(assets: &mut Assets, gfx: &mut Graphics) {
 
     let path = asset_path("1x1.png");
     let tex: Asset<Texture> = assets.load_asset(&path).unwrap();    
-    println!("tex.is_loaded: {}", tex.is_loaded());
+    //println!("tex.is_loaded: {}", tex.is_loaded());
     // TESTING END ---------------------
 
     let tex = gfx

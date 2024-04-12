@@ -61,7 +61,8 @@ impl Trick {
         true
     }
 
-    pub fn add_card(&mut self, p_id: PlayerId, card: &Card) {
+    pub fn add_card(&mut self, p_id: PlayerId, card: &mut Card) {
+        card.face_up = true;
         if self.is_empty {
             self.lead_card = Some(card.clone());
             // First card played will win the trick unless another card takes the lead.

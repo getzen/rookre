@@ -33,7 +33,7 @@ pub enum GameAction {
     EndNestExchange,
     PrepareForNewTrick,
     PrePlayCard,
-    WaitForPlayCard, // player ui or bot launch
+    WaitForPlayCard(PlayerId), // player ui or bot launch
     AwardTrick(PlayerId),
     EndHand,
     EndGame,
@@ -427,10 +427,16 @@ impl Game {
     }
 
     pub fn play_card_id(&mut self, id: &CardId) {
+         // Turn off selectability for all cards in hand.
+         for id in self.active_hand().clone() {
+            if let Some(card) = self.cards.get_mut(id) {
+                card.select_state = SelectState::Unselectable;
+            }
+        }
+
         self.active_player_mut().remove_from_hand(id);
-        let card = self.cards.get(*id).unwrap();
+        let card = self.cards.get_mut(*id).unwrap();
         self.trick.add_card(self.active_player, card);
-        self.advance_active_player();
     }
 
     pub fn trick_completed(&self) -> bool {
@@ -640,12 +646,17 @@ impl Game {
 
                 PrepareForNewTrick => {
                     self.prepare_for_new_trick();
-                    self.next_action = Some(WaitForPlayCard);
+                    self.next_action = Some(PrePlayCard);
                 }
                 PrePlayCard => {
-                    //self.action_queue.push_back(WaitForPlayCard);
+                    self.next_action = Some(WaitForPlayCard(self.active_player));
                 }
-                WaitForPlayCard => {
+                WaitForPlayCard(..) => {
+                    for id in self.get_playable_card_ids() {
+                        if let Some(card) = self.cards.get_mut(id) {
+                            card.select_state = SelectState::Selectable
+                        }
+                    }
                     println!("game: WaitForPlayCard");
                 }
                 AwardTrick(_) => {
@@ -692,6 +703,7 @@ impl Game {
                     let winner = self.trick.winner.unwrap();
                     self.next_action = Some(AwardTrick(winner));
                 } else {
+                    self.advance_active_player();
                     self.next_action = Some(PrePlayCard);
                 }
             }

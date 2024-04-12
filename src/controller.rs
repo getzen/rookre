@@ -7,7 +7,7 @@ use notan::math::Vec2;
 use notan::prelude::*;
 
 use crate::bot::BotMgr;
-use crate::card::CardId;
+use crate::card::{CardId, SelectState};
 use crate::card_update::{CardGroup, CardUpdate};
 use crate::game::{Game, GameAction, PlayerAction};
 use crate::player::PlayerId;
@@ -146,8 +146,12 @@ impl Controller {
                     GameAction::PrepareForNewTrick => {
                         self.update_hands();
                     }
-                    GameAction::PrePlayCard => todo!(),
-                    GameAction::WaitForPlayCard => {
+                    GameAction::PrePlayCard => {
+                        self.update_hands();
+                        self.update_active_trick();
+                    },
+                    GameAction::WaitForPlayCard(p) => {
+                        self.view.get_card_play(*p, &self.game);
                         self.update_hands();
                     }
                     GameAction::AwardTrick(_) => todo!(),
@@ -172,7 +176,9 @@ impl Controller {
                     self.view.set_trump(opt_suit);
                     self.view.bid_selector.visible = false;
                 }
-                PlayerAction::PlayCard(_, _) => todo!(),
+                PlayerAction::PlayCard(_, _) => {
+                    self.view.end_card_play();
+                },
                 PlayerAction::MoveCardToNest(_) => {}
                 PlayerAction::TakeCardFromNest(_) => todo!(),
                 PlayerAction::EndNestExchange => todo!(),
@@ -273,6 +279,24 @@ impl Controller {
                 update.select_state = card.select_state;
             }
             self.card_updates.push_back(update.clone());
+        }
+    }
+
+    fn update_active_trick(&mut self) {
+        let mut update = CardUpdate {
+            group: CardGroup::TrickActive,
+            player_len: self.game.player_count,
+            ..Default::default()
+        };
+        for (p, opt_id) in self.game.trick.card_ids.iter().enumerate() {
+            if let Some(id) = opt_id {
+                update.id = *id;
+                update.player = p;
+                if let Some(card) = self.game.cards.get(*id) {
+                    update.face_up = card.face_up;
+                }
+                self.card_updates.push_back(update.clone());
+            }
         }
     }
 
