@@ -11,6 +11,7 @@ mod discard_panel;
 mod game;
 mod game_options;
 mod image;
+mod image2;
 mod image_button;
 mod text_button;
 // mod message_view;
@@ -33,7 +34,7 @@ use notan::{
 use once_cell::sync::Lazy;
 
 // Globals
-use std::{collections::HashMap, sync::Mutex};
+use std::{collections::HashMap, sync::Mutex, time};
 
 /// This isn't really dots per inch. It's actually physical pixels per logical pixel.
 static PIXEL_RATIO: Mutex<f32> = Mutex::new(0.0);
@@ -41,6 +42,7 @@ static PIXEL_RATIO: Mutex<f32> = Mutex::new(0.0);
 static FONT: Mutex<Option<notan::draw::Font>> = Mutex::new(None);
 
 // Use once_cell to init textures HashMap.
+static ASSET_TEXTURES: Lazy<Mutex<HashMap<String, Asset<Texture>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 static TEXTURES: Lazy<Mutex<HashMap<String, Texture>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[notan_main]
@@ -86,6 +88,21 @@ fn event(controller: &mut Controller, event: Event) {
 }
 
 fn update(app: &mut App, controller: &mut Controller) {
+    let mut asset_binding = ASSET_TEXTURES.lock().unwrap();
+    let ids: Vec<String> = asset_binding.keys().cloned().collect();
+
+    for id in &ids {
+        if let Some(item) = asset_binding.get(id) {
+            if item.is_loaded() {
+                println!("loaded!");
+                let ass_tex = asset_binding.remove(id).unwrap();
+                println!("removed!");
+                let tex = ass_tex.lock().unwrap().clone();
+                TEXTURES.lock().unwrap().insert(id.clone(), tex);
+            }
+        }
+    }
+
     controller.update(app);
 }
 
@@ -107,9 +124,13 @@ fn load_textures(assets: &mut Assets, gfx: &mut Graphics) {
     let path = std::env::current_dir().expect("whoops");
     println!("The current directory is {}", path.display());
 
-    let path = asset_path("1x1.png");
-    let tex: Asset<Texture> = assets.load_asset(&path).unwrap();    
+    let tex_name = "done_enabled.png".to_string();
+    let path = asset_path(&tex_name);
+    let ass_tex: Asset<Texture> = assets.load_asset(&path).unwrap();  
+    ASSET_TEXTURES.lock().unwrap().insert(tex_name, ass_tex);  
+
     //println!("tex.is_loaded: {}", tex.is_loaded());
+
     // TESTING END ---------------------
 
     let tex = gfx

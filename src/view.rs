@@ -8,19 +8,7 @@ use notan::{
 use slotmap::SlotMap;
 
 use crate::{
-    bid_selector::BidSelector,
-    card::{Card, CardId, CardSuit, SelectState},
-    card_update::{CardGroup, CardUpdate},
-    card_view::CardView,
-    discard_panel::DiscardPanel,
-    game::{Game, PlayerAction},
-    image::Image,
-    image_button::ImageButton,
-    player::PlayerId,
-    texture_loader::CARD_TEX_SCALE,
-    view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER},
-    view_trait::ViewTrait,
-    TEXTURES,
+    bid_selector::BidSelector, card::{Card, CardId, CardSuit, SelectState}, card_update::{CardGroup, CardUpdate}, card_view::CardView, discard_panel::DiscardPanel, game::{Game, PlayerAction}, image::Image, image2::Image2, image_button::ImageButton, player::PlayerId, texture_loader::CARD_TEX_SCALE, view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER}, view_trait::ViewTrait, TEXTURES
 };
 
 // Colors
@@ -43,6 +31,8 @@ pub struct View {
     play_outline: Image,
 
     fps_update: f32,
+
+    test_image: crate::image2::Image2,
 }
 
 impl View {
@@ -75,6 +65,7 @@ impl View {
             trump_marker,
             play_outline,
             fps_update: 0.0,
+            test_image: Image2::new("done_enabled.png".to_string(), vec2(100.0, 100.0), vec2(600.0, 600.0)),
         }
     }
 
@@ -431,5 +422,7 @@ impl ViewTrait for View {
             // );
             self.fps_update = 2.0;
         }
+
+        self.test_image.draw(draw, parent_affine);
     }
 }
