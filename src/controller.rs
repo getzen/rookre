@@ -35,10 +35,14 @@ pub struct Controller {
 
     card_updates: VecDeque<CardUpdate>,
     game_action_delay: f32,
+
+    tex_loader_completed: bool,
 }
 
 impl Controller {
-    pub fn new(gfx: &mut Graphics) -> Self {
+    pub fn new(assets: &mut Assets, gfx: &mut Graphics) -> Self {
+        crate::TEX_LOADER.lock().unwrap().load_assets(assets);
+
         let (player_action_sender, player_action_receiver) = mpsc::channel();
 
         let mut game = Game::new();
@@ -65,6 +69,8 @@ impl Controller {
 
             card_updates: VecDeque::new(),
             game_action_delay: 0.0,
+
+            tex_loader_completed: false,
         }
     }
 
@@ -86,6 +92,11 @@ impl Controller {
     ///
     pub fn update(&mut self, app: &mut App) {
         let time_delta = app.timer.delta_f32();
+
+        if !self.tex_loader_completed {
+            println!("TEX_LOADER updating");
+            self.tex_loader_completed = crate::TEX_LOADER.lock().unwrap().update();
+        }
 
         // Skip processing of game.actions if delay is > 0.0.
         self.game_action_delay -= time_delta;

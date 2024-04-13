@@ -32,6 +32,7 @@ use notan::{
     prelude::*,
 };
 use once_cell::sync::Lazy;
+use texture_loader::TextureLoader;
 
 // Globals
 use std::{collections::HashMap, sync::Mutex, time};
@@ -44,6 +45,8 @@ static FONT: Mutex<Option<notan::draw::Font>> = Mutex::new(None);
 // Use once_cell to init textures HashMap.
 static ASSET_TEXTURES: Lazy<Mutex<HashMap<String, Asset<Texture>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 static TEXTURES: Lazy<Mutex<HashMap<String, Texture>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
+static TEX_LOADER: Lazy<Mutex<TextureLoader>> = Lazy::new(|| Mutex::new(TextureLoader::new()));
 
 #[notan_main]
 fn main() -> Result<(), String> {
@@ -71,6 +74,9 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(assets: &mut Assets, gfx: &mut Graphics) -> Controller {
+    let path = std::env::current_dir().expect("whoops");
+    println!("Current directory: {}", path.display());
+
     *PIXEL_RATIO.lock().unwrap() = gfx.dpi() as f32;
 
     let font = gfx
@@ -78,9 +84,7 @@ fn setup(assets: &mut Assets, gfx: &mut Graphics) -> Controller {
         .unwrap();
     *FONT.lock().unwrap() = Some(font as Font);
 
-    load_textures(assets, gfx);
-
-    Controller::new(gfx)
+    Controller::new(assets, gfx)
 }
 
 fn event(controller: &mut Controller, event: Event) {
@@ -88,21 +92,6 @@ fn event(controller: &mut Controller, event: Event) {
 }
 
 fn update(app: &mut App, controller: &mut Controller) {
-    let mut asset_binding = ASSET_TEXTURES.lock().unwrap();
-    let ids: Vec<String> = asset_binding.keys().cloned().collect();
-
-    for id in &ids {
-        if let Some(item) = asset_binding.get(id) {
-            if item.is_loaded() {
-                println!("loaded!");
-                let ass_tex = asset_binding.remove(id).unwrap();
-                println!("removed!");
-                let tex = ass_tex.lock().unwrap().clone();
-                TEXTURES.lock().unwrap().insert(id.clone(), tex);
-            }
-        }
-    }
-
     controller.update(app);
 }
 
@@ -110,29 +99,7 @@ fn draw(gfx: &mut Graphics, controller: &mut Controller) {
     controller.draw(gfx);
 }
 
-fn asset_path(path: &str) -> String {
-    let base = if cfg!(target_arch = "wasm32") { // browsers
-        "./assets"
-    } else {
-        "./src/assets" // development: debug & release
-    };
-    format!("{base}/{path}")
-}
-
 fn load_textures(assets: &mut Assets, gfx: &mut Graphics) {
-    // TESTING START --------------------
-    let path = std::env::current_dir().expect("whoops");
-    println!("The current directory is {}", path.display());
-
-    let tex_name = "done_enabled.png".to_string();
-    let path = asset_path(&tex_name);
-    let ass_tex: Asset<Texture> = assets.load_asset(&path).unwrap();  
-    ASSET_TEXTURES.lock().unwrap().insert(tex_name, ass_tex);  
-
-    //println!("tex.is_loaded: {}", tex.is_loaded());
-
-    // TESTING END ---------------------
-
     let tex = gfx
         .create_texture()
         .from_image(include_bytes!("assets/club.png"))

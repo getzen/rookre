@@ -6,7 +6,7 @@ use notan::{
     prelude::{Color, Texture},
 };
 
-use crate::{TEXTURES, transform::Transform, view_trait::ViewTrait};
+use crate::{TEX_LOADER, transform::Transform, view_trait::ViewTrait};
 
 #[derive(Clone)]
 pub struct Image2 {
@@ -33,9 +33,8 @@ impl Image2 {
 impl ViewTrait for Image2 {
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
         if self.texture.is_none() {
-            println!("checking...");
-            if let Some(texture) = TEXTURES.lock().unwrap().get(&self.texture_id) {
-                println!("texture -> image!");
+            if let Some(texture) = TEX_LOADER.lock().unwrap().get_tex(&self.texture_id) {
+                println!("Image texture loaded");
                 self.texture = Some(texture.clone());
             } else {
                 return;
