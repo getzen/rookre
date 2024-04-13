@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, sync::mpsc::Sender};
 
 use notan::{
-    app::{App, Color, Graphics},
+    app::{assets::Assets, App, Color, Graphics},
     math::{vec2, Affine2, Vec2},
     Event,
 };
@@ -18,6 +18,8 @@ pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 
 //pub const MED_GRAY: Color = Color::new(200. / 255., 200. / 255., 200. / 255., 1.);
 
 pub struct View {
+    tex_loader_completed: bool,
+
     card_views: Vec<CardView<PlayerAction>>,
     card_views_z_order_dirty: bool,
 
@@ -37,11 +39,14 @@ pub struct View {
 
 impl View {
     pub fn new(
+        assets: &mut Assets,
         gfx: &mut Graphics,
         cards: &SlotMap<CardId, Card>,
         sender: Sender<PlayerAction>,
         game: &Game,
     ) -> Self {
+        crate::TEX_LOADER.lock().unwrap().load_assets(assets);
+
         let card_views = View::create_card_views(cards, gfx, sender.clone());
         let active_player_marker = View::create_active_player_marker(gfx);
         let dealer_marker = View::create_dealer_marker(gfx);
@@ -53,6 +58,8 @@ impl View {
         let play_outline = View::create_play_outline(gfx);
 
         Self {
+            tex_loader_completed: false,
+
             card_views,
             card_views_z_order_dirty: false,
 
@@ -375,6 +382,11 @@ impl ViewTrait for View {
     }
 
     fn update(&mut self, time_delta: f32, app: &mut App) {
+        if !self.tex_loader_completed {
+            println!("TEX_LOADER updating");
+            self.tex_loader_completed = crate::TEX_LOADER.lock().unwrap().update();
+        }
+
         // Update the cards.
         for card_view in &mut self.card_views {
             card_view.update(time_delta, app);

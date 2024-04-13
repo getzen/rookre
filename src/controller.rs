@@ -35,14 +35,10 @@ pub struct Controller {
 
     card_updates: VecDeque<CardUpdate>,
     game_action_delay: f32,
-
-    tex_loader_completed: bool,
 }
 
 impl Controller {
     pub fn new(assets: &mut Assets, gfx: &mut Graphics) -> Self {
-        crate::TEX_LOADER.lock().unwrap().load_assets(assets);
-
         let (player_action_sender, player_action_receiver) = mpsc::channel();
 
         let mut game = Game::new();
@@ -54,7 +50,7 @@ impl Controller {
         // let elapsed = now.elapsed().as_micros();
         // println!("game clone: {elapsed} micros");
 
-        let view = View::new(gfx, &game.cards, player_action_sender.clone(), &game);
+        let view = View::new(assets, gfx, &game.cards, player_action_sender.clone(), &game);
 
         let (audio_message_sender, audio_message_receiver) = mpsc::channel();
         *AUDIO_SENDER.lock().unwrap() = Some(audio_message_sender);
@@ -69,8 +65,6 @@ impl Controller {
 
             card_updates: VecDeque::new(),
             game_action_delay: 0.0,
-
-            tex_loader_completed: false,
         }
     }
 
@@ -92,11 +86,6 @@ impl Controller {
     ///
     pub fn update(&mut self, app: &mut App) {
         let time_delta = app.timer.delta_f32();
-
-        if !self.tex_loader_completed {
-            println!("TEX_LOADER updating");
-            self.tex_loader_completed = crate::TEX_LOADER.lock().unwrap().update();
-        }
 
         // Skip processing of game.actions if delay is > 0.0.
         self.game_action_delay -= time_delta;

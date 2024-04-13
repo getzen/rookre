@@ -3,7 +3,7 @@
 use notan::{
     draw::{Draw, DrawImages, DrawTransform},
     math::{Affine2, Vec2},
-    prelude::{Color, Texture},
+    prelude::Texture,
 };
 
 use crate::{TEX_LOADER, transform::Transform, view_trait::ViewTrait};
