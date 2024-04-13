@@ -13,7 +13,7 @@ use crate::{
     animators::{AngleAnimator, TranslationAnimator},
     card::{Card, SelectState},
     card_update::CardUpdate,
-    texture_loader::{ViewFn, CARD_TEX_SCALE},
+    texture_loader::{TextureLoader, CARD_TEX_SCALE},
     transform::Transform,
     view_geom::{CARD_SIZE, CARD_SIZE_HOVER},
     view_trait::ViewTrait,
@@ -46,7 +46,7 @@ pub struct CardView<T> {
 
 impl<T> CardView<T> {
     pub fn new(card: &Card, gfx: &mut Graphics, sender: Option<Sender<T>>) -> Self {
-        let face_tex = ViewFn::load_card_texture(gfx, card);
+        let face_tex = TextureLoader::load_card_texture(gfx, card);
 
         let transform =
             Transform::from_pos_tex_scale_centered(Vec2::ZERO, &face_tex, CARD_TEX_SCALE, true);

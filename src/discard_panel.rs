@@ -9,7 +9,7 @@ use notan::prelude::*;
 use crate::game::PlayerAction;
 use crate::image_button::ButtonState;
 use crate::image_button::ImageButton;
-use crate::texture_loader::ViewFn;
+use crate::texture_loader::TextureLoader;
 use crate::transform::Transform;
 use crate::view_geom::ViewGeom;
 use crate::view_trait::ViewTrait;

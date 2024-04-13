@@ -9,7 +9,7 @@ use notan::prelude::*;
 use crate::card::CardSuit;
 use crate::game::PlayerAction;
 use crate::image_button::ImageButton;
-use crate::texture_loader::ViewFn;
+use crate::texture_loader::TextureLoader;
 use crate::transform::Transform;
 use crate::view_geom::ViewGeom;
 use crate::view_trait::ViewTrait;
@@ -89,8 +89,8 @@ impl BidSelector {
         let mut buttons = Vec::new();
 
         for (idx, suit) in suits.iter().enumerate() {
-            let tex_enabled = ViewFn::load_suit_texture(gfx, suit);
-            let tex_mouse_over = Some(ViewFn::load_suit_mouse_over_texture(gfx, suit));
+            let tex_enabled = TextureLoader::load_suit_texture(gfx, suit);
+            let tex_mouse_over = Some(TextureLoader::load_suit_mouse_over_texture(gfx, suit));
             let pos = vec2(32. + 50. * idx as f32, 53.);
             let mut button = ImageButton::new(
                 pos,

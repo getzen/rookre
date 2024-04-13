@@ -5,9 +5,9 @@ use crate::card::{Card, CardSuit};
 pub const TEX_SCALE: f32 = 2.0; // Default texture images are double size.
 pub const CARD_TEX_SCALE: f32 = 3.0; // Card images are triple size.
 
-pub struct ViewFn {}
+pub struct TextureLoader {}
 
-impl ViewFn {
+impl TextureLoader {
     pub fn load_card_texture(gfx: &mut Graphics, card: &Card) -> Texture {
         let builder = match card.suit {
             CardSuit::Club => match card.face_rank {
