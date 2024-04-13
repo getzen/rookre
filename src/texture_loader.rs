@@ -32,11 +32,13 @@ impl TextureLoader {
         format!("{base}/{path}")
     }
 
-    pub fn load_assets(&mut self, assets: &mut Assets) {
-        let tex_name = "done_enabled.png".to_string();
-        let path = TextureLoader::asset_path(&tex_name);
-        let ass_tex: Asset<Texture> = assets.load_asset(&path).unwrap();
-        self.assets.insert(tex_name, ass_tex);
+    pub fn load_assets(&mut self, assets: &mut Assets, names: &[String]) {
+        for name in names {
+            let adj_name = format!("{}.png", name);
+            let path = TextureLoader::asset_path(&adj_name);
+            let ass_tex: Asset<Texture> = assets.load_asset(&path).unwrap();
+            self.assets.insert(name.to_string(), ass_tex);
+        }
     }
 
     /// Returns true if asset loading is completed.

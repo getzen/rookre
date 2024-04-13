@@ -1,14 +1,12 @@
 use std::{collections::VecDeque, sync::mpsc::Sender};
 
 use notan::{
-    app::{assets::Assets, App, Color, Graphics},
-    math::{vec2, Affine2, Vec2},
-    Event,
+    app::{assets::Assets, App, Color, Graphics}, draw::{CreateFont, Font}, math::{vec2, Affine2, Vec2}, Event
 };
 use slotmap::SlotMap;
 
 use crate::{
-    bid_selector::BidSelector, card::{Card, CardId, CardSuit, SelectState}, card_update::{CardGroup, CardUpdate}, card_view::CardView, discard_panel::DiscardPanel, game::{Game, PlayerAction}, image::Image, image2::Image2, image_button::ImageButton, player::PlayerId, texture_loader::CARD_TEX_SCALE, view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER}, view_trait::ViewTrait, TEXTURES
+    bid_selector::BidSelector, card::{Card, CardId, CardSuit, SelectState}, card_update::{CardGroup, CardUpdate}, card_view::CardView, discard_panel::DiscardPanel, game::{Game, PlayerAction}, image::Image, image2::Image2, image_button::ImageButton, player::PlayerId, texture_loader::CARD_TEX_SCALE, view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER}, view_trait::ViewTrait
 };
 
 // Colors
@@ -29,7 +27,7 @@ pub struct View {
     pub bid_selector: BidSelector,
     discard_panel: DiscardPanel,
     discard_outlines: Vec<Image>,
-    trump_marker: Image,
+    trump_marker: Image2,
     play_outline: Image,
 
     fps_update: f32,
@@ -45,7 +43,14 @@ impl View {
         sender: Sender<PlayerAction>,
         game: &Game,
     ) -> Self {
-        crate::TEX_LOADER.lock().unwrap().load_assets(assets);
+        View::load_texture_assets(assets);
+        
+        *crate::PIXEL_RATIO.lock().unwrap() = gfx.dpi() as f32;
+
+        let font = gfx
+            .create_font(include_bytes!("assets/Futura.ttc"))
+            .unwrap();
+        *crate::FONT.lock().unwrap() = Some(font as Font);
 
         let card_views = View::create_card_views(cards, gfx, sender.clone());
         let active_player_marker = View::create_active_player_marker(gfx);
@@ -54,7 +59,7 @@ impl View {
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
         let discard_panel = DiscardPanel::new(gfx);
         let discard_outlines = View::create_discard_outlines(gfx, game);
-        let trump_marker = View::create_trump_marker(gfx);
+        let trump_marker = View::create_trump_marker();
         let play_outline = View::create_play_outline(gfx);
 
         Self {
@@ -72,8 +77,19 @@ impl View {
             trump_marker,
             play_outline,
             fps_update: 0.0,
-            test_image: Image2::new("done_enabled.png".to_string(), vec2(100.0, 100.0), vec2(600.0, 600.0)),
+            test_image: Image2::new("done_enabled".to_string(), vec2(600.0, 600.0), 0.5),
         }
+    }
+
+    fn load_texture_assets(assets: &mut Assets) {
+        let str_names = vec!["club", "heart", "diamond", "spade", "done_enabled"];
+        let mut names = Vec::new();
+        for n in str_names {
+            names.push(n.to_string());
+        }
+        crate::TEX_LOADER.lock().unwrap().load_assets(assets, &names);
+
+        // cards...
     }
 
     pub fn create_card_views(
@@ -185,14 +201,8 @@ impl View {
         image
     }
 
-    fn create_trump_marker(gfx: &mut Graphics) -> Image {
-        let tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/club.png"))
-            .build()
-            .unwrap();
-        let mut marker = Image::new(tex, VIEW_CENTER);
-        marker.transform.set_size(vec2(70.0, 70.0));
+    fn create_trump_marker() -> Image2 {
+        let mut marker = Image2::new(String::new(), VIEW_CENTER, 0.25);
         marker.visible = false;
         marker
     }
@@ -266,18 +276,14 @@ impl View {
     }
 
     pub fn set_trump(&mut self, suit: Option<CardSuit>) {
-        if let Some(suit) = suit {
-            let tex_string = match suit {
-                CardSuit::Club => "club".to_string(),
-                CardSuit::Diamond => "diamond".to_string(),
-                CardSuit::Heart => "heart".to_string(),
-                CardSuit::Spade => "spade".to_string(),
-                CardSuit::Joker => panic!(),
-            };
-            if let Some(tex) = TEXTURES.lock().unwrap().get(&tex_string) {
-                self.trump_marker.texture = tex.clone();
+        match suit {
+            Some(suit) => {
+                self.trump_marker.set_texture_id(suit.to_string());
+                self.trump_marker.visible = true;
             }
-            self.trump_marker.visible = true;
+            None => {
+                // set some kind of no-trump texture
+            }
         }
     }
 

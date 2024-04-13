@@ -35,17 +35,14 @@ use once_cell::sync::Lazy;
 use texture_loader::TextureLoader;
 
 // Globals
-use std::{collections::HashMap, sync::Mutex, time};
+use std::sync::Mutex;
 
 /// This isn't really dots per inch. It's actually physical pixels per logical pixel.
 static PIXEL_RATIO: Mutex<f32> = Mutex::new(0.0);
 
 static FONT: Mutex<Option<notan::draw::Font>> = Mutex::new(None);
 
-// Use once_cell to init textures HashMap.
-static ASSET_TEXTURES: Lazy<Mutex<HashMap<String, Asset<Texture>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
-static TEXTURES: Lazy<Mutex<HashMap<String, Texture>>> = Lazy::new(|| Mutex::new(HashMap::new()));
-
+// Use once_cell to init lazily.
 static TEX_LOADER: Lazy<Mutex<TextureLoader>> = Lazy::new(|| Mutex::new(TextureLoader::new()));
 
 #[notan_main]
@@ -77,13 +74,6 @@ fn setup(assets: &mut Assets, gfx: &mut Graphics) -> Controller {
     let path = std::env::current_dir().expect("whoops");
     println!("Current directory: {}", path.display());
 
-    *PIXEL_RATIO.lock().unwrap() = gfx.dpi() as f32;
-
-    let font = gfx
-        .create_font(include_bytes!("assets/Futura.ttc"))
-        .unwrap();
-    *FONT.lock().unwrap() = Some(font as Font);
-
     Controller::new(assets, gfx)
 }
 
@@ -99,29 +89,3 @@ fn draw(gfx: &mut Graphics, controller: &mut Controller) {
     controller.draw(gfx);
 }
 
-fn load_textures(assets: &mut Assets, gfx: &mut Graphics) {
-    let tex = gfx
-        .create_texture()
-        .from_image(include_bytes!("assets/club.png"))
-        .build()
-        .unwrap();
-    TEXTURES.lock().unwrap().insert("club".to_string(), tex);
-    let tex = gfx
-        .create_texture()
-        .from_image(include_bytes!("assets/diamond.png"))
-        .build()
-        .unwrap();
-    TEXTURES.lock().unwrap().insert("diamond".to_string(), tex);
-    let tex = gfx
-        .create_texture()
-        .from_image(include_bytes!("assets/heart.png"))
-        .build()
-        .unwrap();
-    TEXTURES.lock().unwrap().insert("heart".to_string(), tex);
-    let tex = gfx
-        .create_texture()
-        .from_image(include_bytes!("assets/spade.png"))
-        .build()
-        .unwrap();
-    TEXTURES.lock().unwrap().insert("spade".to_string(), tex);
-}

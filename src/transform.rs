@@ -45,6 +45,14 @@ impl Default for Transform {
 
 impl Transform {
     #[allow(dead_code)]
+    pub fn from_translation(translation: Vec2) -> Self {
+        Transform {
+            translation,
+            ..Default::default()
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn from_translation_angle(translation: Vec2, angle: f32) -> Self {
         Transform {
             translation,

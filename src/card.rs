@@ -11,6 +11,18 @@ pub enum CardSuit {
     Joker,
 }
 
+impl CardSuit {
+    pub fn to_string(&self) -> String {
+        match self {
+            CardSuit::Club => "club".to_string(),
+            CardSuit::Diamond => "diamond".to_string(),
+            CardSuit::Heart => "heart".to_string(),
+            CardSuit::Spade => "spade".to_string(),
+            CardSuit::Joker => panic!(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SelectState {
     Selectable,   // Expands a bit in size when mouse over.

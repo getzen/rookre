@@ -13,19 +13,29 @@ pub struct Image2 {
     pub visible: bool,
     pub z_order: usize,
     pub transform: Transform,
-    pub texture_id: String,
-    pub texture: Option<Texture>,
+    texture_id: String,
+    texture: Option<Texture>,
+    texture_size_multiplier: f32
 }
 
 impl Image2 {
-    pub fn new(texture_id: String, size: Vec2, position: Vec2) -> Self {
-        let transform = Transform::from_translation_size_centered(position, size, true);
+    /// The size of the image is the texture size mutiplied by tex_size_mult.
+    pub fn new(texture_id: String, translation: Vec2, tex_size_mult: f32) -> Self {
+        let transform = Transform::from_translation(translation);
         Self {
             visible: true,
             z_order: 0,
             transform,
             texture_id,
             texture: None,
+            texture_size_multiplier: tex_size_mult
+        }
+    }
+
+    pub fn set_texture_id(&mut self, id: String) {
+        if self.texture_id != id {
+            self.texture_id = id;
+            self.texture = None;
         }
     }
 }
@@ -34,8 +44,9 @@ impl ViewTrait for Image2 {
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
         if self.texture.is_none() {
             if let Some(texture) = TEX_LOADER.lock().unwrap().get_tex(&self.texture_id) {
-                println!("Image texture loaded");
                 self.texture = Some(texture.clone());
+                let size: Vec2 = texture.size().into();
+                self.transform.set_size(size * self.texture_size_multiplier);
             } else {
                 return;
             }
@@ -51,7 +62,5 @@ impl ViewTrait for Image2 {
                 .transform(self.transform.mat3_with_parent(parent_affine))
                 .size(size_x, size_y);
         }
-
-        
     }
 }
