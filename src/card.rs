@@ -100,15 +100,15 @@ impl Card {
         }
     }
 
-    // fn file_string(&self) -> String {
-    //     match self.suit {
-    //         CardSuit::Club => format!("club_{}", self.rank),
-    //         CardSuit::Diamond => format!("diamond_{}", self.rank),
-    //         CardSuit::Heart => format!("heart_{}", self.rank),
-    //         CardSuit::Spade => format!("spade_{}", self.rank),
-    //         CardSuit::Joker => format!("joker"),
-    //     }
-    // }
+    pub fn file_string(&self) -> String {
+        match self.suit {
+            CardSuit::Club => format!("cards/clb{}", self.game_rank as i8),
+            CardSuit::Diamond => format!("cards/dia{}", self.game_rank as i8),
+            CardSuit::Heart => format!("cards/hrt{}", self.game_rank as i8),
+            CardSuit::Spade => format!("cards/spd{}", self.game_rank as i8),
+            CardSuit::Joker => format!("joker"),
+        }
+    }
 }
 
 impl Ord for Card {

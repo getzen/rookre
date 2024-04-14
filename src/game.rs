@@ -427,8 +427,8 @@ impl Game {
     }
 
     pub fn play_card_id(&mut self, id: &CardId) {
-         // Turn off selectability for all cards in hand.
-         for id in self.active_hand().clone() {
+        // Turn off selectability for all cards in hand.
+        for id in self.active_hand().clone() {
             if let Some(card) = self.cards.get_mut(id) {
                 card.select_state = SelectState::Unselectable;
             }

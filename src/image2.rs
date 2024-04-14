@@ -6,7 +6,7 @@ use notan::{
     prelude::Texture,
 };
 
-use crate::{TEX_LOADER, transform::Transform, view_trait::ViewTrait};
+use crate::{transform::Transform, view_trait::ViewTrait, TEX_LOADER};
 
 #[derive(Clone)]
 pub struct Image2 {
@@ -15,20 +15,20 @@ pub struct Image2 {
     pub transform: Transform,
     texture_id: String,
     texture: Option<Texture>,
-    texture_size_multiplier: f32
+    texture_size_multiplier: f32,
 }
 
 impl Image2 {
     /// The size of the image is the texture size mutiplied by tex_size_mult.
-    pub fn new(texture_id: String, translation: Vec2, tex_size_mult: f32) -> Self {
+    pub fn new(tex_id: &str, translation: Vec2, tex_size_mult: f32) -> Self {
         let transform = Transform::from_translation(translation);
         Self {
             visible: true,
             z_order: 0,
             transform,
-            texture_id,
+            texture_id: tex_id.to_string(),
             texture: None,
-            texture_size_multiplier: tex_size_mult
+            texture_size_multiplier: tex_size_mult,
         }
     }
 

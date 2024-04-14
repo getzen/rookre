@@ -1,12 +1,27 @@
 use std::{collections::VecDeque, sync::mpsc::Sender};
 
 use notan::{
-    app::{assets::Assets, App, Color, Graphics}, draw::{CreateFont, Font}, math::{vec2, Affine2, Vec2}, Event
+    app::{assets::Assets, App, Color, Graphics},
+    draw::{CreateFont, Font},
+    math::{vec2, Affine2, Vec2},
+    Event,
 };
 use slotmap::SlotMap;
 
 use crate::{
-    bid_selector::BidSelector, card::{Card, CardId, CardSuit, SelectState}, card_update::{CardGroup, CardUpdate}, card_view::CardView, discard_panel::DiscardPanel, game::{Game, PlayerAction}, image::Image, image2::Image2, image_button::ImageButton, player::PlayerId, texture_loader::CARD_TEX_SCALE, view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER}, view_trait::ViewTrait
+    bid_selector::BidSelector,
+    card::{Card, CardId, CardSuit, SelectState},
+    card_update::{CardGroup, CardUpdate},
+    card_view::CardView,
+    discard_panel::DiscardPanel,
+    game::{Game, PlayerAction},
+    image::Image,
+    image2::Image2,
+    image_button::ImageButton,
+    player::PlayerId,
+    texture_loader::CARD_TEX_SCALE,
+    view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER},
+    view_trait::ViewTrait,
 };
 
 // Colors
@@ -21,18 +36,16 @@ pub struct View {
     card_views: Vec<CardView<PlayerAction>>,
     card_views_z_order_dirty: bool,
 
-    active_player_marker: Image,
-    dealer_marker: Image,
+    active_player_marker: Image2,
+    dealer_marker: Image2,
     pub deal_button: ImageButton<PlayerAction>,
     pub bid_selector: BidSelector,
     discard_panel: DiscardPanel,
-    discard_outlines: Vec<Image>,
+    discard_outlines: Vec<Image2>,
     trump_marker: Image2,
-    play_outline: Image,
+    play_outline: Image2,
 
     fps_update: f32,
-
-    test_image: crate::image2::Image2,
 }
 
 impl View {
@@ -44,7 +57,7 @@ impl View {
         game: &Game,
     ) -> Self {
         View::load_texture_assets(assets);
-        
+
         *crate::PIXEL_RATIO.lock().unwrap() = gfx.dpi() as f32;
 
         let font = gfx
@@ -53,14 +66,14 @@ impl View {
         *crate::FONT.lock().unwrap() = Some(font as Font);
 
         let card_views = View::create_card_views(cards, gfx, sender.clone());
-        let active_player_marker = View::create_active_player_marker(gfx);
-        let dealer_marker = View::create_dealer_marker(gfx);
+        let active_player_marker = View::create_active_player_marker();
+        let dealer_marker = View::create_dealer_marker();
         let deal_button = View::create_deal_button(gfx, sender.clone());
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
         let discard_panel = DiscardPanel::new(gfx);
-        let discard_outlines = View::create_discard_outlines(gfx, game);
+        let discard_outlines = View::create_discard_outlines(game);
         let trump_marker = View::create_trump_marker();
-        let play_outline = View::create_play_outline(gfx);
+        let play_outline = View::create_play_outline();
 
         Self {
             tex_loader_completed: false,
@@ -77,19 +90,46 @@ impl View {
             trump_marker,
             play_outline,
             fps_update: 0.0,
-            test_image: Image2::new("done_enabled".to_string(), vec2(600.0, 600.0), 0.5),
         }
     }
 
     fn load_texture_assets(assets: &mut Assets) {
-        let str_names = vec!["club", "heart", "diamond", "spade", "done_enabled"];
-        let mut names = Vec::new();
-        for n in str_names {
-            names.push(n.to_string());
-        }
-        crate::TEX_LOADER.lock().unwrap().load_assets(assets, &names);
-
+        let names = [
+            "active_player",
+            "card_outline",
+            "club",
+            "dealer_marker",
+            "diamond",
+            "done_enabled",
+            "heart",
+            "spade",
+        ];
+        let tex_names: Vec<String> = names.iter().map(|&n| n.to_string()).collect();
+        crate::TEX_LOADER
+            .lock()
+            .unwrap()
+            .load_assets(assets, &tex_names);
+        
         // cards...
+    }
+
+    pub fn create_card_views2(cards: &SlotMap<CardId, Card>, assets: &mut Assets, sender: Sender<PlayerAction>,
+    ) -> Vec<CardView<PlayerAction>> {
+        let mut card_views = Vec::new();
+        let mut tex_names = Vec::new();
+
+        for (_, card) in cards {
+            let card_view = CardView::new(card, Some(sender.clone()));
+            card_views.push(card_view);
+            tex_names.push(card.file_string());
+        }
+
+        crate::TEX_LOADER
+            .lock()
+            .unwrap()
+            .load_assets(assets, &tex_names);
+
+        card_views
     }
 
     pub fn create_card_views(
@@ -106,26 +146,16 @@ impl View {
         card_views
     }
 
-    fn create_active_player_marker(gfx: &mut Graphics) -> Image {
-        let tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/active_player.png"))
-            .build()
-            .unwrap();
-        let mut marker = Image::new(tex, Vec2::ZERO);
-        marker.visible = false;
-        marker
+    fn create_active_player_marker() -> Image2 {
+        let mut image = Image2::new("active_player", Vec2::ZERO, 0.5);
+        image.visible = false;
+        image
     }
 
-    fn create_dealer_marker(gfx: &mut Graphics) -> Image {
-        let tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/dealer_marker.png"))
-            .build()
-            .unwrap();
-        let mut marker = Image::new(tex, Vec2::ZERO);
-        marker.visible = false;
-        marker
+    fn create_dealer_marker() -> Image2 {
+        let mut image = Image2::new("dealer_marker", Vec2::ZERO, 0.5);
+        image.visible = false;
+        image
     }
 
     fn create_deal_button(
@@ -166,16 +196,10 @@ impl View {
         BidSelector::new(suits, gfx, sender)
     }
 
-    fn create_discard_outlines(gfx: &mut Graphics, game: &Game) -> Vec<Image> {
+    fn create_discard_outlines(game: &Game) -> Vec<Image2> {
         let mut outlines = Vec::new();
         for idx in 0..2 {
-            let tex = gfx
-                .create_texture()
-                .from_image(include_bytes!("assets/cards/outline.png"))
-                .build()
-                .unwrap();
-            let mut image = Image::new(tex, Vec2::ZERO);
-            image.transform.set_size(CARD_SIZE);
+            let mut image = Image2::new("card_outline", Vec2::ZERO, 0.35);
             let update = CardUpdate {
                 group: CardGroup::NestExchange,
                 group_len: game.options.nest_size as usize,
@@ -189,22 +213,16 @@ impl View {
         outlines
     }
 
-    fn create_play_outline(gfx: &mut Graphics) -> Image {
-        let tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/cards/outline.png"))
-            .build()
-            .unwrap();
-        let mut image = Image::new(tex, Vec2::ZERO);
-        image.transform.set_size(CARD_SIZE);
-        image.visible = true;
+    fn create_play_outline() -> Image2 {
+        let mut image = Image2::new("card_outline", Vec2::ZERO, 0.35);
+        image.visible = false;
         image
     }
 
     fn create_trump_marker() -> Image2 {
-        let mut marker = Image2::new(String::new(), VIEW_CENTER, 0.25);
-        marker.visible = false;
-        marker
+        let mut image = Image2::new("", VIEW_CENTER, 0.25);
+        image.visible = false;
+        image
     }
 
     pub fn update_cards(&mut self, updates: &mut VecDeque<CardUpdate>, time_delta: f32) {
@@ -324,7 +342,9 @@ impl View {
             player: p,
             ..Default::default()
         };
-        self.play_outline.transform.set_translation(update.translation());
+        self.play_outline
+            .transform
+            .set_translation(update.translation());
         self.play_outline.visible = true;
 
         // Set message for eligible cards.
@@ -440,7 +460,5 @@ impl ViewTrait for View {
             // );
             self.fps_update = 2.0;
         }
-
-        self.test_image.draw(draw, parent_affine);
     }
 }

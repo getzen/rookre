@@ -50,7 +50,13 @@ impl Controller {
         // let elapsed = now.elapsed().as_micros();
         // println!("game clone: {elapsed} micros");
 
-        let view = View::new(assets, gfx, &game.cards, player_action_sender.clone(), &game);
+        let view = View::new(
+            assets,
+            gfx,
+            &game.cards,
+            player_action_sender.clone(),
+            &game,
+        );
 
         let (audio_message_sender, audio_message_receiver) = mpsc::channel();
         *AUDIO_SENDER.lock().unwrap() = Some(audio_message_sender);
@@ -149,7 +155,7 @@ impl Controller {
                     GameAction::PrePlayCard => {
                         self.update_hands();
                         self.update_active_trick();
-                    },
+                    }
                     GameAction::WaitForPlayCard(p) => {
                         self.view.get_card_play(*p, &self.game);
                         self.update_hands();
@@ -178,7 +184,7 @@ impl Controller {
                 }
                 PlayerAction::PlayCard(_, _) => {
                     self.view.end_card_play();
-                },
+                }
                 PlayerAction::MoveCardToNest(_) => {}
                 PlayerAction::TakeCardFromNest(_) => todo!(),
                 PlayerAction::EndNestExchange => todo!(),

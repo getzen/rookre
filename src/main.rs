@@ -88,4 +88,3 @@ fn update(app: &mut App, controller: &mut Controller) {
 fn draw(gfx: &mut Graphics, controller: &mut Controller) {
     controller.draw(gfx);
 }
-
