@@ -106,7 +106,7 @@ impl Card {
             CardSuit::Diamond => format!("cards/dia{}", self.game_rank as i8),
             CardSuit::Heart => format!("cards/hrt{}", self.game_rank as i8),
             CardSuit::Spade => format!("cards/spd{}", self.game_rank as i8),
-            CardSuit::Joker => format!("joker"),
+            CardSuit::Joker => format!("cards/joker"),
         }
     }
 }

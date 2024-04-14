@@ -42,7 +42,7 @@ impl Image2 {
 
 impl ViewTrait for Image2 {
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
-        if self.texture.is_none() {
+        if self.texture.is_none() && !self.texture_id.is_empty(){
             if let Some(texture) = TEX_LOADER.lock().unwrap().get_tex(&self.texture_id) {
                 self.texture = Some(texture.clone());
                 let size: Vec2 = texture.size().into();

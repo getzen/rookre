@@ -12,7 +12,7 @@ use crate::{
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit, SelectState},
     card_update::{CardGroup, CardUpdate},
-    card_view::CardView,
+    card_view2::CardView2,
     discard_panel::DiscardPanel,
     game::{Game, PlayerAction},
     image::Image,
@@ -33,7 +33,7 @@ pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 
 pub struct View {
     tex_loader_completed: bool,
 
-    card_views: Vec<CardView<PlayerAction>>,
+    card_views: Vec<CardView2>,
     card_views_z_order_dirty: bool,
 
     active_player_marker: Image2,
@@ -65,7 +65,7 @@ impl View {
             .unwrap();
         *crate::FONT.lock().unwrap() = Some(font as Font);
 
-        let card_views = View::create_card_views(cards, gfx, sender.clone());
+        let card_views = View::create_card_views(cards, assets, sender.clone());
         let active_player_marker = View::create_active_player_marker();
         let dealer_marker = View::create_dealer_marker();
         let deal_button = View::create_deal_button(gfx, sender.clone());
@@ -96,7 +96,8 @@ impl View {
     fn load_texture_assets(assets: &mut Assets) {
         let names = [
             "active_player",
-            "card_outline",
+            "cards/back",
+            "cards/outline",
             "club",
             "dealer_marker",
             "diamond",
@@ -109,17 +110,27 @@ impl View {
             .lock()
             .unwrap()
             .load_assets(assets, &tex_names);
-        
+
         // cards...
     }
 
-    pub fn create_card_views2(cards: &SlotMap<CardId, Card>, assets: &mut Assets, sender: Sender<PlayerAction>,
-    ) -> Vec<CardView<PlayerAction>> {
+    pub fn create_card_views(
+        cards: &SlotMap<CardId, Card>,
+        assets: &mut Assets,
+        sender: Sender<PlayerAction>,
+    ) -> Vec<CardView2> {
         let mut card_views = Vec::new();
         let mut tex_names = Vec::new();
 
         for (_, card) in cards {
-            let card_view = CardView::new(card, Some(sender.clone()));
+            let card_view = CardView2::new(
+                card.id,
+                card.points,
+                &card.file_string(),
+                "cards/back",
+                0.5,
+                Some(sender.clone()),
+            );
             card_views.push(card_view);
             tex_names.push(card.file_string());
         }
@@ -129,20 +140,6 @@ impl View {
             .unwrap()
             .load_assets(assets, &tex_names);
 
-        card_views
-    }
-
-    pub fn create_card_views(
-        cards: &SlotMap<CardId, Card>,
-        gfx: &mut Graphics,
-        sender: Sender<PlayerAction>,
-    ) -> Vec<CardView<PlayerAction>> {
-        let mut card_views = Vec::new();
-
-        for (_, card) in cards {
-            let card_view = CardView::new(card, gfx, Some(sender.clone()));
-            card_views.push(card_view);
-        }
         card_views
     }
 
@@ -199,7 +196,7 @@ impl View {
     fn create_discard_outlines(game: &Game) -> Vec<Image2> {
         let mut outlines = Vec::new();
         for idx in 0..2 {
-            let mut image = Image2::new("card_outline", Vec2::ZERO, 0.35);
+            let mut image = Image2::new("cards/outline", Vec2::ZERO, 0.35);
             let update = CardUpdate {
                 group: CardGroup::NestExchange,
                 group_len: game.options.nest_size as usize,
@@ -214,7 +211,7 @@ impl View {
     }
 
     fn create_play_outline() -> Image2 {
-        let mut image = Image2::new("card_outline", Vec2::ZERO, 0.35);
+        let mut image = Image2::new("cards/outline", Vec2::ZERO, 0.35);
         image.visible = false;
         image
     }
