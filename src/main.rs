@@ -5,33 +5,23 @@ mod bot_monte;
 mod bot_random;
 mod card;
 mod card_update;
-// mod card_view;
-mod card_view2;
+mod card_view;
 mod controller;
-mod discard_panel;
 mod game;
 mod game_options;
 mod image;
-mod image2;
 mod image_button;
-mod text_button;
-// mod message_view;
 mod player;
-// mod score_card_view;
-// mod suit_button;
+mod text_button;
+mod texture_loader;
 mod transform;
 mod trick;
-// mod trump_view;
-mod texture_loader;
 mod view;
 mod view_geom;
 mod view_trait;
 
 use controller::Controller;
-use notan::{
-    draw::{CreateFont, Font},
-    prelude::*,
-};
+use notan::prelude::*;
 use once_cell::sync::Lazy;
 use texture_loader::TextureLoader;
 

@@ -9,7 +9,6 @@ use notan::prelude::*;
 use crate::card::CardSuit;
 use crate::game::PlayerAction;
 use crate::image_button::ImageButton;
-use crate::texture_loader::TextureLoader;
 use crate::transform::Transform;
 use crate::view_geom::ViewGeom;
 use crate::view_trait::ViewTrait;
@@ -39,8 +38,8 @@ impl BidSelector {
             true,
         );
 
-        let pass_button = BidSelector::create_pass_button(gfx, sender.clone());
-        let suit_buttons = BidSelector::create_suit_buttons(suits, gfx, sender.clone());
+        let pass_button = BidSelector::create_pass_button(sender.clone());
+        let suit_buttons = BidSelector::create_suit_buttons(suits, sender.clone());
 
         Self {
             visible: false,
@@ -52,29 +51,15 @@ impl BidSelector {
         }
     }
 
-    fn create_pass_button(
-        gfx: &mut Graphics,
-        sender: Sender<PlayerAction>,
-    ) -> ImageButton<PlayerAction> {
-        let enabled = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/pass_enabled.png"))
-            .build()
-            .unwrap();
-
-        let mouse_over = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/pass_mouse_over.png"))
-            .build()
-            .unwrap();
-
-        let pos = vec2(266., 55.);
+    fn create_pass_button(sender: Sender<PlayerAction>) -> ImageButton<PlayerAction> {
+        let trans = vec2(266., 55.);
         let mut button = ImageButton::new(
-            pos,
-            enabled,
-            Some(mouse_over),
-            None,
-            String::new(),
+            trans,
+            "pass_enabled",
+            "pass_mouse_over",
+            "",
+            0.5,
+            "",
             Some(sender),
         );
         button.mouse_up_message = Some(PlayerAction::MakeBid(None));
@@ -83,24 +68,29 @@ impl BidSelector {
 
     fn create_suit_buttons(
         suits: Vec<CardSuit>,
-        gfx: &mut Graphics,
         sender: Sender<PlayerAction>,
     ) -> Vec<ImageButton<PlayerAction>> {
         let mut buttons = Vec::new();
 
         for (idx, suit) in suits.iter().enumerate() {
-            let tex_enabled = TextureLoader::load_suit_texture(gfx, suit);
-            let tex_mouse_over = Some(TextureLoader::load_suit_mouse_over_texture(gfx, suit));
-            let pos = vec2(32. + 50. * idx as f32, 53.);
+            let (enabled, mouse_over) = match suit {
+                CardSuit::Club => ("club", "club_mouse_over"),
+                CardSuit::Diamond => ("diamond", "diamond_mouse_over"),
+                CardSuit::Heart => ("heart", "heart_mouse_over"),
+                CardSuit::Spade => ("spade", "spade_mouse_over"),
+                CardSuit::Joker => panic!(),
+            };
+
+            let trans = vec2(32. + 50. * idx as f32, 53.);
             let mut button = ImageButton::new(
-                pos,
-                tex_enabled,
-                tex_mouse_over,
-                None,
-                String::new(),
+                trans,
+                enabled,
+                mouse_over,
+                "",
+                0.18,
+                "",
                 Some(sender.clone()),
             );
-            button.transform.set_size(vec2(44.0, 44.0));
             button.mouse_up_message = Some(PlayerAction::MakeBid(Some(*suit)));
             buttons.push(button);
         }

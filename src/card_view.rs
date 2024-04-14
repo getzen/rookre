@@ -1,7 +1,6 @@
 use std::sync::mpsc::Sender;
 
 use notan::{
-    app::Graphics,
     draw::*,
     math::{Affine2, Vec2},
     prelude::{Color, Texture},
@@ -11,24 +10,27 @@ use slotmap::DefaultKey;
 
 use crate::{
     animators::{AngleAnimator, TranslationAnimator},
-    card::{Card, SelectState},
+    card::{CardId, SelectState},
     card_update::CardUpdate,
-    texture_loader::{TextureLoader, CARD_TEX_SCALE},
+    game::PlayerAction,
     transform::Transform,
     view_geom::{CARD_SIZE, CARD_SIZE_HOVER},
     view_trait::ViewTrait,
 };
 
-pub struct CardView<T> {
+pub struct CardView {
     pub id: DefaultKey,
     pub visible: bool,
     pub z_order: usize,
     pub transform: Transform,
 
-    pub face_tex: Texture,
+    tex_size_multiplier: f32,
+    face_tex_id: String,
+    face_tex: Option<Texture>,
     pub face_up: bool,
-    pub back_tex: Texture,
-    pub color: Color,
+    back_tex_id: String,
+    back_tex: Option<Texture>,
+    color: Color,
 
     pt_text: String,
 
@@ -40,32 +42,33 @@ pub struct CardView<T> {
     pub translation_animator: Option<TranslationAnimator>,
     pub angle_animator: Option<AngleAnimator>,
 
-    pub sender: Option<Sender<T>>,
-    pub mouse_up_message: Option<T>,
+    pub sender: Option<Sender<PlayerAction>>,
+    pub mouse_up_message: Option<PlayerAction>,
 }
 
-impl<T> CardView<T> {
-    pub fn new(card: &Card, gfx: &mut Graphics, sender: Option<Sender<T>>) -> Self {
-        let face_tex = TextureLoader::load_card_texture(gfx, card);
-
-        let transform =
-            Transform::from_pos_tex_scale_centered(Vec2::ZERO, &face_tex, CARD_TEX_SCALE, true);
-
-        let back_tex = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/cards/back.png"))
-            .build()
-            .unwrap();
+impl CardView {
+    pub fn new(
+        card_id: CardId,
+        points: i16,
+        face_tex_id: &str,
+        back_tex_id: &str,
+        tex_size_multiplier: f32,
+        sender: Option<Sender<PlayerAction>>,
+    ) -> Self {
+        let transform = Transform::default();
 
         let mut view = Self {
-            id: card.id,
+            id: card_id,
             visible: true,
             z_order: 0,
-            transform: transform.clone(),
+            transform,
 
-            face_tex,
+            tex_size_multiplier,
+            face_tex_id: face_tex_id.to_string(),
+            face_tex: None,
             face_up: false,
-            back_tex,
+            back_tex_id: back_tex_id.to_string(),
+            back_tex: None,
             color: Color::WHITE,
 
             pt_text: String::new(),
@@ -80,14 +83,14 @@ impl<T> CardView<T> {
             sender,
             mouse_up_message: None,
         };
-        view.update_pt_text(card);
+        view.update_pt_text(points);
         view
     }
 
-    pub fn update_pt_text(&mut self, card: &Card) {
-        self.pt_text = match card.points {
+    pub fn update_pt_text(&mut self, points: i16) {
+        self.pt_text = match points {
             0 => String::new(),
-            _ => format!("{} pts", card.points),
+            _ => format!("{} pts", points),
         };
     }
 
@@ -111,7 +114,7 @@ impl<T> CardView<T> {
     }
 }
 
-impl<T: Copy> ViewTrait for CardView<T> {
+impl ViewTrait for CardView {
     fn update(&mut self, time_delta: f32, _app: &mut notan::app::App) {
         if let Some(animator) = &mut self.translation_animator {
             self.transform.set_translation(animator.update(time_delta));
@@ -181,14 +184,27 @@ impl<T: Copy> ViewTrait for CardView<T> {
     }
 
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
+        if self.face_tex.is_none() && !self.face_tex_id.is_empty() {
+            if let Some(texture) = crate::TEX_LOADER.lock().unwrap().get_tex(&self.face_tex_id) {
+                self.face_tex = Some(texture.clone());
+                let size: Vec2 = texture.size().into();
+                self.transform.set_size(size * self.tex_size_multiplier);
+            } else {
+                return;
+            }
+        }
+
+        if self.back_tex.is_none() && !self.back_tex_id.is_empty() {
+            if let Some(texture) = crate::TEX_LOADER.lock().unwrap().get_tex(&self.back_tex_id) {
+                self.back_tex = Some(texture.clone());
+            } else {
+                return;
+            }
+        }
+
         if !self.visible {
             return;
         }
-
-        let tex = match self.face_up {
-            true => &self.face_tex,
-            false => &self.back_tex,
-        };
 
         let mut color = self.color;
 
@@ -208,10 +224,17 @@ impl<T: Copy> ViewTrait for CardView<T> {
 
         let (size_x, size_y) = self.transform.size().into();
 
-        draw.image(tex)
-            .transform(self.transform.mat3_with_parent(parent_affine))
-            .size(size_x, size_y)
-            .color(color);
+        let tex = match self.face_up {
+            true => &self.face_tex,
+            false => &self.back_tex,
+        };
+
+        if let Some(tex) = tex {
+            draw.image(tex)
+                .transform(self.transform.mat3_with_parent(parent_affine))
+                .size(size_x, size_y)
+                .color(color);
+        }
 
         let font = crate::FONT.lock().unwrap().expect("Font is None");
 

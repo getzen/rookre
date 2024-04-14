@@ -12,15 +12,12 @@ use crate::{
     bid_selector::BidSelector,
     card::{Card, CardId, CardSuit, SelectState},
     card_update::{CardGroup, CardUpdate},
-    card_view2::CardView2,
-    discard_panel::DiscardPanel,
+    card_view::CardView,
     game::{Game, PlayerAction},
     image::Image,
-    image2::Image2,
     image_button::ImageButton,
     player::PlayerId,
-    texture_loader::CARD_TEX_SCALE,
-    view_geom::{ViewGeom, BUTTON_POS, CARD_SIZE, VIEW_CENTER},
+    view_geom::{ViewGeom, BUTTON_POS, VIEW_CENTER},
     view_trait::ViewTrait,
 };
 
@@ -33,17 +30,17 @@ pub const LIGHT_GRAY: Color = Color::new(225. / 255., 225. / 255., 225. / 255., 
 pub struct View {
     tex_loader_completed: bool,
 
-    card_views: Vec<CardView2>,
+    card_views: Vec<CardView>,
     card_views_z_order_dirty: bool,
 
-    active_player_marker: Image2,
-    dealer_marker: Image2,
+    active_player_marker: Image,
+    dealer_marker: Image,
     pub deal_button: ImageButton<PlayerAction>,
     pub bid_selector: BidSelector,
-    discard_panel: DiscardPanel,
-    discard_outlines: Vec<Image2>,
-    trump_marker: Image2,
-    play_outline: Image2,
+    discard_panel: Image,
+    discard_outlines: Vec<Image>,
+    trump_marker: Image,
+    play_outline: Image,
 
     fps_update: f32,
 }
@@ -68,9 +65,9 @@ impl View {
         let card_views = View::create_card_views(cards, assets, sender.clone());
         let active_player_marker = View::create_active_player_marker();
         let dealer_marker = View::create_dealer_marker();
-        let deal_button = View::create_deal_button(gfx, sender.clone());
+        let deal_button = View::create_deal_button(sender.clone());
         let bid_selector = View::create_bid_selector(gfx, sender.clone());
-        let discard_panel = DiscardPanel::new(gfx);
+        let discard_panel = View::create_discard_panel();
         let discard_outlines = View::create_discard_outlines(game);
         let trump_marker = View::create_trump_marker();
         let play_outline = View::create_play_outline();
@@ -99,31 +96,38 @@ impl View {
             "cards/back",
             "cards/outline",
             "club",
+            "club_mouse_over",
+            "deal_enabled",
+            "deal_mouse_over",
             "dealer_marker",
             "diamond",
+            "diamond_mouse_over",
+            "discard",
             "done_enabled",
             "heart",
+            "heart_mouse_over",
+            "pass_enabled",
+            "pass_mouse_over",
             "spade",
+            "spade_mouse_over",
         ];
         let tex_names: Vec<String> = names.iter().map(|&n| n.to_string()).collect();
         crate::TEX_LOADER
             .lock()
             .unwrap()
             .load_assets(assets, &tex_names);
-
-        // cards...
     }
 
     pub fn create_card_views(
         cards: &SlotMap<CardId, Card>,
         assets: &mut Assets,
         sender: Sender<PlayerAction>,
-    ) -> Vec<CardView2> {
+    ) -> Vec<CardView> {
         let mut card_views = Vec::new();
         let mut tex_names = Vec::new();
 
         for (_, card) in cards {
-            let card_view = CardView2::new(
+            let card_view = CardView::new(
                 card.id,
                 card.points,
                 &card.file_string(),
@@ -143,40 +147,26 @@ impl View {
         card_views
     }
 
-    fn create_active_player_marker() -> Image2 {
-        let mut image = Image2::new("active_player", Vec2::ZERO, 0.5);
+    fn create_active_player_marker() -> Image {
+        let mut image = Image::new("active_player", Vec2::ZERO, 0.5);
         image.visible = false;
         image
     }
 
-    fn create_dealer_marker() -> Image2 {
-        let mut image = Image2::new("dealer_marker", Vec2::ZERO, 0.5);
+    fn create_dealer_marker() -> Image {
+        let mut image = Image::new("dealer_marker", Vec2::ZERO, 0.5);
         image.visible = false;
         image
     }
 
-    fn create_deal_button(
-        gfx: &mut Graphics,
-        sender: Sender<PlayerAction>,
-    ) -> ImageButton<PlayerAction> {
-        let enabled = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/deal_enabled.png"))
-            .build()
-            .unwrap();
-
-        let mouse_over = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/deal_mouse_over.png"))
-            .build()
-            .unwrap();
-
+    fn create_deal_button(sender: Sender<PlayerAction>) -> ImageButton<PlayerAction> {
         let mut button = ImageButton::new(
             BUTTON_POS,
-            enabled,
-            Some(mouse_over),
-            None,
-            String::new(),
+            "deal_enabled",
+            "deal_mouse_over",
+            "",
+            0.5,
+            "",
             Some(sender),
         );
         button.mouse_up_message = Some(PlayerAction::DealCards);
@@ -193,10 +183,18 @@ impl View {
         BidSelector::new(suits, gfx, sender)
     }
 
-    fn create_discard_outlines(game: &Game) -> Vec<Image2> {
+    fn create_discard_panel() -> Image {
+        let mut trans = VIEW_CENTER;
+        trans.y += 150.0;
+        let mut image = Image::new("discard", trans, 0.50);
+        image.visible = false;
+        image
+    }
+
+    fn create_discard_outlines(game: &Game) -> Vec<Image> {
         let mut outlines = Vec::new();
         for idx in 0..2 {
-            let mut image = Image2::new("cards/outline", Vec2::ZERO, 0.35);
+            let mut image = Image::new("cards/outline", Vec2::ZERO, 0.35);
             let update = CardUpdate {
                 group: CardGroup::NestExchange,
                 group_len: game.options.nest_size as usize,
@@ -210,14 +208,14 @@ impl View {
         outlines
     }
 
-    fn create_play_outline() -> Image2 {
-        let mut image = Image2::new("cards/outline", Vec2::ZERO, 0.35);
+    fn create_play_outline() -> Image {
+        let mut image = Image::new("cards/outline", Vec2::ZERO, 0.35);
         image.visible = false;
         image
     }
 
-    fn create_trump_marker() -> Image2 {
-        let mut image = Image2::new("", VIEW_CENTER, 0.25);
+    fn create_trump_marker() -> Image {
+        let mut image = Image::new("", VIEW_CENTER, 0.25);
         image.visible = false;
         image
     }

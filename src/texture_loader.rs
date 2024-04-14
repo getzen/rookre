@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use notan::prelude::*;
 
-use crate::card::{Card, CardSuit};
-
 pub const TEX_SCALE: f32 = 2.0; // Default texture images are double size.
 pub const CARD_TEX_SCALE: f32 = 3.0; // Card images are triple size.
 
@@ -73,7 +71,7 @@ impl TextureLoader {
             None => {
                 println!("Can't find texture: {}", name);
                 None
-            },
+            }
         }
     }
 }

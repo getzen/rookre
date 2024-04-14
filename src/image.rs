@@ -3,43 +3,64 @@
 use notan::{
     draw::{Draw, DrawImages, DrawTransform},
     math::{Affine2, Vec2},
-    prelude::{Color, Texture},
+    prelude::Texture,
 };
 
-use crate::{texture_loader::TEX_SCALE, transform::Transform, view_trait::ViewTrait};
+use crate::{transform::Transform, view_trait::ViewTrait, TEX_LOADER};
 
 #[derive(Clone)]
 pub struct Image {
     pub visible: bool,
     pub z_order: usize,
     pub transform: Transform,
-    pub texture: Texture,
-    pub color: Color,
+    texture_id: String,
+    texture: Option<Texture>,
+    texture_size_multiplier: f32,
 }
 
 impl Image {
-    pub fn new(texture: Texture, position: Vec2) -> Self {
-        let transform = Transform::from_pos_tex_scale_centered(position, &texture, TEX_SCALE, true);
+    /// The size of the image is the texture size mutiplied by tex_size_mult.
+    pub fn new(tex_id: &str, translation: Vec2, tex_size_mult: f32) -> Self {
+        let transform = Transform::from_translation(translation);
         Self {
             visible: true,
             z_order: 0,
             transform,
-            texture,
-            color: Color::WHITE,
+            texture_id: tex_id.to_string(),
+            texture: None,
+            texture_size_multiplier: tex_size_mult,
+        }
+    }
+
+    pub fn set_texture_id(&mut self, id: String) {
+        if self.texture_id != id {
+            self.texture_id = id;
+            self.texture = None;
         }
     }
 }
 
 impl ViewTrait for Image {
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
+        if self.texture.is_none() && !self.texture_id.is_empty() {
+            if let Some(texture) = TEX_LOADER.lock().unwrap().get_tex(&self.texture_id) {
+                self.texture = Some(texture.clone());
+                let size: Vec2 = texture.size().into();
+                self.transform.set_size(size * self.texture_size_multiplier);
+            } else {
+                return;
+            }
+        }
+
         if !self.visible {
             return;
         }
 
-        let (size_x, size_y) = self.transform.size().into();
-        draw.image(&self.texture)
-            .transform(self.transform.mat3_with_parent(parent_affine))
-            .size(size_x, size_y)
-            .color(self.color);
+        if let Some(tex) = &self.texture {
+            let (size_x, size_y) = self.transform.size().into();
+            draw.image(tex)
+                .transform(self.transform.mat3_with_parent(parent_affine))
+                .size(size_x, size_y);
+        }
     }
 }

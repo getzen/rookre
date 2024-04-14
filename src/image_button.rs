@@ -22,9 +22,16 @@ pub struct ImageButton<T> {
     pub z_order: usize,
     pub state: ButtonState,
 
-    pub texture_enabled: Texture,
-    pub texture_mouse_over: Option<Texture>,
-    pub texture_disabled: Option<Texture>,
+    tex_size_multiplier: f32,
+
+    tex_enabled_id: String,
+    tex_enabled: Option<Texture>,
+
+    tex_mouse_over_id: String,
+    tex_mouse_over: Option<Texture>,
+
+    tex_disabled_id: String,
+    tex_disabled: Option<Texture>,
 
     pub text: String,
     pub font: Font,
@@ -39,31 +46,31 @@ pub struct ImageButton<T> {
 
 impl<T> ImageButton<T> {
     pub fn new(
-        position: Vec2,
-        tex_enabled: Texture,
-        tex_mouse_over: Option<Texture>,
-        tex_disabled: Option<Texture>,
-        text: String,
+        translation: Vec2,
+        tex_enabled_id: &str,
+        tex_mouse_over_id: &str,
+        tex_disabled_id: &str,
+        tex_size_multiplier: f32,
+        text: &str,
         sender: Option<Sender<T>>,
     ) -> Self {
-        let trans = Transform::from_pos_tex_scale_centered(
-            position,
-            &tex_enabled,
-            crate::texture_loader::TEX_SCALE,
-            true,
-        );
+        let transform = Transform::from_translation(translation);
 
         Self {
             visible: true,
-            transform: trans,
+            transform,
             z_order: 0,
             state: ButtonState::Enabled,
 
-            texture_enabled: tex_enabled,
-            texture_mouse_over: tex_mouse_over,
-            texture_disabled: tex_disabled,
+            tex_size_multiplier,
+            tex_enabled_id: tex_enabled_id.to_string(),
+            tex_enabled: None,
+            tex_mouse_over_id: tex_mouse_over_id.to_string(),
+            tex_mouse_over: None,
+            tex_disabled_id: tex_disabled_id.to_string(),
+            tex_disabled: None,
 
-            text,
+            text: text.to_string(),
             font: crate::FONT.lock().unwrap().expect("Font is None"), // see main.rs setup()
             font_size: 12.0,
             font_color: Color::BLACK,
@@ -124,39 +131,71 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
     }
 
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
+        if self.tex_enabled.is_none() && !self.tex_enabled_id.is_empty() {
+            if let Some(texture) = crate::TEX_LOADER
+                .lock()
+                .unwrap()
+                .get_tex(&self.tex_enabled_id)
+            {
+                self.tex_enabled = Some(texture.clone());
+                let size: Vec2 = texture.size().into();
+                self.transform.set_size(size * self.tex_size_multiplier);
+            } else {
+                return;
+            }
+        }
+
+        if self.tex_mouse_over.is_none() && !self.tex_mouse_over_id.is_empty() {
+            if let Some(texture) = crate::TEX_LOADER
+                .lock()
+                .unwrap()
+                .get_tex(&self.tex_mouse_over_id)
+            {
+                self.tex_mouse_over = Some(texture.clone());
+            } else {
+                return;
+            }
+        }
+
+        if self.tex_disabled.is_none() && !self.tex_disabled_id.is_empty() {
+            if let Some(texture) = crate::TEX_LOADER
+                .lock()
+                .unwrap()
+                .get_tex(&self.tex_disabled_id)
+            {
+                self.tex_disabled = Some(texture.clone());
+            } else {
+                return;
+            }
+        }
         if !self.visible {
             return;
         }
 
         let tex = match self.state {
-            ButtonState::Enabled => &self.texture_enabled,
-            ButtonState::Disabled => &self
-                .texture_disabled
-                .as_ref()
-                .unwrap_or(&self.texture_enabled),
-            ButtonState::MouseOver => &self
-                .texture_mouse_over
-                .as_ref()
-                .unwrap_or(&self.texture_enabled),
-            ButtonState::MouseDown => &self
-                .texture_mouse_over
-                .as_ref()
-                .unwrap_or(&self.texture_enabled),
+            ButtonState::Enabled => &self.tex_enabled,
+            ButtonState::Disabled => &self.tex_disabled,
+            ButtonState::MouseOver => &self.tex_mouse_over,
+            ButtonState::MouseDown => &self.tex_mouse_over,
         };
 
-        let (size_x, size_y) = self.transform.size().into();
-        draw.image(tex)
-            .transform(self.transform.mat3_with_parent(parent_affine))
-            .size(size_x, size_y);
+        if let Some(tex) = tex {
+            let (size_x, size_y) = self.transform.size().into();
+            draw.image(tex)
+                .transform(self.transform.mat3_with_parent(parent_affine))
+                .size(size_x, size_y);
 
-        // Need to move the position to the center, then use draw methods to center from there.
-        let pos = self.transform.size() * 0.5;
-        draw.text(&self.font, &self.text)
-            .position(pos.x, pos.y)
-            .transform(self.transform.mat3_with_parent(parent_affine))
-            .size(self.font_size * self.pixel_ratio)
-            .h_align_center()
-            .v_align_middle()
-            .color(self.font_color);
+            // Need to move the position to the center, then use draw methods to center from there.
+            if !self.text.is_empty() {
+                let pos = self.transform.size() * 0.5;
+                draw.text(&self.font, &self.text)
+                    .position(pos.x, pos.y)
+                    .transform(self.transform.mat3_with_parent(parent_affine))
+                    .size(self.font_size * self.pixel_ratio)
+                    .h_align_center()
+                    .v_align_middle()
+                    .color(self.font_color);
+            }
+        }
     }
 }
