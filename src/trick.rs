@@ -40,18 +40,10 @@ impl Trick {
         &self,
         card: &Card,
         cards_matching_lead: usize,
-        has_none_trump_card: bool,
     ) -> bool {
-        // Assume card is eligible.
-
-        if self.is_empty {
-            if card.is_trump && has_none_trump_card {
-                return false;
-            }
-        } else {
+        if !self.is_empty {
             if let Some(lead_card) = &self.lead_card {
                 if cards_matching_lead > 0 {
-                    // we have matching suit in hand
                     if card.suit != lead_card.suit {
                         return false;
                     }

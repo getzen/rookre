@@ -376,13 +376,12 @@ impl Game {
     pub fn get_playable_card_ids(&self) -> Vec<CardId> {
         let mut ids = Vec::new();
         let card_count_matching_lead = self.card_count_matching_lead();
-        let has_non_trump_card = self.hand_contains_non_trump_card();
 
         for id in self.active_hand() {
             let card = self.cards.get(*id).unwrap();
             if self
                 .trick
-                .is_eligible(card, card_count_matching_lead, has_non_trump_card)
+                .is_eligible(card, card_count_matching_lead)
             {
                 ids.push(*id);
             }
@@ -414,16 +413,6 @@ impl Game {
             }
         }
         count
-    }
-
-    fn hand_contains_non_trump_card(&self) -> bool {
-        for id in self.active_hand() {
-            let card = self.cards.get(*id).unwrap();
-            if !card.is_trump {
-                return true;
-            }
-        }
-        false
     }
 
     pub fn play_card_id(&mut self, id: &CardId) {
