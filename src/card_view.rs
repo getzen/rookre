@@ -24,7 +24,7 @@ pub struct CardView {
     pub z_order: usize,
     pub transform: Transform,
 
-    tex_size_multiplier: f32,
+    tex_size_mult: f32,
     face_tex_id: String,
     face_tex: Option<Texture>,
     pub face_up: bool,
@@ -52,7 +52,7 @@ impl CardView {
         points: i16,
         face_tex_id: &str,
         back_tex_id: &str,
-        tex_size_multiplier: f32,
+        tex_size_mult: f32,
         sender: Option<Sender<PlayerAction>>,
     ) -> Self {
         let transform = Transform::default();
@@ -63,7 +63,7 @@ impl CardView {
             z_order: 0,
             transform,
 
-            tex_size_multiplier,
+            tex_size_mult,
             face_tex_id: face_tex_id.to_string(),
             face_tex: None,
             face_up: false,
@@ -188,7 +188,7 @@ impl ViewTrait for CardView {
             if let Some(texture) = crate::TEX_LOADER.lock().unwrap().get_tex(&self.face_tex_id) {
                 self.face_tex = Some(texture.clone());
                 let size: Vec2 = texture.size().into();
-                self.transform.set_size(size * self.tex_size_multiplier);
+                self.transform.set_size(size * self.tex_size_mult);
             } else {
                 return;
             }

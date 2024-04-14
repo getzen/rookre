@@ -13,9 +13,9 @@ pub struct Image {
     pub visible: bool,
     pub z_order: usize,
     pub transform: Transform,
-    texture_id: String,
-    texture: Option<Texture>,
-    texture_size_multiplier: f32,
+    tex_id: String,
+    tex: Option<Texture>,
+    tex_size_mult: f32,
 }
 
 impl Image {
@@ -26,27 +26,27 @@ impl Image {
             visible: true,
             z_order: 0,
             transform,
-            texture_id: tex_id.to_string(),
-            texture: None,
-            texture_size_multiplier: tex_size_mult,
+            tex_id: tex_id.to_string(),
+            tex: None,
+            tex_size_mult,
         }
     }
 
     pub fn set_texture_id(&mut self, id: String) {
-        if self.texture_id != id {
-            self.texture_id = id;
-            self.texture = None;
+        if self.tex_id != id {
+            self.tex_id = id;
+            self.tex = None;
         }
     }
 }
 
 impl ViewTrait for Image {
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
-        if self.texture.is_none() && !self.texture_id.is_empty() {
-            if let Some(texture) = TEX_LOADER.lock().unwrap().get_tex(&self.texture_id) {
-                self.texture = Some(texture.clone());
+        if self.tex.is_none() && !self.tex_id.is_empty() {
+            if let Some(texture) = TEX_LOADER.lock().unwrap().get_tex(&self.tex_id) {
+                self.tex = Some(texture.clone());
                 let size: Vec2 = texture.size().into();
-                self.transform.set_size(size * self.texture_size_multiplier);
+                self.transform.set_size(size * self.tex_size_mult);
             } else {
                 return;
             }
@@ -56,7 +56,7 @@ impl ViewTrait for Image {
             return;
         }
 
-        if let Some(tex) = &self.texture {
+        if let Some(tex) = &self.tex {
             let (size_x, size_y) = self.transform.size().into();
             draw.image(tex)
                 .transform(self.transform.mat3_with_parent(parent_affine))

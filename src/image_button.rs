@@ -22,7 +22,7 @@ pub struct ImageButton<T> {
     pub z_order: usize,
     pub state: ButtonState,
 
-    tex_size_multiplier: f32,
+    tex_size_mult: f32,
 
     tex_enabled_id: String,
     tex_enabled: Option<Texture>,
@@ -50,7 +50,7 @@ impl<T> ImageButton<T> {
         tex_enabled_id: &str,
         tex_mouse_over_id: &str,
         tex_disabled_id: &str,
-        tex_size_multiplier: f32,
+        tex_size_mult: f32,
         text: &str,
         sender: Option<Sender<T>>,
     ) -> Self {
@@ -62,7 +62,7 @@ impl<T> ImageButton<T> {
             z_order: 0,
             state: ButtonState::Enabled,
 
-            tex_size_multiplier,
+            tex_size_mult,
             tex_enabled_id: tex_enabled_id.to_string(),
             tex_enabled: None,
             tex_mouse_over_id: tex_mouse_over_id.to_string(),
@@ -139,7 +139,7 @@ impl<T: Copy> ViewTrait for ImageButton<T> {
             {
                 self.tex_enabled = Some(texture.clone());
                 let size: Vec2 = texture.size().into();
-                self.transform.set_size(size * self.tex_size_multiplier);
+                self.transform.set_size(size * self.tex_size_mult);
             } else {
                 return;
             }
