@@ -11,6 +11,7 @@ use crate::card::{CardId, SelectState};
 use crate::card_update::{CardGroup, CardUpdate};
 use crate::game::{Game, GameAction, PlayerAction};
 use crate::player::PlayerId;
+use crate::trick::Trick;
 use crate::view::View;
 use crate::view_trait::ViewTrait;
 
@@ -155,12 +156,21 @@ impl Controller {
                     GameAction::PrePlayCard => {
                         self.update_hands();
                         self.update_active_trick();
+                        self.game_action_delay = 1.0;
                     }
                     GameAction::WaitForPlayCard(p) => {
-                        self.view.get_card_play(*p, &self.game);
-                        self.update_hands();
+                        if self.game.active_player_is_bot() {
+                            self.spawn_play_card_bot();
+                        } else {
+                            self.view.get_card_play(*p, &self.game);
+                        }
                     }
-                    GameAction::AwardTrick(_) => todo!(),
+                    GameAction::PauseAfterPlayCard => {
+                        self.game_action_delay = 2.0;
+                    }
+                    GameAction::AwardTrick(trick) => {
+                        self.update_won_trick(trick);
+                    },
                     GameAction::EndHand => todo!(),
                     GameAction::EndGame => todo!(),
                 }
@@ -301,6 +311,23 @@ impl Controller {
                 if let Some(card) = self.game.cards.get(*id) {
                     update.face_up = card.face_up;
                 }
+                self.card_updates.push_back(update.clone());
+            }
+        }
+    }
+
+    fn update_won_trick(&mut self, trick: &Trick) {
+        let mut update = CardUpdate {
+            group: CardGroup::TrickAside,
+            player_len: self.game.player_count,
+            player: trick.winner.unwrap(),
+            ..Default::default()
+        };
+
+        for opt_id in &trick.card_ids {
+            if let Some(id) = opt_id {
+                update.id = *id;
+                update.face_up = false;
                 self.card_updates.push_back(update.clone());
             }
         }

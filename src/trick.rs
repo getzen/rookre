@@ -1,7 +1,7 @@
 use crate::card::{Card, CardId, Points};
 use crate::player::PlayerId;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Trick {
     pub card_ids: Vec<Option<CardId>>,
     pub is_empty: bool,

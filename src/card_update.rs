@@ -82,7 +82,7 @@ impl CardUpdate {
                 ViewGeom::position_from(VIEW_CENTER, radians, distance_from_center)
             }
             CardGroup::TrickAside => {
-                let distance_from_center = 500.0;
+                let distance_from_center = 400.0;
                 let radians = ViewGeom::player_radians_from_center(self.player, self.player_len);
                 ViewGeom::position_from(VIEW_CENTER, radians, distance_from_center)
             }

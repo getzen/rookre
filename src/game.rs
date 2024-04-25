@@ -34,7 +34,8 @@ pub enum GameAction {
     PrepareForNewTrick,
     PrePlayCard,
     WaitForPlayCard(PlayerId), // player ui or bot launch
-    AwardTrick(PlayerId),
+    PauseAfterPlayCard,
+    AwardTrick(Trick),
     EndHand,
     EndGame,
 }
@@ -89,7 +90,7 @@ impl Game {
 
             match p {
                 0 => player.bot_kind = None,
-                _ => player.bot_kind = Some(BotKind::Monte),
+                _ => player.bot_kind = Some(BotKind::Random),
             }
             players.push(player);
         }
@@ -144,12 +145,8 @@ impl Game {
     }
 
     pub fn advance_active_player(&mut self) {
-        loop {
-            self.active_player = (self.active_player + 1) % self.player_count;
-            if self.active_player().active {
-                break;
-            }
-        }
+        self.active_player = (self.active_player + 1) % self.player_count;
+        println!("Active P:{}", self.active_player);
     }
 
     pub fn assign_across_partners(&mut self) {
@@ -379,6 +376,7 @@ impl Game {
 
         for id in self.active_hand() {
             let card = self.cards.get(*id).unwrap();
+            //println!("checking id: {:?}", id);
             if self
                 .trick
                 .is_eligible(card, card_count_matching_lead)
@@ -398,6 +396,8 @@ impl Game {
                 let card = self.cards.get(*id).unwrap();
                 println!("Hand card: {:?}", card);
             }
+        } else {
+            println!("P: {}. Playable: {}", self.active_player, ids.len());
         }
         ids
     }
@@ -632,7 +632,6 @@ impl Game {
                     self.mark_select_state(&ids, SelectState::Unselectable);
                     self.next_action = Some(PrepareForNewTrick)
                 }
-
                 PrepareForNewTrick => {
                     self.prepare_for_new_trick();
                     self.next_action = Some(PrePlayCard);
@@ -640,7 +639,7 @@ impl Game {
                 PrePlayCard => {
                     self.next_action = Some(WaitForPlayCard(self.active_player));
                 }
-                WaitForPlayCard(..) => {
+                WaitForPlayCard(..) => {                  
                     for id in self.get_playable_card_ids() {
                         if let Some(card) = self.cards.get_mut(id) {
                             card.select_state = SelectState::Selectable
@@ -648,7 +647,17 @@ impl Game {
                     }
                     println!("game: WaitForPlayCard");
                 }
+                PauseAfterPlayCard => {
+                    if self.trick_completed() {
+                        let winner = self.trick.winner.unwrap();
+                        self.next_action = Some(AwardTrick(self.trick.clone()));
+                    } else {
+                        self.advance_active_player();
+                        self.next_action = Some(PrePlayCard);
+                    }
+                }
                 AwardTrick(_) => {
+                    println!("game: AwardTrick");
                     self.award_trick();
                     self.next_action = Some(PrepareForNewTrick);
                 }
@@ -686,15 +695,10 @@ impl Game {
                 self.next_action = Some(EndNestExchange);
             }
 
-            PlayerAction::PlayCard(_, c_id) => {
+            PlayerAction::PlayCard(_p, c_id) => {
+                println!("game: PlayCard: {:?}", c_id);
                 self.play_card_id(c_id);
-                if self.trick_completed() {
-                    let winner = self.trick.winner.unwrap();
-                    self.next_action = Some(AwardTrick(winner));
-                } else {
-                    self.advance_active_player();
-                    self.next_action = Some(PrePlayCard);
-                }
+                self.next_action = Some(PauseAfterPlayCard);
             }
         }
     }
