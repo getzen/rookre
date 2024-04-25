@@ -40,6 +40,49 @@ pub enum GameAction {
     EndGame,
 }
 
+pub enum ActionNew { // present tense
+    //ChangeState,
+    CreateCard,
+    AddCardToDeck,         
+    AdvancePlayer,
+    AdvanceDealer,
+    UpdatePlayerIsBot,
+    DealCard,
+    TurnCardFaceUp,
+    DealToNest,
+    SortHand,
+    GetBid, // wait for input      
+    MakeBid,
+    SetTrump,
+    AddNestCardToHand,
+    GetDiscard, // wait for input
+    Discard,
+    GetPlayCard, // wait for input
+    PlayCard,
+    AwardTrick,
+    PrepareNextTrick,
+}
+
+pub enum ActionResult { // past tense -- correlating to Actions above
+    //StateChanged(old, new),
+    CardCreated(CardId),
+    CardAddedToDeck(CardId),            
+    PlayerAdvanced(PlayerId),
+    DealerAdvanced(PlayerId),
+    PlayerIsBotUpdated(bool),
+    CardDealt(PlayerId, CardId, Vec<CardId>),
+    CardTurnedFaceUp(CardId, bool),
+    CardDealtToNest(CardId),
+    HandSorted(PlayerId, Vec<CardId>),
+    BidMade(PlayerId, Option<CardSuit>), // bot or human
+    TrumpSet(CardSuit),
+    NestCardAddedToHand(PlayerId, CardId),
+    Discarded(PlayerId, CardId, Vec<CardId>), // bot or human
+    CardPlayed(PlayerId, CardId, Vec<CardId>), // bot or human
+    TrickAwarded(PlayerId, Trick),
+    NextTrickPrepared,
+}
+
 const DEAL_PAUSES: [u8; 5] = [20, 24, 28, 32, 36];
 
 #[derive(Clone)]
