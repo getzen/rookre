@@ -1,9 +1,11 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
-use slotmap::SlotMap;
+use serde::de::IntoDeserializer;
+use slotmap::{DefaultKey, SlotMap};
 
 use crate::bot::BotKind;
 use crate::card::{Card, CardId, CardSuit, Points, SelectState};
+use crate::card_update::{CardGroup, CardUpdate};
 use crate::game::GameAction::*;
 use crate::game_options::{GameOptions, PointsAwarded};
 use crate::player::{Player, PlayerId, PlayerKind};
@@ -40,10 +42,11 @@ pub enum GameAction {
     EndGame,
 }
 
+#[derive(Clone)]
 pub enum ActionNew { // present tense
     //ChangeState,
-    CreateCard,
-    AddCardToDeck,         
+    //CreateCards,
+    AddCardsToDeck,         
     AdvancePlayer,
     AdvanceDealer,
     UpdatePlayerIsBot,
@@ -65,8 +68,8 @@ pub enum ActionNew { // present tense
 
 pub enum ActionResult { // past tense -- correlating to Actions above
     //StateChanged(old, new),
-    CardCreated(CardId),
-    CardAddedToDeck(CardId),            
+    //CardsCreated(Vec<Card>),
+    CardsAddedToDeck(Vec<CardId>),            
     PlayerAdvanced(PlayerId),
     DealerAdvanced(PlayerId),
     PlayerIsBotUpdated(bool),
@@ -88,6 +91,8 @@ const DEAL_PAUSES: [u8; 5] = [20, 24, 28, 32, 36];
 #[derive(Clone)]
 pub struct Game {
     pub options: GameOptions,
+
+    pub action_new: Option<ActionNew>,
 
     pub next_action: Option<GameAction>,
     pub actions_taken: VecDeque<GameAction>,
@@ -115,6 +120,8 @@ pub struct Game {
     pub tricks_played: u8,
 
     pub game_over: bool,
+
+    pub view_exists: bool,
 }
 
 impl Game {
@@ -143,6 +150,8 @@ impl Game {
 
         Self {
             options,
+            action_new: Some(ActionNew::AddCardsToDeck),
+
             next_action: Some(Setup),
             actions_taken: VecDeque::new(),
             cards: SlotMap::new(),
@@ -164,6 +173,7 @@ impl Game {
             last_trick_winner: 0,
             tricks_played: 0,
             game_over: false,
+            view_exists: true,
         }
     }
 
@@ -189,7 +199,6 @@ impl Game {
 
     pub fn advance_active_player(&mut self) {
         self.active_player = (self.active_player + 1) % self.player_count;
-        println!("Active P:{}", self.active_player);
     }
 
     pub fn assign_across_partners(&mut self) {
@@ -212,7 +221,7 @@ impl Game {
     //     }
     // }
 
-    pub fn create_cards(&mut self) {
+    pub fn create_cards(&mut self) -> Vec<Card>{
         let mut cards = self.create_card_ranks(5, 14);
 
         // Remove 6s.
@@ -238,12 +247,14 @@ impl Game {
         }
 
         // Assign IDs.
-        for card in cards {
-            let key = self.cards.insert(card);
+        for card in &cards {
+            let key = self.cards.insert(card.clone());
             if let Some(card) = self.cards.get_mut(key) {
                 card.id = key;
             }
         }
+
+        self.cards.values().cloned().collect()
     }
 
     fn create_card_ranks(&self, from_rank: u8, to_rank: u8) -> Vec<Card> {
@@ -278,6 +289,27 @@ impl Game {
         self.tricks_played = 0;
 
         self.assign_across_partners();
+    }
+
+    fn move_cards_to_deck(&mut self) -> Option<Vec<CardUpdate>> {
+        self.deck = self.cards.keys().collect();
+        if self.view_exists {
+            let mut updates = Vec::new();
+            for (idx, id) in self.deck.iter().enumerate() {
+                let mut update = CardUpdate {
+                    id: id.clone(),
+                    group: CardGroup::Deck,
+                    group_index: idx,
+                    group_len: self.deck.len(),
+                    face_up: false,
+                    select_state: SelectState::Unselectable,
+                    ..Default::default()
+                };
+                updates.push(update);
+            }
+            return Some(updates)
+        }
+        None
     }
 
     /// Deals a single card to active_player. Flips it face up and sorts
@@ -606,14 +638,44 @@ impl Game {
         }
     }
 
+    pub fn do_action_new(&mut self) -> Vec<ActionResult> {
+        let mut results = Vec::new();
+
+        if let Some(action) = self.action_new.take() {
+            match action {
+                ActionNew::AddCardsToDeck => {
+
+                },
+                ActionNew::AdvancePlayer => todo!(),
+                ActionNew::AdvanceDealer => todo!(),
+                ActionNew::UpdatePlayerIsBot => todo!(),
+                ActionNew::DealCard => todo!(),
+                ActionNew::TurnCardFaceUp => todo!(),
+                ActionNew::DealToNest => todo!(),
+                ActionNew::SortHand => todo!(),
+                ActionNew::GetBid => todo!(),
+                ActionNew::MakeBid => todo!(),
+                ActionNew::SetTrump => todo!(),
+                ActionNew::AddNestCardToHand => todo!(),
+                ActionNew::GetDiscard => todo!(),
+                ActionNew::Discard => todo!(),
+                ActionNew::GetPlayCard => todo!(),
+                ActionNew::PlayCard => todo!(),
+                ActionNew::AwardTrick => todo!(),
+                ActionNew::PrepareNextTrick => todo!(),
+            }
+        }
+        results
+    }
+
     pub fn do_next_action(&mut self) {
         if let Some(mut action) = self.next_action.take() {
             // self.next_action is now None
 
             match action {
                 Setup => {
-                    self.create_cards();
-                    self.next_action = Some(PrepareForNewHand);
+                    //self.create_cards();
+                    //self.next_action = Some(PrepareForNewHand);
                 }
                 PrepareForNewHand => {
                     self.prepare_for_new_hand();
@@ -747,67 +809,4 @@ impl Game {
     }
 }
 
-// Pop, perform, and return action in queue. Add next action.
-// pub fn update(&mut self, time_delta: f32) -> Option<GameAction> {
-//     if let Some(action) = self.action_queue.pop_front() {
-//         match action {
-//             Setup => {
-//                 self.create_cards();
-//                 self.action_queue.push_back(PrepareForNewHand(Vec::new()));
-//             }
-//             PrepareForNewHand(_) => {
-//                 self.prepare_for_new_hand();
-//                 self.action_queue.push_back(DealCards);
-//             }
-//             DealCards => {
-//                 self.deal_cards(self.options.hand_size);
-//                 self.action_queue.push_back(PresentNest);
-//             }
-//             PresentNest => {
-//                 self.action_queue.push_back(PreBid);
-//             }
-//             PreBid => {
-//                 self.action_queue.push_back(WaitForBid);
-//             }
-//             WaitForBid => {}
-//             MoveNestToHand => {
-//                 self.move_nest_cards_to_hand();
-//                 self.action_queue.push_back(PreDiscard);
-//             }
-//             PreDiscard => {
-//                 self.action_queue.push_back(WaitForDiscards);
-//             }
-//             WaitForDiscards => {}
-//             PreChooseTrump => {
-//                 self.action_queue.push_back(WaitForChooseTrump);
-//             }
-//             WaitForChooseTrump => {} // just wait
-//             PrepareForNewTrick => {
-//                 self.prepare_for_new_trick();
-//                 self.action_queue.push_back(PrePlayCard);
-//             }
-//             PrePlayCard => {
-//                 self.action_queue.push_back(WaitForPlayCard);
-//             }
-//             WaitForPlayCard => {} // just wait
-//             AwardTrick(p_id) => {
-//                 self.award_trick();
-//                 self.action_queue.push_back(PrepareForNewTrick);
-//             }
-//             EndHand => {
-//                 self.award_nest();
-//                 println!("========= End of Hand ========")
-//             }
-//             EndGame => todo!(),
-//             Delay(mut time) => {
-//                 time -= time_delta;
-//                 if time > 0.0 {
-//                     self.action_queue.push_front(GameAction::Delay(time));
-//                 }
-//             }
-//             _ => {}
-//         }
-//         return Some(action);
-//     }
-//     None
-// }
+

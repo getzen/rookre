@@ -42,8 +42,18 @@ impl Controller {
     pub fn new(assets: &mut Assets, gfx: &mut Graphics) -> Self {
         let (player_action_sender, player_action_receiver) = mpsc::channel();
 
+        *crate::PIXEL_RATIO.lock().unwrap() = gfx.dpi() as f32;
+
+        let font = gfx
+            .create_font(include_bytes!("assets/Futura.ttc"))
+            .unwrap();
+        *crate::FONT.lock().unwrap() = Some(font as Font);
+
+        let (audio_message_sender, audio_message_receiver) = mpsc::channel();
+        *AUDIO_SENDER.lock().unwrap() = Some(audio_message_sender);
+
         let mut game = Game::new();
-        game.do_next_action();
+        game.create_cards();
 
         // Game clone speed test
         // let now = std::time::Instant::now();
@@ -53,14 +63,12 @@ impl Controller {
 
         let view = View::new(
             assets,
-            gfx,
             &game.cards,
             player_action_sender.clone(),
             &game,
         );
 
-        let (audio_message_sender, audio_message_receiver) = mpsc::channel();
-        *AUDIO_SENDER.lock().unwrap() = Some(audio_message_sender);
+       
 
         Self {
             game,
@@ -98,6 +106,14 @@ impl Controller {
         self.game_action_delay -= time_delta;
         self.game_action_delay = self.game_action_delay.max(0.0);
         if self.game_action_delay == 0.0 {
+
+            
+            let action_results = self.game.do_action_new();
+            for result in &action_results {
+                self.view.handle_action_result(result);
+            }
+            
+
             if let Some(action) = &self.game.actions_taken.pop_front() {
                 match action {
                     GameAction::Setup => {
@@ -177,9 +193,9 @@ impl Controller {
             }
         }
 
-        if !self.card_updates.is_empty() {
-            self.view.update_cards(&mut self.card_updates, time_delta);
-        }
+        // if !self.card_updates.is_empty() {
+        //     self.view.update_cards(&mut self.card_updates, time_delta);
+        // }
 
         // Check for PlayerAction messages and call related game functions.
         let received = self.player_action_receiver.try_recv();

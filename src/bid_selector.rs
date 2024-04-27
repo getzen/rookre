@@ -12,40 +12,36 @@ use crate::image_button::ImageButton;
 use crate::transform::Transform;
 use crate::view_geom::ViewGeom;
 use crate::view_trait::ViewTrait;
+use crate::TEX_LOADER;
 
 pub struct BidSelector {
     pub visible: bool,
     pub transform: Transform,
     pub z_order: usize,
-    pub texture: Texture,
+    
+    tex_id: String,
+    tex: Option<Texture>,
+    tex_size_mult: f32,
 
     pub pass_button: ImageButton<PlayerAction>,
     suit_buttons: Vec<ImageButton<PlayerAction>>,
 }
 
 impl BidSelector {
-    pub fn new(suits: Vec<CardSuit>, gfx: &mut Graphics, sender: Sender<PlayerAction>) -> Self {
-        let texture = gfx
-            .create_texture()
-            .from_image(include_bytes!("assets/bid_selector.png"))
-            .build()
-            .unwrap();
-
-        let trans = Transform::from_pos_tex_scale_centered(
-            ViewGeom::bid_view_position(0, 4),
-            &texture,
-            crate::texture_loader::TEX_SCALE,
-            true,
-        );
+    pub fn new(suits: Vec<CardSuit>, tex_id: &str, tex_size_mult: f32, translation: Vec2, sender: Sender<PlayerAction>) -> Self {
+        let transform = Transform::from_translation(translation);
+       
 
         let pass_button = BidSelector::create_pass_button(sender.clone());
         let suit_buttons = BidSelector::create_suit_buttons(suits, sender.clone());
 
         Self {
             visible: false,
-            transform: trans,
+            transform,
             z_order: 0,
-            texture,
+            tex_id: tex_id.to_string(),
+            tex: None,
+            tex_size_mult,
             pass_button,
             suit_buttons,
         }
@@ -132,14 +128,26 @@ impl ViewTrait for BidSelector {
     }
 
     fn draw(&mut self, draw: &mut Draw, parent_affine: &Affine2) {
+        if self.tex.is_none() && !self.tex_id.is_empty() {
+            if let Some(texture) = TEX_LOADER.lock().unwrap().get_tex(&self.tex_id) {
+                self.tex = Some(texture.clone());
+                let size: Vec2 = texture.size().into();
+                self.transform.set_size(size * self.tex_size_mult);
+            } else {
+                return;
+            }
+        }
+        
         if !self.visible {
             return;
         }
 
-        let (size_x, size_y) = self.transform.size().into();
-        draw.image(&self.texture)
-            .transform(self.transform.mat3_with_parent(parent_affine))
-            .size(size_x, size_y);
+        if let Some(tex) = &self.tex {
+            let (size_x, size_y) = self.transform.size().into();
+                draw.image(tex)
+                .transform(self.transform.mat3_with_parent(parent_affine))
+                .size(size_x, size_y);
+        }
 
         let affine = *parent_affine * self.transform.affine2();
         for button in &mut self.suit_buttons {
