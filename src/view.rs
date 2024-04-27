@@ -303,9 +303,6 @@ impl View {
             self.hands[p].push(card);
             self.update_hand(p, is_bot);
         }
-
-        
-       
     }
 
     pub fn get_bid(&mut self, game: &Game) {
@@ -395,7 +392,9 @@ impl View {
             ActionResult::PlayerAdvanced(_) => todo!(),
             ActionResult::DealerAdvanced(_) => todo!(),
             ActionResult::PlayerIsBotUpdated(_) => todo!(),
-            ActionResult::CardDealt(_, _, _) => todo!(),
+            ActionResult::CardDealt(p, is_bot, id) => {
+                self.deal_card(*p, *is_bot, *id);
+            },
             ActionResult::CardTurnedFaceUp(_, _) => todo!(),
             ActionResult::CardDealtToNest(_) => todo!(),
             ActionResult::HandSorted(_, _) => todo!(),

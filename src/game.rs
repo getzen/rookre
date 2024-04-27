@@ -66,6 +66,7 @@ pub enum ActionNew { // present tense
     PrepareNextTrick,
 }
 
+#[derive(Clone)]
 pub enum ActionResult { // past tense -- correlating to Actions above
     //StateChanged(old, new),
     //CardsCreated(Vec<Card>),
@@ -73,7 +74,7 @@ pub enum ActionResult { // past tense -- correlating to Actions above
     PlayerAdvanced(PlayerId),
     DealerAdvanced(PlayerId),
     PlayerIsBotUpdated(bool),
-    CardDealt(PlayerId, CardId, Vec<CardId>),
+    CardDealt(PlayerId, bool, CardId), // player, is_bot, id
     CardTurnedFaceUp(CardId, bool),
     CardDealtToNest(CardId),
     HandSorted(PlayerId, Vec<CardId>),
@@ -93,6 +94,7 @@ pub struct Game {
     pub options: GameOptions,
 
     pub action_new: Option<ActionNew>,
+    pub action_results: VecDeque<ActionResult>,
 
     pub next_action: Option<GameAction>,
     pub actions_taken: VecDeque<GameAction>,
@@ -151,6 +153,7 @@ impl Game {
         Self {
             options,
             action_new: Some(ActionNew::AddCardsToDeck),
+            action_results: VecDeque::new(),
 
             next_action: Some(Setup),
             actions_taken: VecDeque::new(),
@@ -274,6 +277,7 @@ impl Game {
         }
 
         // Put all the ids in the deck and shuffle.
+        self.move_cards_to_deck();
         self.deck = self.cards.keys().collect();
         fastrand::shuffle(&mut self.deck);
 
@@ -291,25 +295,8 @@ impl Game {
         self.assign_across_partners();
     }
 
-    fn move_cards_to_deck(&mut self) -> Option<Vec<CardUpdate>> {
+    fn move_cards_to_deck(&mut self) {
         self.deck = self.cards.keys().collect();
-        if self.view_exists {
-            let mut updates = Vec::new();
-            for (idx, id) in self.deck.iter().enumerate() {
-                let mut update = CardUpdate {
-                    id: id.clone(),
-                    group: CardGroup::Deck,
-                    group_index: idx,
-                    group_len: self.deck.len(),
-                    face_up: false,
-                    select_state: SelectState::Unselectable,
-                    ..Default::default()
-                };
-                updates.push(update);
-            }
-            return Some(updates)
-        }
-        None
     }
 
     /// Deals a single card to active_player. Flips it face up and sorts
@@ -318,6 +305,10 @@ impl Game {
         let p = self.active_player;
         if let Some(id) = self.deck.pop() {
             self.players[p].add_to_hand(id);
+            if self.view_exists {
+                let result = ActionResult::CardDealt(p, self.active_player_is_bot(), id);
+                self.action_results.push_back(result);
+            }
             if !self.active_player_is_bot() {
                 if let Some(card) = self.cards.get_mut(id) {
                     card.face_up = true;
